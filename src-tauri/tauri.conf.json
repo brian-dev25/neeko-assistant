@@ -25,7 +25,7 @@
   "build": {
     "frontendDist": "../src",
     "beforeDevCommand": "",
-    "beforeBuildCommand": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'src-tauri/binaries' | Out-Null; if (!(Test-Path 'src-tauri/binaries/llama-server-x86_64-pc-windows-msvc.exe')) { $bytes = New-Object byte[] 512; $bytes[0] = 0x4D; $bytes[1] = 0x5A; $bytes[2] = 0x90; [System.IO.File]::WriteAllBytes('src-tauri/binaries/llama-server-x86_64-pc-windows-msvc.exe', $bytes) }\""
+    "beforeBuildCommand": ""
   },
   "bundle": {
     "active": true,

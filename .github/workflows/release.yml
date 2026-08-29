@@ -29,6 +29,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create placeholder sidecar binary
+        run: |
+          New-Item -ItemType Directory -Force -Path "src-tauri/binaries"
+          $bytes = New-Object byte[] 512
+          $bytes[0] = 0x4D
+          $bytes[1] = 0x5A
+          $bytes[2] = 0x90
+          [System.IO.File]::WriteAllBytes("src-tauri\binaries\llama-server-x86_64-pc-windows-msvc.exe", $bytes)
+
       - uses: tauri-apps/tauri-action@action-v0.5.24
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
