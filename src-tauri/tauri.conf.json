@@ -48,9 +48,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REEMPLAZAR_CON_TU_PUBLIC_KEY_MINISIGN",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyNzVBRTRGMkFCRUFERTcKUldUbnJiNHFUNjUxRXZkNlUrU1VIL1NENkxnaHFmUFdIQ2RJSE9LdkRHb0dRcVJxK1pIeVk0bTIK",
       "endpoints": [
-        "https://github.com/TU_USUARIO/neeko-assistant/releases/latest/download/latest.json"
+        "https://github.com/brian-dev25/neeko-assistant/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
