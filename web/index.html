@@ -1,0 +1,2514 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neeko Assistant 🦎</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #1a1a25;
+            --border: #2a2a3a;
+            --neeko: #7c3aed;
+            --neeko-light: #a78bfa;
+            --neeko-glow: rgba(124, 58, 237, 0.3);
+            --text: #e4e4e7;
+            --text-dim: #71717a;
+            --user-bg: #1e1e2e;
+            --neeko-bg: #1a1025;
+            --green: #22c55e;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* LOGIN */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        #login-screen .logo {
+            font-size: 64px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        #login-screen h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--neeko), var(--neeko-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #login-screen input {
+            width: 100%;
+            max-width: 300px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #login-screen input:focus {
+            border-color: var(--neeko);
+        }
+
+        #login-screen button {
+            width: 100%;
+            max-width: 300px;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--neeko), #5b21b6);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        #login-screen button:active {
+            transform: scale(0.98);
+        }
+
+        #login-screen button:hover {
+            box-shadow: 0 0 20px var(--neeko-glow);
+        }
+
+        #login-error {
+            color: var(--red);
+            font-size: 14px;
+            display: none;
+        }
+
+        /* MAIN APP */
+        #app-screen {
+            display: none;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--neeko-light);
+            border-bottom-color: var(--neeko);
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab-icon {
+            font-size: 18px;
+            margin-right: 6px;
+        }
+
+        /* TAB CONTENT */
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── CHAT TAB ─── */
+        .chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neeko), #5b21b6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .chat-header .info h2 {
+            font-size: 15px;
+        }
+
+        .chat-header .info span {
+            font-size: 11px;
+            color: var(--green);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        .msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: var(--user-bg);
+            border: 1px solid var(--border);
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg.neeko {
+            align-self: flex-start;
+            background: var(--neeko-bg);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg.neeko .label {
+            font-size: 11px;
+            color: var(--neeko-light);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .typing {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 16px;
+            background: var(--neeko-bg);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neeko-light);
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .quick-actions {
+            padding: 8px 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .quick-actions::-webkit-scrollbar {
+            display: none;
+        }
+
+        .quick-btn {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--neeko);
+            color: var(--neeko-light);
+        }
+
+        .chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            max-height: 120px;
+            min-height: 44px;
+            line-height: 1.4;
+        }
+
+        .chat-input-area textarea:focus {
+            border-color: var(--neeko);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--neeko), #5b21b6);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.1s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ─── FILES TAB ─── */
+        .files-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .upload-zone {
+            display: flex;
+            position: relative;
+            width: 100%;
+            min-height: 168px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--neeko);
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .upload-zone .icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone .text {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .upload-zone .hint {
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0.6;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-progress {
+            display: none;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .upload-progress.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neeko), var(--neeko-light));
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 2px;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .files-header h3 {
+            font-size: 14px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .files-header .count {
+            font-size: 12px;
+            color: var(--text-dim);
+            background: var(--surface2);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .file-item:hover {
+            border-color: var(--neeko);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .file-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .file-btn:hover {
+            border-color: var(--neeko);
+            color: var(--neeko-light);
+        }
+
+        .file-btn.delete:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* FREE GAMES TAB */
+        .games-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .games-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .games-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .games-refresh {
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .games-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .games-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .game-item:hover {
+            border-color: var(--neeko);
+            transform: translateY(-1px);
+        }
+
+        .game-cover {
+            width: 74px;
+            height: 42px;
+            border-radius: 8px;
+            background: var(--surface);
+            object-fit: cover;
+            flex: 0 0 auto;
+        }
+
+        .game-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .game-title {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        .game-chip {
+            padding: 2px 7px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+        }
+
+        .game-free {
+            color: var(--green);
+            border-color: rgba(34, 197, 94, 0.35);
+        }
+
+        /* ─── HELP TAB ─── */
+
+        .help-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .help-header {
+            margin-bottom: 24px;
+        }
+
+        .help-header h3 {
+            font-size: 20px;
+            color: var(--neeko-light);
+            margin-bottom: 6px;
+        }
+
+        .help-header p {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .help-section {
+            margin-bottom: 24px;
+        }
+
+        .help-section h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .help-command {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            padding: 14px;
+            margin-bottom: 8px;
+
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+
+            transition: border-color 0.2s;
+        }
+
+        .help-command:hover {
+            border-color: var(--neeko);
+        }
+
+        .help-command code {
+            color: var(--neeko-light);
+            font-size: 13px;
+        }
+
+        .help-command span {
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        .toast-stack {
+            position: fixed;
+            right: 14px;
+            bottom: 52px;
+            z-index: 50;
+            display: grid;
+            gap: 10px;
+            width: min(340px, calc(100vw - 28px));
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.45);
+            background: rgba(18, 18, 26, 0.96);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            animation: toastIn 0.25s ease;
+        }
+
+        .toast strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--neeko-light);
+            font-size: 13px;
+        }
+
+        .toast span {
+            display: block;
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-dim);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state .text {
+            font-size: 14px;
+        }
+
+        /* BOTTOM BAR */
+        .bottom-bar {
+            padding: 8px 16px;
+            font-size: 12px;
+            color: var(--text-dim);
+            text-align: center;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+        }
+
+        .bottom-bar span {
+            color: var(--neeko-light);
+            font-family: monospace;
+        }
+        .rbg-bg-btn.active {
+            border-color: var(--neeko) !important;
+            background: var(--surface2);
+        }
+        .rbg-lib-btn:hover {
+            border-color: var(--neeko) !important;
+        }
+        #rbg-result-container {
+            transition: background 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOGIN -->
+    <div id="login-screen">
+        <div class="logo">🦎</div>
+        <h1>Neeko Assistant</h1>
+        <input type="password" id="password" placeholder="Contraseña..." autofocus>
+        <button onclick="doLogin()">Entrar</button>
+        <div id="login-error">Contraseña incorrecta</div>
+    </div>
+
+    <!-- APP -->
+    <div id="app-screen">
+        <!-- TABS -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('chat')">
+                <span class="tab-icon">💬</span>Chat
+            </div>
+            <div class="tab" onclick="switchTab('files')">
+                <span class="tab-icon">📁</span>Archivos
+            </div>
+            <div class="tab" onclick="switchTab('games')">
+                <span class="tab-icon">🎮</span>Juegos gratis
+            </div>
+            <div class="tab" onclick="switchTab('removebg')">
+                <span class="tab-icon">✂️</span>Quitar fondo
+            </div>
+            <div class="tab" onclick="switchTab('install')">
+                <span class="tab-icon">⬇️</span>Instalar
+            </div>
+            <div class="tab" onclick="switchTab('help')">
+                <span class="tab-icon">❓</span>Ayuda
+            </div>
+        </div>
+
+        <!-- CHAT TAB -->
+        <div id="tab-chat" class="tab-content active">
+            <div class="chat-messages" id="messages">
+                <div class="msg neeko">
+                    <div class="label">Neeko</div>
+                    ¡Hola! Soy Neeko, tu asistente. ¿Qué necesitás? 🦎
+                </div>
+            </div>
+
+            <div class="typing" id="typing">
+                <span></span><span></span><span></span>
+            </div>
+
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="sendQuick('abri spotify')">🎵 Spotify</button>
+                <button class="quick-btn" onclick="sendQuick('abri chrome')">🌐 Chrome</button>
+                <button class="quick-btn" onclick="sendQuick('abri discord')">💬 Discord</button>
+                <button class="quick-btn" onclick="sendQuick('abri steam')">🎮 Steam</button>
+                <button class="quick-btn" onclick="sendQuick('abri vscode')">💻 VS Code</button>
+                <button class="quick-btn" onclick="sendQuick('abri carpeta')">📁 Archivos</button>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="input-row">
+                    <textarea id="chat-input" rows="1" placeholder="Escribí tu mensaje..."
+                        onkeydown="handleKey(event)"></textarea>
+                    <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILES TAB -->
+        <div id="tab-files" class="tab-content">
+            <div class="files-container">
+                <label class="upload-zone" id="upload-zone" for="file-input">
+                    <span class="icon">📤</span>
+                    <span class="text">Tocá para subir archivos</span>
+                    <span class="hint">o arrastrá archivos aquí</span>
+                </label>
+                <input type="file" id="file-input" class="upload-input" multiple>
+
+                <div class="upload-progress" id="upload-progress">
+                    <div class="progress-text" id="progress-text">Subiendo...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="files-header">
+                    <h3>Archivos compartidos</h3>
+                    <span class="count" id="file-count">0</span>
+                </div>
+
+                <div class="file-list" id="file-list">
+                    <div class="empty-state">
+                        <div class="icon">📂</div>
+                        <div class="text">No hay archivos todavía</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FREE GAMES TAB -->
+        <div id="tab-games" class="tab-content">
+            <div class="games-container">
+                <div class="games-header">
+                    <h3>Juegos gratis</h3>
+                    <div class="games-actions">
+                        <button class="games-refresh" onclick="testNativeNotification()">Probar aviso</button>
+                        <button class="games-refresh" onclick="loadFreeGames(true)">Actualizar</button>
+                    </div>
+                </div>
+
+                <div class="games-list" id="games-list">
+                    <div class="empty-state">
+                        <div class="icon">🎮</div>
+                        <div class="text">Cargando juegos gratis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar" id="bottom-bar">
+            <span id="llama-status"
+                style="cursor:pointer;padding:4px 10px;border-radius:8px;background:#1a1a25;border:1px solid #2a2a3a;font-size:12px;"
+                onclick="toggleLlama()">🦎 LLaMA: <span id="llama-state">?</span></span>
+        </div>
+
+        <!-- INSTALL TAB -->
+        <div id="tab-install" class="tab-content">
+            <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;">
+                <h3 style="font-size:18px;">⬇️ Instalaciones</h3>
+                <p style="color:var(--text-dim);font-size:13px;">Descargá dependencias en la PC donde corre Neeko.</p>
+
+                <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                        <strong>FFmpeg + FFprobe</strong>
+                        <span style="color:var(--text-dim);font-size:12px;">Necesarios para comprimir, inspeccionar y procesar video.</span>
+                        <button class="quick-btn" onclick="runWebInstaller('ffmpeg')">Descargar FFmpeg</button>
+                        <button class="quick-btn" onclick="runWebUninstaller('ffmpeg')">Desinstalar FFmpeg</button>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                        <strong>Git</strong>
+                        <span style="color:var(--text-dim);font-size:12px;">Necesario para comandos de repositorios.</span>
+                        <button class="quick-btn" onclick="runWebInstaller('git')">Descargar Git</button>
+                        <button class="quick-btn" onclick="runWebUninstaller('git')">Desinstalar Git</button>
+                    </div>
+                </div>
+
+                <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                    <strong>Modelo GGUF</strong>
+                    <span style="color:var(--text-dim);font-size:12px;">Modelo fijo en Google Drive (~2.5 GB).</span>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="quick-btn" onclick="runWebInstaller('model')">Descargar modelo</button>
+                        <button class="quick-btn" onclick="window.open('https://drive.google.com/file/d/1eHu-UkJ0cdK35kvpt9YPoNBVPtuTgGHe/view','_blank')" style="border-color:#38bdf8;color:#38bdf8;">Abrir en navegador</button>
+                    </div>
+                    <input id="web-model-file" type="file" accept=".gguf" style="display:none" onchange="installWebModelFromFile(this.files[0]);this.value=''">
+                    <button class="quick-btn" onclick="document.getElementById('web-model-file').click()">Instalar desde archivo</button>
+                    <button class="quick-btn" onclick="runWebUninstaller('model')">Desinstalar modelo</button>
+                </div>
+
+                <div id="web-install-status" class="file-item" style="display:none;flex-direction:column;align-items:flex-start;gap:6px;">
+                    <div style="width:100%;display:flex;justify-content:space-between;gap:10px;">
+                        <strong id="web-install-title">Instalando...</strong>
+                        <span id="web-install-percent" style="color:var(--neeko-light);font-size:12px;">0%</span>
+                    </div>
+                    <div style="width:100%;height:6px;background:var(--surface2);border-radius:999px;overflow:hidden;">
+                        <div id="web-install-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--neeko),var(--neeko-light));transition:width 0.2s;"></div>
+                    </div>
+                    <div style="width:100%;display:flex;align-items:center;gap:8px;">
+                        <span id="web-install-message" style="color:var(--text-dim);font-size:12px;">Preparando...</span>
+                        <button id="web-cancel-download-btn" type="button" style="display:none;padding:3px 8px;border-radius:6px;border:1px solid #f87171;background:transparent;color:#f87171;cursor:pointer;font-size:11px;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REMOVE BG TAB -->
+        <div id="tab-removebg" class="tab-content">
+            <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;">
+                <h3 style="font-size:18px;">✂️ Quitar fondo de imagen</h3>
+                <p style="color:var(--text-dim);font-size:13px;">Elegí una librería y procesá en tu navegador. La imagen nunca sale de tu dispositivo.</p>
+
+                <!-- LIBRARY SELECTOR -->
+                <div id="rbg-lib-select" style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button onclick="selectRbgLib('imgly')" class="rbg-lib-btn" style="flex:1;min-width:140px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;transition:border-color 0.2s;">
+                        <div style="font-size:16px;font-weight:700;margin-bottom:4px;">📦 @imgly</div>
+                        <div style="color:var(--text-dim);font-size:11px;">WASM · ~40MB modelo<br>7.3k ⭐ · AGPL-3.0</div>
+                    </button>
+                    <button onclick="selectRbgLib('chroma')" class="rbg-lib-btn" style="flex:1;min-width:140px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;transition:border-color 0.2s;">
+                        <div style="font-size:16px;font-weight:700;margin-bottom:4px;">🎨 Chroma key</div>
+                        <div style="color:var(--text-dim);font-size:11px;">Sin IA · elimina color<br>ideal fondos planos</div>
+                    </button>
+                    <button onclick="selectRbgLib('wand')" class="rbg-lib-btn" style="flex:1;min-width:140px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;transition:border-color 0.2s;">
+                        <div style="font-size:16px;font-weight:700;margin-bottom:4px;">🪄 Varita mágica</div>
+                        <div style="color:var(--text-dim);font-size:11px;">Sin IA · flood fill<br>solo zona conectada</div>
+                    </button>
+                </div>
+
+                <!-- WORKSPACE (hidden until lib selected) -->
+                <div id="rbg-workspace" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <button onclick="showRbgLibSelect()" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);font-size:11px;cursor:pointer;">← Cambiar librería</button>
+                        <span id="rbg-lib-name" style="color:var(--neeko-light);font-size:13px;font-weight:600;"></span>
+                    </div>
+
+                    <div id="rbg-dropzone" style="border:2px dashed var(--border);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--surface);"
+                         ondragover="event.preventDefault();this.style.borderColor='var(--neeko)'"
+                         ondragleave="this.style.borderColor='var(--border)'"
+                         ondrop="event.preventDefault();this.style.borderColor='var(--border)';handleRbgFile(event.dataTransfer.files[0])"
+                         onclick="document.getElementById('rbg-input').click()">
+                        <div style="font-size:48px;margin-bottom:12px;">🖼️</div>
+                        <div style="color:var(--text);font-size:15px;font-weight:600;">Arrastrá una imagen aquí</div>
+                        <div style="color:var(--text-dim);font-size:13px;margin-top:6px;">o tocá para seleccionar</div>
+                        <div style="color:var(--text-dim);font-size:11px;margin-top:10px;">JPG, PNG, WebP</div>
+                        <input type="file" id="rbg-input" accept="image/*" style="display:none" onchange="handleRbgFile(this.files[0])">
+                    </div>
+
+                    <div id="rbg-controls" style="display:none;">
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                            <label style="color:var(--text-dim);font-size:13px;">Fondo nuevo:</label>
+                            <button id="rbg-bg-transparent" class="rbg-bg-btn active" onclick="setRbgBg('transparent')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--neeko);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;">Transparente</button>
+                            <button id="rbg-bg-white" class="rbg-bg-btn" onclick="setRbgBg('#ffffff')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;">Blanco</button>
+                            <button id="rbg-bg-black" class="rbg-bg-btn" onclick="setRbgBg('#000000')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;">Negro</button>
+                            <input type="color" id="rbg-bg-color" value="#7c3aed" onchange="setRbgBg(this.value)" style="width:32px;height:32px;border:none;border-radius:8px;cursor:pointer;background:none;">
+                            <button id="rbg-eyedropper-btn" onclick="startEyedropper()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;" title="Elegir color a eliminar de la imagen">💧 Color a eliminar</button>
+                            <div id="rbg-picked-color" style="width:24px;height:24px;border-radius:6px;border:1px solid var(--border);display:none;"></div>
+                            <label id="rbg-tolerance-wrap" style="display:none;align-items:center;gap:6px;color:var(--text-dim);font-size:12px;">
+                                Tolerancia
+                                <input type="range" id="rbg-color-tolerance" min="0" max="140" value="42" oninput="updateRbgColorSettings()" style="width:90px;">
+                                <span id="rbg-color-tolerance-value">42</span>
+                            </label>
+                            <label id="rbg-feather-wrap" style="display:none;align-items:center;gap:6px;color:var(--text-dim);font-size:12px;">
+                                Suavizado
+                                <input type="range" id="rbg-color-feather" min="0" max="120" value="28" oninput="updateRbgColorSettings()" style="width:90px;">
+                                <span id="rbg-color-feather-value">28</span>
+                            </label>
+                            <button id="rbg-process-btn" onclick="processRbg()" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--neeko),#5b21b6);color:white;font-size:13px;font-weight:600;cursor:pointer;margin-left:auto;">✂️ Quitar fondo</button>
+                        </div>
+                        <div id="rbg-status" style="color:var(--text-dim);font-size:12px;margin-top:8px;"></div>
+                        <div id="rbg-progress" style="display:none;margin-top:8px;">
+                            <div style="height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+                                <div id="rbg-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--neeko),var(--neeko-light));border-radius:4px;transition:width 0.3s;"></div>
+                            </div>
+                            <div id="rbg-progress-text" style="color:var(--text-dim);font-size:11px;margin-top:4px;">0%</div>
+                        </div>
+                    </div>
+
+                    <div id="rbg-preview" style="display:none;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:200px;">
+                                <div style="color:var(--text-dim);font-size:12px;margin-bottom:6px;">Original <span id="rbg-eyedropper-hint" style="display:none;color:var(--neeko-light);">(tocá el color a eliminar)</span></div>
+                                <div style="position:relative;width:100%;border-radius:8px;border:1px solid var(--border);background:var(--surface);overflow:hidden;">
+                                    <canvas id="rbg-original-canvas" style="width:100%;display:block;cursor:crosshair;" onclick="pickColorFromCanvas(event)"></canvas>
+                                    <div id="rbg-magnifier" style="display:none;position:fixed;width:80px;height:80px;border:2px solid var(--neeko);border-radius:50%;pointer-events:none;z-index:9999;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>
+                                </div>
+                            </div>
+                            <div style="flex:1;min-width:200px;">
+                                <div style="color:var(--text-dim);font-size:12px;margin-bottom:6px;">Resultado</div>
+                                <div id="rbg-result-container" style="width:100%;border-radius:8px;border:1px solid var(--border);background:var(--surface);min-height:100px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                                    <img id="rbg-result" style="max-width:100%;max-height:400px;display:none;" alt="Resultado">
+                                    <div id="rbg-result-placeholder" style="color:var(--text-dim);font-size:13px;padding:20px;">Presioná "Quitar fondo"</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                            <button id="rbg-download-btn" onclick="downloadRbg()" style="display:none;padding:8px 16px;border-radius:8px;border:none;background:var(--green);color:white;font-size:13px;font-weight:600;cursor:pointer;">⬇️ Descargar PNG</button>
+                            <button onclick="resetRbg()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;">🔄 Otra imagen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:auto;padding:12px 0;">
+                    <p style="color:var(--text-dim);font-size:11px;">
+                        <a href="https://github.com/imgly/background-removal-js" target="_blank" style="color:var(--neeko-light);">@imgly</a> (AGPL-3.0) ·
+                        <a href="https://github.com/Tamersoul/magic-wand-js" target="_blank" style="color:var(--neeko-light);">magic-wand-js</a> (MIT) ·
+                        <a href="https://github.com/bhj/gl-chromakey" target="_blank" style="color:var(--neeko-light);">gl-chromakey</a> (MIT)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- HELP TAB -->
+        <div id="help-tab" class="tab-content">
+            <div class="help-container" style="flex:1;overflow-y:auto;padding:16px;">
+                <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:20px;">
+                    <strong>Actualizaciones</strong>
+                    <span id="web-update-status" style="color:var(--text-dim);font-size:12px;">Versión actual: v1.0.0</span>
+                    <div style="display:flex;gap:8px;">
+                        <button class="quick-btn" onclick="checkWebUpdate()">Buscar actualizaciones</button>
+                    </div>
+                    <span id="web-update-notes" style="color:var(--text-dim);font-size:11px;"></span>
+                </div>
+
+                <h3 style="margin-bottom:16px;font-size:18px;">Comandos disponibles</h3>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🌐 IP / Conexión</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">ip · mi ip · la ip</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Muestra la IP local para conectarte desde otros dispositivos</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">📂 Archivos / Compartir</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">subir archivo · sube el video · subilo</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Desde la pestaña Archivos podés subir archivos arrastrando o tocando la zona de upload</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🎮 Abrir apps</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">abri spotify · abre discord · abrir chrome</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Abre cualquier app instalada. También: "pone vscode", "iniciar steam"</span>
+                    </div>
+                    <div style="margin-top:6px;color:var(--text-dim);font-size:12px;padding-left:8px;">
+                        Apps conocidas: spotify, discord, steam, chrome, firefox, edge, vscode, obs, youtube, league of legends, lol, riot client, obsidian, brave, 7-zip, winrar, roblox, fightcade, qbittorrent, virtualbox, node, python, git, y más
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🔍 Buscar</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">busca gatitos · buscar recetas</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Busca en Google</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">busca en youtube: tutorial rust</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Busca en sitios específicos: youtube, github, reddit, mercadolibre, wikipedia, spotify, steam</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">⚙️ Git</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">git init · git add . · git commit "mensaje" · git push · git pull</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Comandos git estándar en inglés</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">inicializar repo · agregar archivo al repo · sube mi repo</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Mismos comandos en español</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">haz commit con mensaje "fix" · commitear "nuevo feature"</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Commit con mensaje en español</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">pushealo · sube el repo</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Add + commit + push automático</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">git status · estado del repo</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Muestra estado del repositorio</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">git log · ultimos commits</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Historial de commits</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">git branch · que branches tiene</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Lista branches</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">baja los cambios · git pull</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Pull del remoto</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">git remote add origin URL</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Agregar remoto</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🏆 League of Legends</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">ultima partida de Faker#KR1 en kr</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Historial de partidas de un jugador</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">mi ultima partida · mis partidas · como va mi lol</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Usa tu Riot ID configurado</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">elo de Faker#KR1 en korea</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Rango/elo de cualquier jugador</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">mi elo · que rango soy · en que tier estoy</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Tu rango con tu Riot ID configurado</span>
+                    </div>
+                    <div style="margin-top:6px;color:var(--text-dim);font-size:12px;padding-left:8px;">
+                        Regiones: las, euw, na, br, kr, korea, corea, jp, oce, tr, ru, eune
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🎬 Video</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">comprimi el video: C:\ruta\video.mp4</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Comprime video para Discord (auto 2-pass H.264)</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">achica el video: C:\ruta\video.mp4</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Mismo comando en español</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">comprime C:\ruta\video.mp4</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Sin decir "video", detecta por la extensión</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">⚙️ Configuración</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">guardar git pat ghp_XXXXXXX</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Guardar token de GitHub</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">configurar region las</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Cambiar región LOL por defecto</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">configurar git path C:\Users\tu\Documents</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Cambiar ruta de git por defecto</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🦎 LLaMA (IA local)</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">abre llama · cierra llama</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Prender/apagar el servidor de IA (también desde Configuración)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">🔌 Sistema</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">apaga la pc</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Apaga la PC inmediatamente</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">apaga la pc en 30 minutos</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Programa el apagado (minutos o horas)</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">cancelar apagado</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Cancela un apagado programado</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">reiniciar explorer · reiniciar iconos</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Reinicia el Explorador de Windows</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">reiniciar wifi · reiniciar internet</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Reinicia el adaptador WiFi</span>
+                    </div>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
+                        <code style="color:var(--text);font-size:13px;">reiniciar bluetooth</code>
+                        <span style="color:var(--text-dim);font-size:12px;">Reinicia el adaptador Bluetooth</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="toast-stack" id="toast-stack"></div>
+
+    <script>
+        let token = localStorage.getItem('neeko_token');
+        let chatHistory = [];
+        let currentTab = 'chat';
+        let freeGamesInterval = null;
+        let installEventSource = null;
+        let webLlamaModelAvailable = false;
+
+        // LLaMA status
+        async function checkLlama() {
+            try {
+                const resp = await fetch('/api/llama/status');
+                const data = await resp.json();
+                webLlamaModelAvailable = !!data.model_available;
+                const el = document.getElementById('llama-state');
+                const running = !!data.running && webLlamaModelAvailable;
+                el.textContent = running ? 'ON' : 'OFF';
+                el.style.color = running ? '#4ade80' : '#f87171';
+            } catch { }
+        }
+        checkLlama();
+        setInterval(checkLlama, 10000);
+
+        async function toggleLlama() {
+            const el = document.getElementById('llama-state');
+            el.textContent = '...';
+            try {
+                const statusResp = await fetch('/api/llama/status');
+                const status = await statusResp.json();
+                webLlamaModelAvailable = !!status.model_available;
+                const running = !!status.running && webLlamaModelAvailable;
+
+                if (!webLlamaModelAvailable) {
+                    el.textContent = 'OFF';
+                    el.style.color = '#f87171';
+                    showBubble('No encontre el modelo GGUF. Instala la IA primero.');
+                    return;
+                }
+
+                const resp = await fetch(running ? '/api/llama/stop' : '/api/llama/start', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await resp.json();
+                showBubble(data.message);
+                checkLlama();
+            } catch (e) {
+                el.textContent = 'OFF';
+                el.style.color = '#f87171';
+                showBubble('Error: ' + e.message);
+            }
+        }
+
+        document.getElementById('password').addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        async function doLogin() {
+            const pw = document.getElementById('password').value;
+            const btn = document.querySelector('#login-screen button');
+            const err = document.getElementById('login-error');
+            btn.textContent = 'Entrando...';
+            btn.disabled = true;
+            err.style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    token = data.token;
+                    localStorage.setItem('neeko_token', token);
+                    showApp();
+                } else {
+                    err.textContent = 'Contraseña incorrecta';
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                err.textContent = 'Error de conexión: ' + e.message;
+                err.style.display = 'block';
+            }
+
+            btn.textContent = 'Entrar';
+            btn.disabled = false;
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'flex';
+            document.getElementById('chat-input').focus();
+            document.getElementById('bottom-bar').innerHTML = `🌐 <span>${location.hostname}:${location.port || '1414'}</span> <span id="llama-status" style="cursor:pointer;padding:4px 10px;border-radius:8px;background:#1a1a25;border:1px solid #2a2a3a;font-size:12px;margin-left:8px;" onclick="toggleLlama()">🦎 LLaMA: <span id="llama-state">?</span></span>`;
+            loadFiles();
+            loadFreeGames(false);
+            startFreeGamesWatcher();
+            startFilesEvents();
+        }
+
+        // ─── TABS ───
+        let filesPollInterval = null;
+        let filesEventSource = null;
+        let filesReloadTimer = null;
+
+        function scheduleFilesReload(delay = 100) {
+            clearTimeout(filesReloadTimer);
+            filesReloadTimer = setTimeout(loadFiles, delay);
+        }
+
+        function startFilesEvents() {
+            if (filesEventSource) return;
+
+            filesEventSource = new EventSource('/api/files/events');
+            filesEventSource.addEventListener('files-changed', () => scheduleFilesReload());
+            filesEventSource.onerror = () => {
+                filesEventSource.close();
+                filesEventSource = null;
+                startFilesPoll();
+            };
+        }
+
+        function startFilesPoll() {
+            if (filesPollInterval) return;
+            filesPollInterval = setInterval(() => {
+                if (currentTab === 'files') loadFiles();
+            }, 2000);
+        }
+
+        function stopFilesPoll() {
+            if (filesPollInterval) { clearInterval(filesPollInterval); filesPollInterval = null; }
+        }
+
+        // ─── REMOVE BACKGROUND ───
+        let rbgFile = null;
+        let rbgBg = 'transparent';
+        let rbgResultBlob = null;
+        let rbgOriginalImg = null;
+        let rbgEyedropping = false;
+        let rbgLib = null;
+        let rbgRemoveColor = null;
+        let rbgRemovePoint = null;
+
+        const RBG_LIBS = {
+            imgly: { name: '@imgly/background-removal', icon: '📦' },
+            chroma: { name: 'Chroma key por color', icon: '🎨' },
+            wand: { name: 'Varita mágica por color', icon: '🪄' }
+        };
+
+        function selectRbgLib(lib) {
+            rbgLib = lib;
+            document.getElementById('rbg-lib-select').style.display = 'none';
+            document.getElementById('rbg-workspace').style.display = 'block';
+            document.getElementById('rbg-lib-name').textContent = RBG_LIBS[lib].icon + ' ' + RBG_LIBS[lib].name;
+            document.querySelectorAll('.rbg-lib-btn').forEach(b => b.style.borderColor = 'var(--border)');
+        }
+
+        function showRbgLibSelect() {
+            rbgLib = null;
+            document.getElementById('rbg-lib-select').style.display = 'flex';
+            document.getElementById('rbg-workspace').style.display = 'none';
+            resetRbg();
+        }
+
+        function handleRbgFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            rbgFile = file;
+            rbgResultBlob = null;
+            rbgEyedropping = false;
+            rbgRemoveColor = null;
+            rbgRemovePoint = null;
+
+            const url = URL.createObjectURL(file);
+            rbgOriginalImg = new Image();
+            rbgOriginalImg.onload = function() {
+                const canvas = document.getElementById('rbg-original-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = rbgOriginalImg.naturalWidth;
+                canvas.height = rbgOriginalImg.naturalHeight;
+                ctx.drawImage(rbgOriginalImg, 0, 0);
+            };
+            rbgOriginalImg.src = url;
+
+            document.getElementById('rbg-preview').style.display = 'block';
+            document.getElementById('rbg-controls').style.display = 'block';
+            document.getElementById('rbg-dropzone').style.display = 'none';
+            document.getElementById('rbg-result').style.display = 'none';
+            document.getElementById('rbg-result-placeholder').style.display = 'block';
+            document.getElementById('rbg-download-btn').style.display = 'none';
+            document.getElementById('rbg-status').textContent = `Archivo: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+            document.getElementById('rbg-progress').style.display = 'none';
+            document.getElementById('rbg-picked-color').style.display = 'none';
+            document.getElementById('rbg-tolerance-wrap').style.display = 'none';
+            document.getElementById('rbg-feather-wrap').style.display = 'none';
+            document.getElementById('rbg-eyedropper-hint').style.display = 'none';
+            document.getElementById('rbg-magnifier').style.display = 'none';
+            document.getElementById('rbg-eyedropper-btn').style.borderColor = 'var(--border)';
+            applyRbgBg();
+        }
+
+        function setRbgBg(color) {
+            rbgBg = color;
+            document.querySelectorAll('.rbg-bg-btn').forEach(b => {
+                b.style.borderColor = 'var(--border)';
+                b.classList.remove('active');
+            });
+            if (color === 'transparent') {
+                document.getElementById('rbg-bg-transparent').style.borderColor = 'var(--neeko)';
+                document.getElementById('rbg-bg-transparent').classList.add('active');
+            } else if (color === '#ffffff') {
+                document.getElementById('rbg-bg-white').style.borderColor = 'var(--neeko)';
+                document.getElementById('rbg-bg-white').classList.add('active');
+            } else if (color === '#000000') {
+                document.getElementById('rbg-bg-black').style.borderColor = 'var(--neeko)';
+                document.getElementById('rbg-bg-black').classList.add('active');
+            } else if (color !== 'transparent') {
+                document.getElementById('rbg-bg-color').value = color;
+            }
+            applyRbgBg();
+        }
+
+        function applyRbgBg() {
+            const container = document.getElementById('rbg-result-container');
+            if (rbgBg === 'transparent') {
+                container.style.background = 'repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50% / 16px 16px';
+            } else {
+                container.style.background = rbgBg;
+            }
+        }
+
+        function startEyedropper() {
+            rbgEyedropping = !rbgEyedropping;
+            const btn = document.getElementById('rbg-eyedropper-btn');
+            const hint = document.getElementById('rbg-eyedropper-hint');
+            const canvas = document.getElementById('rbg-original-canvas');
+            if (rbgEyedropping) {
+                btn.style.borderColor = 'var(--neeko)';
+                btn.style.background = 'var(--surface2)';
+                hint.style.display = 'inline';
+                canvas.style.cursor = 'crosshair';
+                document.getElementById('rbg-status').textContent = '💧 Tocá el fondo o color que querés eliminar';
+            } else {
+                btn.style.borderColor = 'var(--border)';
+                btn.style.background = 'var(--surface)';
+                hint.style.display = 'none';
+                canvas.style.cursor = 'default';
+                document.getElementById('rbg-magnifier').style.display = 'none';
+                document.getElementById('rbg-status').textContent = '';
+            }
+        }
+
+        function pickColorFromCanvas(e) {
+            if (!rbgEyedropping) return;
+            const canvas = document.getElementById('rbg-original-canvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = Math.floor((e.clientX - rect.left) * scaleX);
+            const y = Math.floor((e.clientY - rect.top) * scaleY);
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+
+            rbgRemoveColor = { r: pixel[0], g: pixel[1], b: pixel[2], hex };
+            rbgRemovePoint = { x, y };
+
+            const swatch = document.getElementById('rbg-picked-color');
+            swatch.style.background = hex;
+            swatch.style.display = 'block';
+            document.getElementById('rbg-tolerance-wrap').style.display = 'inline-flex';
+            document.getElementById('rbg-feather-wrap').style.display = 'inline-flex';
+
+            document.getElementById('rbg-status').textContent = `💧 Color a eliminar: ${hex}. Presioná "Quitar fondo" para borrar ese color.`;
+
+            rbgEyedropping = false;
+            document.getElementById('rbg-eyedropper-btn').style.borderColor = 'var(--border)';
+            document.getElementById('rbg-eyedropper-btn').style.background = 'var(--surface)';
+            document.getElementById('rbg-eyedropper-hint').style.display = 'none';
+            canvas.style.cursor = 'default';
+            document.getElementById('rbg-magnifier').style.display = 'none';
+        }
+
+        function updateRbgColorSettings() {
+            const tolerance = document.getElementById('rbg-color-tolerance').value;
+            const feather = document.getElementById('rbg-color-feather').value;
+            document.getElementById('rbg-color-tolerance-value').textContent = tolerance;
+            document.getElementById('rbg-color-feather-value').textContent = feather;
+            if (rbgRemoveColor) {
+                document.getElementById('rbg-status').textContent = `💧 Color a eliminar: ${rbgRemoveColor.hex} · tolerancia ${tolerance} · suavizado ${feather}`;
+            }
+        }
+
+        document.addEventListener('mousemove', function(e) {
+            const mag = document.getElementById('rbg-magnifier');
+            if (!rbgEyedropping || !mag) { return; }
+            mag.style.display = 'block';
+            mag.style.left = (e.clientX + 16) + 'px';
+            mag.style.top = (e.clientY - 40) + 'px';
+
+            const canvas = document.getElementById('rbg-original-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = Math.floor((e.clientX - rect.left) * scaleX);
+            const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+            if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+                mag.style.display = 'none';
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            const zoom = 8;
+            const size = 10;
+            const imgData = ctx.getImageData(Math.max(0, x - Math.floor(size/2)), Math.max(0, y - Math.floor(size/2)), size, size);
+
+            mag.innerHTML = '';
+            const zc = document.createElement('canvas');
+            zc.width = 80;
+            zc.height = 80;
+            zc.style.width = '80px';
+            zc.style.height = '80px';
+            const zctx = zc.getContext('2d');
+            zctx.imageSmoothingEnabled = false;
+
+            for (let iy = 0; iy < size; iy++) {
+                for (let ix = 0; ix < size; ix++) {
+                    const i = (iy * size + ix) * 4;
+                    zctx.fillStyle = `rgb(${imgData.data[i]},${imgData.data[i+1]},${imgData.data[i+2]})`;
+                    zctx.fillRect(ix * zoom, iy * zoom, zoom, zoom);
+                }
+            }
+
+            const cx = Math.floor(size/2) * zoom;
+            const cy = Math.floor(size/2) * zoom;
+            zctx.strokeStyle = '#fff';
+            zctx.lineWidth = 2;
+            zctx.strokeRect(cx, cy, zoom, zoom);
+            zctx.strokeStyle = '#000';
+            zctx.lineWidth = 1;
+            zctx.strokeRect(cx - 1, cy - 1, zoom + 2, zoom + 2);
+
+            mag.appendChild(zc);
+        });
+
+        async function processRbg() {
+            if (!rbgFile || !rbgLib) return;
+            if (rbgLib === 'chroma') {
+                if (!rbgRemoveColor) {
+                    rbgUIError('Elegí primero el color a eliminar con el cuentagotas.');
+                    return;
+                }
+                return processRbgByColor();
+            }
+            if (rbgLib === 'wand') {
+                if (!rbgRemoveColor || !rbgRemovePoint) {
+                    rbgUIError('Elegí primero una zona de fondo con el cuentagotas.');
+                    return;
+                }
+                return processRbgMagicWand();
+            }
+            if (rbgLib === 'imgly') return processRbgImgly();
+        }
+
+        function rbgUIStart(msg) {
+            const btn = document.getElementById('rbg-process-btn');
+            const progress = document.getElementById('rbg-progress');
+            const bar = document.getElementById('rbg-progress-bar');
+            const text = document.getElementById('rbg-progress-text');
+            const status = document.getElementById('rbg-status');
+            btn.disabled = true;
+            btn.textContent = '⏳ Procesando...';
+            progress.style.display = 'block';
+            bar.style.width = '0%';
+            text.textContent = msg;
+            status.textContent = '';
+        }
+
+        function rbgUIProgress(pct, msg) {
+            document.getElementById('rbg-progress-bar').style.width = pct + '%';
+            document.getElementById('rbg-progress-text').textContent = msg;
+        }
+
+        function rbgUIShowResult(blob) {
+            rbgResultBlob = blob;
+            const resultUrl = URL.createObjectURL(blob);
+            document.getElementById('rbg-result').src = resultUrl;
+            document.getElementById('rbg-result').style.display = 'block';
+            document.getElementById('rbg-result-placeholder').style.display = 'none';
+            document.getElementById('rbg-download-btn').style.display = 'inline-block';
+            rbgUIProgress(100, '¡Listo!');
+            document.getElementById('rbg-status').textContent = `Resultado: ${(blob.size / 1024).toFixed(0)} KB (PNG)`;
+            applyRbgBg();
+        }
+
+        function rbgUIEnd() {
+            document.getElementById('rbg-process-btn').disabled = false;
+            document.getElementById('rbg-process-btn').textContent = '✂️ Quitar fondo';
+        }
+
+        function rbgUIError(err) {
+            document.getElementById('rbg-status').textContent = 'Error: ' + err;
+            rbgUIProgress(0, '');
+        }
+
+        async function processRbgByColor() {
+            rbgUIStart('Eliminando color seleccionado...');
+            let worker = null;
+            let workerUrl = null;
+            try {
+                const canvas = document.getElementById('rbg-original-canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const workerCode = `
+                    self.onmessage = ({ data }) => {
+                        const pixels = new Uint8ClampedArray(data.buffer);
+                        const color = data.color;
+                        const tolerance = data.tolerance;
+                        const feather = Math.max(1, data.feather);
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            const dr = pixels[i] - color.r;
+                            const dg = pixels[i + 1] - color.g;
+                            const db = pixels[i + 2] - color.b;
+                            const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+                            if (distance <= tolerance) {
+                                pixels[i + 3] = 0;
+                            } else if (distance < tolerance + feather) {
+                                pixels[i + 3] = Math.round(pixels[i + 3] * ((distance - tolerance) / feather));
+                            }
+                        }
+                        self.postMessage({ buffer: pixels.buffer, width: data.width, height: data.height }, [pixels.buffer]);
+                    };
+                `;
+                workerUrl = URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' }));
+                worker = new Worker(workerUrl);
+                const result = await new Promise((resolve, reject) => {
+                    worker.onerror = () => reject(new Error('No se pudo procesar el color seleccionado'));
+                    worker.onmessage = (event) => resolve(event.data);
+                    worker.postMessage({
+                        buffer: imageData.data.buffer,
+                        width: canvas.width,
+                        height: canvas.height,
+                        color: rbgRemoveColor,
+                        tolerance: Number(document.getElementById('rbg-color-tolerance').value),
+                        feather: Number(document.getElementById('rbg-color-feather').value)
+                    }, [imageData.data.buffer]);
+                });
+
+                rbgUIProgress(70, 'Generando PNG...');
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = result.width;
+                outCanvas.height = result.height;
+                outCanvas.getContext('2d').putImageData(
+                    new ImageData(new Uint8ClampedArray(result.buffer), result.width, result.height),
+                    0,
+                    0
+                );
+                let blob = await new Promise(resolve => outCanvas.toBlob(resolve, 'image/png'));
+                if (rbgBg !== 'transparent') blob = await mergeWithBackground(blob, rbgBg);
+                rbgUIShowResult(blob);
+            } catch (err) {
+                rbgUIError(err.message);
+            } finally {
+                if (worker) worker.terminate();
+                if (workerUrl) URL.revokeObjectURL(workerUrl);
+                rbgUIEnd();
+            }
+        }
+
+        async function processRbgMagicWand() {
+            rbgUIStart('Seleccionando fondo conectado...');
+            let worker = null;
+            let workerUrl = null;
+            try {
+                const canvas = document.getElementById('rbg-original-canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const workerCode = `
+                    const colorDistance = (pixels, i, color) => {
+                        const dr = pixels[i] - color.r;
+                        const dg = pixels[i + 1] - color.g;
+                        const db = pixels[i + 2] - color.b;
+                        return Math.sqrt(dr * dr + dg * dg + db * db);
+                    };
+
+                    self.onmessage = ({ data }) => {
+                        const width = data.width;
+                        const height = data.height;
+                        const pixels = new Uint8ClampedArray(data.buffer);
+                        const visited = new Uint8Array(width * height);
+                        const remove = new Uint8Array(width * height);
+                        const tolerance = data.tolerance;
+                        const feather = data.feather;
+                        const stack = [data.point.y * width + data.point.x];
+                        visited[stack[0]] = 1;
+
+                        while (stack.length) {
+                            const pos = stack.pop();
+                            const i = pos * 4;
+                            if (colorDistance(pixels, i, data.color) > tolerance) continue;
+
+                            remove[pos] = 1;
+                            const x = pos % width;
+                            const y = Math.floor(pos / width);
+                            const next = [];
+                            if (x > 0) next.push(pos - 1);
+                            if (x < width - 1) next.push(pos + 1);
+                            if (y > 0) next.push(pos - width);
+                            if (y < height - 1) next.push(pos + width);
+
+                            for (const n of next) {
+                                if (!visited[n]) {
+                                    visited[n] = 1;
+                                    stack.push(n);
+                                }
+                            }
+                        }
+
+                        for (let pass = 0; pass < feather; pass++) {
+                            const edge = [];
+                            for (let pos = 0; pos < remove.length; pos++) {
+                                if (!remove[pos]) continue;
+                                const x = pos % width;
+                                const y = Math.floor(pos / width);
+                                if ((x > 0 && !remove[pos - 1]) || (x < width - 1 && !remove[pos + 1]) || (y > 0 && !remove[pos - width]) || (y < height - 1 && !remove[pos + width])) {
+                                    edge.push(pos);
+                                }
+                            }
+                            for (const pos of edge) {
+                                const i = pos * 4;
+                                pixels[i + 3] = Math.min(pixels[i + 3], Math.round(255 * pass / Math.max(1, feather)));
+                                remove[pos] = 0;
+                            }
+                        }
+
+                        for (let pos = 0; pos < remove.length; pos++) {
+                            if (remove[pos]) pixels[pos * 4 + 3] = 0;
+                        }
+
+                        self.postMessage({ buffer: pixels.buffer, width, height }, [pixels.buffer]);
+                    };
+                `;
+                workerUrl = URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' }));
+                worker = new Worker(workerUrl);
+                const result = await new Promise((resolve, reject) => {
+                    worker.onerror = () => reject(new Error('No se pudo procesar la zona seleccionada'));
+                    worker.onmessage = (event) => resolve(event.data);
+                    worker.postMessage({
+                        buffer: imageData.data.buffer,
+                        width: canvas.width,
+                        height: canvas.height,
+                        point: rbgRemovePoint,
+                        color: rbgRemoveColor,
+                        tolerance: Number(document.getElementById('rbg-color-tolerance').value),
+                        feather: Math.round(Number(document.getElementById('rbg-color-feather').value) / 12)
+                    }, [imageData.data.buffer]);
+                });
+
+                rbgUIProgress(70, 'Generando PNG...');
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = result.width;
+                outCanvas.height = result.height;
+                outCanvas.getContext('2d').putImageData(
+                    new ImageData(new Uint8ClampedArray(result.buffer), result.width, result.height),
+                    0,
+                    0
+                );
+                let blob = await new Promise(resolve => outCanvas.toBlob(resolve, 'image/png'));
+                if (rbgBg !== 'transparent') blob = await mergeWithBackground(blob, rbgBg);
+                rbgUIShowResult(blob);
+            } catch (err) {
+                rbgUIError(err.message);
+            } finally {
+                if (worker) worker.terminate();
+                if (workerUrl) URL.revokeObjectURL(workerUrl);
+                rbgUIEnd();
+            }
+        }
+
+        async function processRbgImgly() {
+            rbgUIStart('Descargando modelo ~40MB (primera vez)...');
+            try {
+                const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+                rbgUIProgress(30, 'Cargando modelo...');
+                document.getElementById('rbg-status').textContent = 'Procesando con @imgly...';
+
+                const blob = await removeBackground(rbgFile, {
+                    progress: (key, current, total) => {
+                        const pct = Math.round((current / total) * 100);
+                        rbgUIProgress(30 + pct * 0.7, `${pct}%`);
+                    }
+                });
+
+                let result = blob;
+                if (rbgBg !== 'transparent') result = await mergeWithBackground(blob, rbgBg);
+                rbgUIShowResult(result);
+            } catch (err) { rbgUIError(err.message); }
+            finally { rbgUIEnd(); }
+        }
+
+        function mergeWithBackground(fgBlob, bgColor) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const fg = new Image();
+                fg.onload = function() {
+                    canvas.width = fg.naturalWidth;
+                    canvas.height = fg.naturalHeight;
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(fg, 0, 0);
+                    canvas.toBlob(resolve, 'image/png');
+                };
+                fg.src = URL.createObjectURL(fgBlob);
+            });
+        }
+
+        function downloadRbg() {
+            if (!rbgResultBlob) return;
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(rbgResultBlob);
+            const name = rbgFile ? rbgFile.name.replace(/\.[^.]+$/, '') : 'imagen';
+            a.download = name + '_sin_fondo.png';
+            a.click();
+        }
+
+        function resetRbg() {
+            rbgFile = null;
+            rbgResultBlob = null;
+            rbgEyedropping = false;
+            rbgRemoveColor = null;
+            document.getElementById('rbg-dropzone').style.display = 'block';
+            document.getElementById('rbg-controls').style.display = 'none';
+            document.getElementById('rbg-preview').style.display = 'none';
+            document.getElementById('rbg-input').value = '';
+            document.getElementById('rbg-picked-color').style.display = 'none';
+            document.getElementById('rbg-tolerance-wrap').style.display = 'none';
+            document.getElementById('rbg-feather-wrap').style.display = 'none';
+            document.getElementById('rbg-magnifier').style.display = 'none';
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+            if (tab === 'chat') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('tab-chat').classList.add('active');
+                stopFilesPoll();
+            } else if (tab === 'files') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('tab-files').classList.add('active');
+                loadFiles();
+                startFilesPoll();
+            } else if (tab === 'games') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('tab-games').classList.add('active');
+                stopFilesPoll();
+                loadFreeGames(false);
+            } else if (tab === 'removebg') {
+                document.querySelectorAll('.tab')[3].classList.add('active');
+                document.getElementById('tab-removebg').classList.add('active');
+                stopFilesPoll();
+            } else if (tab === 'install') {
+                document.querySelectorAll('.tab')[4].classList.add('active');
+                document.getElementById('tab-install').classList.add('active');
+                stopFilesPoll();
+            } else {
+                document.querySelectorAll('.tab')[5].classList.add('active');
+                document.getElementById('help-tab').classList.add('active');
+            }
+        }
+
+        // ─── CHAT ───
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            if (role === 'neeko') {
+                div.innerHTML = `<div class="label">Neeko</div>${escapeHtml(text)}`;
+            } else {
+                div.textContent = text;
+            }
+            document.getElementById('messages').appendChild(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function escapeAttr(text) {
+            return escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function apiHeaders(extra = {}) {
+            return { ...extra, 'Authorization': `Bearer ${token}` };
+        }
+
+        function showToast(title, text) {
+            const stack = document.getElementById('toast-stack');
+            if (!stack) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span>`;
+            stack.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 250);
+            }, 7000);
+        }
+
+        function showBubble(text) {
+            showToast('Neeko', text);
+        }
+
+        function formatDownloadBytes(bytes) {
+            if (!Number.isFinite(bytes) || bytes <= 0) return '0 MB';
+            return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+        }
+
+        function updateWebInstallProgress(payload) {
+            const status = document.getElementById('web-install-status');
+            const title = document.getElementById('web-install-title');
+            const percentEl = document.getElementById('web-install-percent');
+            const bar = document.getElementById('web-install-bar');
+            const message = document.getElementById('web-install-message');
+            if (!status || !payload) return;
+
+            const percent = payload.percent ?? 0;
+            const totalText = payload.total ? ` · ${formatDownloadBytes(payload.downloaded)} / ${formatDownloadBytes(payload.total)} · faltan ${formatDownloadBytes(Math.max(0, payload.total - payload.downloaded))}` : '';
+            status.style.display = 'flex';
+            title.textContent = payload.label || 'Descarga';
+            percentEl.textContent = payload.percent == null ? '...' : `${percent}%`;
+            bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+            message.textContent = `${payload.message || 'Descargando...'}${totalText}`;
+        }
+
+        function startInstallEvents() {
+            if (installEventSource) return;
+            installEventSource = new EventSource('/api/install/events');
+            installEventSource.addEventListener('progress', (event) => {
+                try {
+                    updateWebInstallProgress(JSON.parse(event.data));
+                } catch {}
+            });
+            installEventSource.onerror = () => {
+                installEventSource.close();
+                installEventSource = null;
+            };
+        }
+
+        async function checkWebUpdate() {
+            const status = document.getElementById('web-update-status');
+            const notes = document.getElementById('web-update-notes');
+            status.textContent = 'Buscando...';
+            notes.textContent = '';
+            try {
+                const resp = await fetch('/api/check-update', { method: 'POST', headers: apiHeaders({}) });
+                const data = await resp.json();
+                if (data.ok) {
+                    const result = JSON.parse(data.message);
+                    if (result.hasUpdate) {
+                        status.textContent = `Nueva versión: v${result.latestVersion} (actual: v${result.currentVersion})`;
+                        status.style.color = '#4ade80';
+                        notes.textContent = result.notes || '';
+                    } else {
+                        status.textContent = `Estás en la última versión (v${result.currentVersion})`;
+                        status.style.color = '#aab';
+                    }
+                } else {
+                    status.textContent = data.message;
+                    status.style.color = '#f87171';
+                }
+            } catch (e) {
+                status.textContent = 'Error: ' + e.message;
+                status.style.color = '#f87171';
+            }
+        }
+
+        async function runWebInstaller(kind) {
+            startInstallEvents();
+            const status = document.getElementById('web-install-status');
+            const title = document.getElementById('web-install-title');
+            const percent = document.getElementById('web-install-percent');
+            const bar = document.getElementById('web-install-bar');
+            const message = document.getElementById('web-install-message');
+            const cancelBtn = document.getElementById('web-cancel-download-btn');
+            status.style.display = 'flex';
+            title.textContent = kind === 'model' ? 'Descargando modelo...' : `Instalando ${kind}...`;
+            percent.textContent = '...';
+            bar.style.width = '0%';
+            message.textContent = 'Esto puede tardar. Dejá Neeko abierta mientras descarga.';
+            cancelBtn.style.display = 'inline-block';
+            cancelBtn.onclick = async () => {
+                try {
+                    const resp = await fetch('/api/install/cancel', {
+                        method: 'POST',
+                        headers: apiHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({ id: kind })
+                    });
+                    const data = await resp.json();
+                    message.textContent = data.message || 'Cancelando...';
+                } catch (e) {
+                    message.textContent = 'Error al cancelar';
+                }
+            };
+
+            const options = {
+                method: 'POST',
+                headers: apiHeaders({ 'Content-Type': 'application/json' })
+            };
+            let url = `/api/install/${kind}`;
+            if (kind === 'model') {
+                options.body = JSON.stringify({ model_url: 'https://drive.google.com/file/d/1eHu-UkJ0cdK35kvpt9YPoNBVPtuTgGHe/view?usp=drive_link' });
+            }
+
+            try {
+                const resp = await fetch(url, options);
+                const data = await resp.json();
+                title.textContent = data.ok ? 'Listo' : 'Error';
+                percent.textContent = data.ok ? '100%' : '';
+                if (data.ok) bar.style.width = '100%';
+                message.textContent = data.message;
+                if (kind === 'model') {
+                    webLlamaModelAvailable = !!data.ok;
+                    checkLlama();
+                }
+                showBubble(data.message);
+            } catch (e) {
+                title.textContent = 'Error';
+                percent.textContent = '';
+                message.textContent = e.message;
+                showBubble('Error: ' + e.message);
+            }
+            cancelBtn.style.display = 'none';
+        }
+
+        function installWebModelFromFile(file) {
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.gguf')) {
+                showBubble('Selecciona un archivo .gguf');
+                return;
+            }
+
+            const status = document.getElementById('web-install-status');
+            const title = document.getElementById('web-install-title');
+            const percent = document.getElementById('web-install-percent');
+            const bar = document.getElementById('web-install-bar');
+            const message = document.getElementById('web-install-message');
+            status.style.display = 'flex';
+            title.textContent = 'Instalando modelo...';
+            percent.textContent = '0%';
+            bar.style.width = '0%';
+            message.textContent = `Subiendo ${file.name}...`;
+
+            const form = new FormData();
+            form.append('model', file, file.name);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/install/model-file');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.upload.onprogress = (event) => {
+                if (!event.lengthComputable) {
+                    percent.textContent = '...';
+                    message.textContent = `Subiendo ${file.name}... ${formatDownloadBytes(event.loaded)}`;
+                    return;
+                }
+                const pct = Math.round((event.loaded / event.total) * 100);
+                percent.textContent = `${pct}%`;
+                bar.style.width = `${pct}%`;
+                message.textContent = `${formatDownloadBytes(event.loaded)} / ${formatDownloadBytes(event.total)} · faltan ${formatDownloadBytes(Math.max(0, event.total - event.loaded))}`;
+            };
+            xhr.onload = () => {
+                let data = { ok: false, message: `HTTP ${xhr.status}` };
+                try { data = JSON.parse(xhr.responseText); } catch {}
+                title.textContent = data.ok ? 'Listo' : 'Error';
+                percent.textContent = data.ok ? '100%' : '';
+                if (data.ok) bar.style.width = '100%';
+                message.textContent = data.message;
+                if (data.ok) {
+                    webLlamaModelAvailable = true;
+                    checkLlama();
+                }
+                showBubble(data.message);
+            };
+            xhr.onerror = () => {
+                title.textContent = 'Error';
+                percent.textContent = '';
+                message.textContent = 'No pude subir el modelo';
+                showBubble('Error: no pude subir el modelo');
+            };
+            xhr.send(form);
+        }
+
+        async function runWebUninstaller(kind) {
+            const labels = {
+                ffmpeg: 'el FFmpeg descargado por Neeko',
+                git: 'Git desde Windows',
+                model: 'los modelos GGUF descargados por Neeko'
+            };
+            if (!confirm(`¿Desinstalar ${labels[kind] || kind}?`)) return;
+
+            const status = document.getElementById('web-install-status');
+            const title = document.getElementById('web-install-title');
+            const percent = document.getElementById('web-install-percent');
+            const bar = document.getElementById('web-install-bar');
+            const message = document.getElementById('web-install-message');
+            status.style.display = 'flex';
+            title.textContent = `Desinstalando ${kind}...`;
+            percent.textContent = '';
+            bar.style.width = '0%';
+            message.textContent = 'Preparando...';
+
+            try {
+                const resp = await fetch(`/api/uninstall/${kind}`, {
+                    method: 'POST',
+                    headers: apiHeaders({ 'Content-Type': 'application/json' })
+                });
+                const data = await resp.json();
+                title.textContent = data.ok ? 'Listo' : 'Error';
+                message.textContent = data.message;
+                if (kind === 'model') {
+                    webLlamaModelAvailable = false;
+                    checkLlama();
+                }
+                showBubble(data.message);
+            } catch (e) {
+                title.textContent = 'Error';
+                message.textContent = e.message;
+                showBubble('Error: ' + e.message);
+            }
+        }
+
+        function formatExpiration(value) {
+            if (!value) return 'Sin fecha';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderFreeGames(games) {
+            const list = document.getElementById('games-list');
+            if (!list) return;
+
+            if (!games.length) {
+                list.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div class="text">No encontre juegos gratis ahora</div></div>';
+                return;
+            }
+
+            list.innerHTML = games.map(game => {
+                const cover = game.image_url
+                    ? `<img class="game-cover" src="${escapeAttr(game.image_url)}" alt="">`
+                    : '<div class="game-cover"></div>';
+                const price = game.original_price ? `<span class="game-chip">${escapeHtml(game.original_price)}</span>` : '';
+                return `
+                    <a class="game-item" href="${escapeAttr(game.url)}" target="_blank" rel="noreferrer">
+                        ${cover}
+                        <div class="game-info">
+                            <div class="game-title">${escapeHtml(game.title)}</div>
+                            <div class="game-meta">
+                                <span class="game-chip">${escapeHtml(game.store)}</span>
+                                ${price}
+                                <span class="game-chip game-free">Gratis</span>
+                                <span class="game-chip">Hasta ${escapeHtml(formatExpiration(game.expires_at))}</span>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        async function loadFreeGames(manual = false) {
+            const list = document.getElementById('games-list');
+            if (manual && list) {
+                list.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div class="text">Buscando juegos gratis...</div></div>';
+            }
+
+            try {
+                const resp = await fetch('/api/free-games?t=' + Date.now(), {
+                    headers: apiHeaders()
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+                const games = await resp.json();
+                renderFreeGames(games);
+
+            } catch (e) {
+                if (list) {
+                    list.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div class="text">No pude cargar los juegos gratis</div></div>';
+                }
+                if (manual) showToast('Juegos gratis', 'No pude actualizar la lista');
+            }
+        }
+
+        async function testNativeNotification() {
+            try {
+                const resp = await fetch('/api/free-games/test-notification', {
+                    method: 'POST',
+                    headers: apiHeaders()
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            } catch (e) {
+                console.error('No pude enviar el aviso nativo:', e);
+            }
+        }
+
+        function startFreeGamesWatcher() {
+            if (freeGamesInterval) return;
+            freeGamesInterval = setInterval(() => loadFreeGames(false), 30 * 60 * 1000);
+        }
+
+        function scrollToBottom() {
+            const c = document.getElementById('messages');
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function showTyping() { document.getElementById('typing').style.display = 'flex'; scrollToBottom(); }
+        function hideTyping() { document.getElementById('typing').style.display = 'none'; }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        async function sendQuick(text) {
+            document.getElementById('chat-input').value = text;
+            await sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            addMessage('user', text);
+            chatHistory.push({ role: 'user', content: text });
+
+            document.getElementById('send-btn').disabled = true;
+            showTyping();
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                hideTyping();
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    addMessage('neeko', data.message);
+                    chatHistory.push({ role: 'assistant', content: data.message });
+                } else if (resp.status === 401) {
+                    localStorage.removeItem('neeko_token');
+                    location.reload();
+                } else {
+                    addMessage('neeko', 'Error al conectar con Neeko 🥺');
+                }
+            } catch (e) {
+                hideTyping();
+                addMessage('neeko', 'No pude conectar. ¿Está corriendo Neeko?');
+            }
+
+            document.getElementById('send-btn').disabled = false;
+            input.focus();
+        }
+
+        // ─── FILES ───
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+
+        uploadZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            uploadFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', () => {
+            const selectedFiles = Array.from(fileInput.files);
+            fileInput.value = '';
+            if (selectedFiles.length) uploadFiles(selectedFiles);
+        });
+
+        async function uploadFiles(files) {
+            files = Array.from(files);
+            if (!files.length) return;
+
+            const progress = document.getElementById('upload-progress');
+            const progressText = document.getElementById('progress-text');
+            const progressFill = document.getElementById('progress-fill');
+
+            progress.classList.add('active');
+            progressFill.style.width = '0%';
+
+            let totalDone = 0;
+            const totalSize = files.reduce((s, f) => s + f.size, 0);
+
+            for (const file of files) {
+                progressText.textContent = `Subiendo ${file.name}... 0%`;
+
+                try {
+                    const resp = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'X-Filename': encodeURIComponent(file.name),
+                            'Content-Type': file.type || 'application/octet-stream',
+                        },
+                        body: file,
+                    });
+
+                    if (!resp.ok) {
+                        const text = await resp.text().catch(() => '');
+                        throw new Error(`HTTP ${resp.status}${text ? ': ' + text : ''}`);
+                    }
+
+                    totalDone += file.size;
+                    progressFill.style.width = Math.round((totalDone / totalSize) * 100) + '%';
+                } catch (e) {
+                    progress.classList.remove('active');
+                    progressText.textContent = 'Error al subir: ' + e.message;
+                    return;
+                }
+            }
+
+            progress.classList.remove('active');
+            progressText.textContent = 'Subidos: ' + Array.from(files).map(f => f.name).join(', ');
+            scheduleFilesReload(50);
+        }
+
+        async function loadFiles() {
+            try {
+                const resp = await fetch('/api/files?t=' + Date.now());
+                if (!resp.ok) { console.error('loadFiles HTTP', resp.status); return; }
+
+                const files = await resp.json();
+                const list = document.getElementById('file-list');
+                const count = document.getElementById('file-count');
+
+                count.textContent = files.length;
+
+                if (files.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="icon">📂</div><div class="text">No hay archivos todavía</div></div>';
+                    return;
+                }
+
+                list.innerHTML = files.map(f => {
+                    const icon = getFileIcon(f.name);
+                    const size = formatSize(f.size);
+                    const url = `/shared/${encodeURIComponent(f.name)}`;
+                    const safeName = escapeAttr(JSON.stringify(f.name));
+                    return `
+                        <div class="file-item">
+                            <div class="file-icon">${icon}</div>
+                            <div class="file-info">
+                                <div class="file-name">${escapeHtml(f.name)}</div>
+                                <div class="file-size">${size}</div>
+                            </div>
+                            <div class="file-actions">
+                                <a class="file-btn" href="${escapeAttr(url)}" download title="Descargar">⬇</a>
+                                <button class="file-btn delete" onclick="deleteFile(${safeName})" title="Eliminar">🗑</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) { console.error('loadFiles error:', e); }
+        }
+
+        async function deleteFile(name) {
+            if (!confirm(`¿Eliminar ${name}?`)) return;
+            try {
+                await fetch(`/api/files/${encodeURIComponent(name)}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                loadFiles();
+            } catch (e) { }
+        }
+
+        function getFileIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            const icons = {
+                mp4: '🎬', mkv: '🎬', avi: '🎬', mov: '🎬', webm: '🎬',
+                mp3: '🎵', wav: '🎵', flac: '🎵', ogg: '🎵',
+                jpg: '🖼', jpeg: '🖼', png: '🖼', gif: '🖼', webp: '🖼',
+                pdf: '📄', doc: '📄', docx: '📄', txt: '📄',
+                zip: '📦', rar: '📦', '7z': '📦',
+                exe: '⚙', msi: '⚙',
+            };
+            return icons[ext] || '📄';
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+            return (bytes / 1073741824).toFixed(2) + ' GB';
+        }
+
+        document.getElementById('chat-input').addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        if (token) showApp();
+    </script>
+</body>
+
+</html>

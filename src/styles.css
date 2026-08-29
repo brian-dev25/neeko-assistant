@@ -1,0 +1,712 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1a1a2e;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    min-width: 280px;
+    min-height: 400px;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    min-width: 280px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top Bar */
+#top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+}
+
+#title {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#window-controls {
+    display: flex;
+    gap: 6px;
+}
+
+#window-controls button, #input-bar, #input-bar * {
+    -webkit-app-region: no-drag;
+}
+
+#window-controls button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+#window-controls button:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Neeko Section */
+#neeko-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+#speech-bubble {
+    background: #2d2d44;
+    border: 1px solid #7c3aed;
+    border-radius: 16px;
+    padding: 12px 18px;
+    margin-bottom: 15px;
+    max-width: 300px;
+    min-width: 100px;
+    animation: bubblePop 0.3s ease-out;
+}
+
+#speech-bubble.hidden {
+    display: none;
+}
+
+#bubble-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #e0e0e0;
+    text-align: center;
+}
+
+@keyframes bubblePop {
+    from { opacity: 0; transform: scale(0.8) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+#neeko-sprite {
+    width: 180px;
+    height: 180px;
+    animation: float 3s ease-in-out infinite;
+}
+
+#neeko-sprite.sprite-standing {
+    height: 220px;
+}
+
+#neeko-sprite.sprite-sitting {
+    width: 210px;
+    height: 210px;
+}
+
+#neeko-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.4));
+}
+
+#neeko-img.sprite-loading {
+    visibility: hidden;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+#neeko-sprite.talking {
+    animation: talk 0.4s ease-in-out infinite;
+}
+
+@keyframes talk {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.03); }
+}
+
+#neeko-sprite.thinking {
+    animation: think 1.2s ease-in-out infinite;
+}
+
+@keyframes think {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(-3deg); }
+}
+
+.emotion-happy #neeko-img {
+    filter: drop-shadow(0 8px 25px rgba(255, 200, 0, 0.5));
+}
+
+.emotion-thinking #neeko-img {
+    filter: drop-shadow(0 8px 25px rgba(100, 150, 255, 0.5));
+}
+
+.emotion-surprised #neeko-img {
+    filter: drop-shadow(0 8px 25px rgba(255, 100, 150, 0.5));
+}
+
+/* Input Bar */
+#input-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 10px;
+    background: #16162a;
+    border-top: 1px solid #2d2d44;
+    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+}
+
+#chat-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 12px 16px;
+    border: 2px solid #2d2d44;
+    border-radius: 22px;
+    background: #2d2d44;
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#chat-input:focus {
+    border-color: #7c3aed;
+}
+
+#chat-input::placeholder {
+    color: #666;
+}
+
+#send-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex: 0 0 44px;
+}
+
+#send-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.5);
+}
+
+#send-btn:active {
+    transform: scale(0.95);
+}
+
+/* Settings Button */
+#settings-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+#settings-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    z-index: 100;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #2d2d44;
+    border-radius: 8px;
+    padding: 18px;
+    width: min(520px, 100%);
+    max-height: calc(100vh - 28px);
+    border: 1px solid #7c3aed;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.modal-content h3 {
+    color: white;
+    font-size: 15px;
+}
+
+.settings-title-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.modal-header button,
+#cfg-llama-toggle {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #45455d;
+    background: #1a1a2e;
+    color: #f5f5f7;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.settings-menu-btn {
+    display: none;
+}
+
+.settings-menu-scrim {
+    display: none;
+}
+
+.modal-header button:disabled,
+#cfg-llama-toggle:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.settings-scroll {
+    overflow-y: auto;
+    padding-right: 4px;
+    min-height: 0;
+}
+
+.settings-section {
+    padding: 14px 0 4px;
+}
+
+.settings-tabs {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 4px;
+    border: 1px solid #3b3b55;
+    border-radius: 8px;
+    background: #202037;
+}
+
+.settings-tab {
+    min-width: 0;
+    padding: 8px 6px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #c9c3dc;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.settings-tab:hover {
+    color: white;
+    background: rgba(124, 58, 237, 0.18);
+}
+
+.settings-tab.active {
+    border-color: #7c3aed;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+.settings-panel {
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+.settings-section h4 {
+    color: #f5f5f7;
+    font-size: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.modal-content label {
+    color: #a0a0b0;
+    font-size: 11px;
+    margin-top: 10px;
+    display: block;
+}
+
+.modal-content input,
+.modal-content select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: white;
+    margin-top: 4px;
+    font-size: 12px;
+    outline: none;
+    min-width: 0;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+    border-color: #7c3aed;
+}
+
+.installer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.installer-actions.one-row {
+    margin-top: 6px;
+}
+
+.installer-actions button,
+#install-model-btn {
+    padding: 8px 10px;
+    border: 1px solid #5b21b6;
+    border-radius: 8px;
+    background: #2d2d44;
+    color: #f4efff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.installer-actions button:disabled,
+#install-model-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.download-status {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 9px 10px;
+    border: 1px solid #45455d;
+    border-radius: 8px;
+    background: #202037;
+    color: #d4d4dd;
+    font-size: 11px;
+}
+
+.download-status.hidden {
+    display: none;
+}
+
+.download-status-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.download-bar {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #151526;
+}
+
+#dependency-download-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    transition: width 0.2s;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-shrink: 0;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.modal-buttons button:hover {
+    transform: scale(1.02);
+}
+
+#save-settings-btn {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+#close-settings-btn {
+    background: #444;
+    color: #aaa;
+}
+
+.llama-row,
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.llama-row {
+    justify-content: space-between;
+}
+
+#cfg-llama-state {
+    font-size: 13px;
+}
+
+.checkbox-row input {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.checkbox-row input:disabled,
+.checkbox-row input:disabled + label {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.checkbox-row label {
+    margin: 0;
+    line-height: 1.35;
+}
+
+.tool-status-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tool-status {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid #45455d;
+    border-radius: 8px;
+    background: #202037;
+    color: #d4d4dd;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.tool-status strong {
+    color: white;
+    font-size: 11px;
+}
+
+.tool-status span {
+    overflow-wrap: anywhere;
+}
+
+.tool-ok {
+    border-color: rgba(74, 222, 128, 0.45);
+}
+
+.tool-ok strong {
+    color: #4ade80;
+}
+
+.tool-error {
+    border-color: rgba(248, 113, 113, 0.45);
+}
+
+.tool-error strong {
+    color: #f87171;
+}
+
+.checking {
+    color: #d8b4fe;
+}
+
+@media (max-width: 420px), (max-height: 620px) {
+    #neeko-section {
+        padding: 14px;
+    }
+
+    #speech-bubble {
+        max-width: min(300px, calc(100vw - 32px));
+    }
+
+    #neeko-sprite {
+        width: 150px;
+        height: 150px;
+    }
+
+    #neeko-sprite.sprite-standing {
+        height: 180px;
+    }
+
+    #neeko-sprite.sprite-sitting {
+        width: 170px;
+        height: 170px;
+    }
+
+    .modal {
+        align-items: stretch;
+        padding: 8px;
+    }
+
+    .modal-content {
+        max-height: calc(100vh - 16px);
+        padding: 14px;
+    }
+
+    .settings-menu-btn {
+        display: block;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .settings-menu-scrim {
+        display: none;
+    }
+
+    .modal-content.settings-menu-open .settings-menu-scrim {
+        display: none;
+    }
+
+    .settings-tabs {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        position: absolute;
+        inset: 62px auto 0 0;
+        z-index: 3;
+        width: min(220px, calc(100% - 36px));
+        margin: 0;
+        padding: 12px 10px;
+        border: 0;
+        border-right: 1px solid #3b3b55;
+        border-radius: 0;
+        background: #151526;
+        box-shadow: 12px 0 22px rgba(0, 0, 0, 0.32);
+        overflow-y: auto;
+        overflow-x: hidden;
+        transform: translateX(-104%);
+        transition: transform 0.2s ease;
+    }
+
+    .modal-content.settings-menu-open .settings-tabs {
+        transform: translateX(0);
+    }
+
+    .settings-tabs::-webkit-scrollbar-track {
+        background: #151526;
+    }
+
+    .settings-tabs::-webkit-scrollbar-thumb {
+        background: #4b3a74;
+        border-radius: 999px;
+    }
+
+    .settings-tabs::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .settings-tab {
+        width: 100%;
+        min-height: 40px;
+        padding: 10px 12px;
+        text-align: left;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+
+    .modal-buttons {
+        flex-direction: column;
+    }
+
+    .llama-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #input-bar {
+        padding: 10px 14px;
+        gap: 8px;
+    }
+
+    #chat-input {
+        padding: 10px 14px;
+    }
+
+    #send-btn {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    #send-btn:hover {
+        transform: none;
+    }
+}

@@ -1,0 +1,45 @@
+# Build outputs
+src-tauri/target/
+src-tauri/binaries/
+
+# Node
+node_modules/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Downloaded tools
+src-tauri/downloads/
+src-tauri/appData/
+
+# Temp files
+*.tmp
+*.bak
+~$*
+
+# Model files (too large for git)
+*.gguf
+
+# Tauri generated
+src-tauri/gen/
+src-tauri/icons/*.png
+!src-tauri/icons/icon.ico
+
+# FFmpeg logs
+src-tauri/ffmpeg2pass-*

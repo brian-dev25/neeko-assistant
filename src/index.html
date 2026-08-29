@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neeko Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="top-bar" data-tauri-drag-region>
+            <span id="title">Neeko</span>
+            <div id="window-controls">
+                <button id="settings-btn" title="Configuracion">⚙</button>
+                <button id="minimize-btn" title="Minimizar">-</button>
+                <button id="close-btn" title="Cerrar">x</button>
+            </div>
+        </div>
+
+        <div id="neeko-section">
+            <div id="speech-bubble" class="hidden">
+                <p id="bubble-text"></p>
+            </div>
+            <div id="neeko-sprite">
+                <img alt="Neeko" id="neeko-img" class="sprite-loading">
+            </div>
+        </div>
+
+        <div id="input-bar">
+            <input type="text" id="chat-input" placeholder="Hablale a Neeko..." autocomplete="off">
+            <button id="send-btn">➤</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="settings-title-row">
+                    <button id="settings-menu-btn" class="settings-menu-btn" type="button" aria-label="Abrir menu de configuracion" aria-expanded="false">&#9776;</button>
+                    <h3>Configuracion</h3>
+                </div>
+                <div class="modal-actions">
+                    <button id="check-tools-btn" type="button">Probar</button>
+                </div>
+            </div>
+
+            <div id="settings-menu-scrim" class="settings-menu-scrim"></div>
+
+            <div class="settings-tabs" role="tablist" aria-label="Secciones de configuracion">
+                <button class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settings-tab-tools" data-settings-tab="tools">Herramientas</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-git" data-settings-tab="git">Git</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-lol" data-settings-tab="lol">LoL</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-ai" data-settings-tab="ai">IA</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-system" data-settings-tab="system">Sistema</button>
+            </div>
+
+            <div class="settings-scroll">
+                <section id="settings-tab-tools" class="settings-section settings-panel active" role="tabpanel" data-settings-panel="tools">
+                    <h4>Herramientas</h4>
+                    <div class="installer-actions">
+                        <button id="install-ffmpeg-btn" type="button">Descargar FFmpeg + FFprobe</button>
+                        <button id="uninstall-ffmpeg-btn" type="button">Desinstalar FFmpeg + FFprobe</button>
+                        <button id="install-git-btn" type="button">Descargar Git</button>
+                        <button id="uninstall-git-btn" type="button">Desinstalar Git</button>
+                    </div>
+
+                    <p style="color: #aab; font-size: 0.85rem; margin: 0 0 6px 0;">Modelo fijo en Google Drive</p>
+                    <div class="installer-actions one-row">
+                        <button id="install-model-btn" type="button">Descargar modelo</button>
+                        <button id="install-model-browser-btn" type="button" style="border-color:#38bdf8;color:#38bdf8;">Abrir en navegador</button>
+                        <button id="install-model-file-btn" type="button">Instalar desde archivo</button>
+                        <button id="uninstall-model-btn" type="button">Desinstalar modelo</button>
+                    </div>
+
+                    <div id="dependency-download-status" class="download-status hidden">
+                        <div class="download-status-row">
+                            <strong id="dependency-download-label">Descarga</strong>
+                            <span id="dependency-download-percent">0%</span>
+                        </div>
+                        <div class="download-bar">
+                            <div id="dependency-download-bar"></div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span id="dependency-download-message">Listo</span>
+                            <button id="cancel-download-btn" type="button" style="display:none;padding:4px 10px;border-radius:6px;border:1px solid #f87171;background:transparent;color:#f87171;cursor:pointer;font-size:0.8rem;">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <div id="tool-status-list" class="tool-status-list"></div>
+                </section>
+
+                <section id="settings-tab-git" class="settings-section settings-panel" role="tabpanel" data-settings-panel="git" hidden>
+                    <h4>Git</h4>
+                    <label for="cfg-git-pat">GitHub Personal Access Token:</label>
+                    <input type="password" id="cfg-git-pat" placeholder="ghp_xxxx">
+
+                    <label for="cfg-git-path">Ruta Git por defecto:</label>
+                    <input type="text" id="cfg-git-path" placeholder="D:\projects\myrepo">
+                </section>
+
+                <section id="settings-tab-lol" class="settings-section settings-panel" role="tabpanel" data-settings-panel="lol" hidden>
+                    <h4>League of Legends</h4>
+                    <label for="cfg-riot-id">Riot ID (Usuario#Tag):</label>
+                    <input type="text" id="cfg-riot-id" placeholder="NotNeeko#LAS">
+
+                    <label for="cfg-lol-region">Region LOL:</label>
+                    <select id="cfg-lol-region">
+                        <option value="las">LAS</option>
+                        <option value="la1">LAN</option>
+                        <option value="br">BR</option>
+                        <option value="euw">EUW</option>
+                        <option value="na">NA</option>
+                        <option value="kr">KR</option>
+                        <option value="jp">JP</option>
+                        <option value="oce">OCE</option>
+                        <option value="tr">TR</option>
+                        <option value="ru">RU</option>
+                    </select>
+                </section>
+
+                <section id="settings-tab-ai" class="settings-section settings-panel" role="tabpanel" data-settings-panel="ai" hidden>
+                    <h4>Apariencia de IA</h4>
+                    <label for="cfg-neeko-sprite">Sprite de Neeko:</label>
+                    <select id="cfg-neeko-sprite">
+                        <option value="NEEKO.png">Neeko con clip</option>
+                        <option value="NEEKO-standing-costume.png">Neeko parada</option>
+                        <option value="NEEKO-sitting.png">Neeko sentada</option>
+                    </select>
+
+                    <label>LLaMA (IA):</label>
+                    <div class="llama-row">
+                        <span id="cfg-llama-state">Cargando...</span>
+                        <button id="cfg-llama-toggle" type="button">Toggle</button>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="cfg-llama-autostart">
+                        <label for="cfg-llama-autostart">Auto-iniciar LLaMA al abrir la app</label>
+                    </div>
+                </section>
+
+                <section id="settings-tab-system" class="settings-section settings-panel" role="tabpanel" data-settings-panel="system" hidden>
+                    <h4>Comandos de sistema (Peligroso)</h4>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="cfg-system-cmds">
+                        <label for="cfg-system-cmds">Activar comandos de sistema (apagar PC, reiniciar WiFi, etc.)</label>
+                    </div>
+                    <p style="color:var(--text-dim);font-size:11px;margin-top:4px;">Permite comandos como "apaga la pc", "reiniciar wifi", "reiniciar bluetooth". Desactivado por defecto.</p>
+                </section>
+
+                <section class="settings-section">
+                    <h4>Actualizaciones</h4>
+                    <div id="update-status" style="color:var(--text-dim);font-size:12px;margin-bottom:8px;">Versión actual: v1.0.0</div>
+                    <div style="display:flex;gap:8px;">
+                        <button id="check-update-btn" type="button">Buscar actualizaciones</button>
+                        <button id="apply-update-btn" type="button" style="display:none;border-color:#4ade80;color:#4ade80;">Actualizar y reiniciar</button>
+                    </div>
+                    <div id="update-notes" style="color:var(--text-dim);font-size:11px;margin-top:6px;max-height:60px;overflow-y:auto;"></div>
+                </section>
+            </div>
+
+            <div class="modal-buttons">
+                <button id="save-settings-btn">Guardar</button>
+                <button id="close-settings-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

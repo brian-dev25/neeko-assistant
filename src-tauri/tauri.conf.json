@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicklasonmedia/tauri/dev/crates/tauri-cli/schema.json",
+  "productName": "Neeko Assistant",
+  "version": "1.0.0",
+  "identifier": "com.neeko.assistant",
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Neeko Assistant",
+        "width": 380,
+        "height": 600,
+        "minWidth": 290,
+        "minHeight": 430,
+        "resizable": true,
+        "decorations": false,
+        "skipTaskbar": false,
+        "url": "index.html"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "build": {
+    "frontendDist": "../src",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/llama-server"
+    ],
+    "windows": {
+      "nsis": {
+        "installerHooks": "windows/nsis-hooks.nsh"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REEMPLAZAR_CON_TU_PUBLIC_KEY_MINISIGN",
+      "endpoints": [
+        "https://github.com/TU_USUARIO/neeko-assistant/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
