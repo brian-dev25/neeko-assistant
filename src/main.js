@@ -1051,7 +1051,7 @@ checkUpdateBtn.addEventListener('click', async () => {
     checkUpdateBtn.textContent = 'Buscando...';
     updateNotes.textContent = '';
     try {
-        const result = JSON.parse(await invoke('check_updates'));
+        const result = await invoke('check_updates');
         if (result.hasUpdate) {
             updateStatus.textContent = `Nueva versión: v${result.latestVersion} (actual: v${result.currentVersion})`;
             updateStatus.style.color = '#4ade80';
