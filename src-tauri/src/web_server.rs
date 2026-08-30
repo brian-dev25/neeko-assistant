@@ -1040,8 +1040,9 @@ async fn chat_handler(
 
     let reply = data["choices"][0]["message"]["content"]
         .as_str()
-        .unwrap_or("No entendí")
+        .unwrap_or("No entendi")
         .to_string();
+    let reply = crate::clean_ai_reply(&reply);
 
     if let Some(action) = extract_action(&reply) {
         let result = execute_web_action(&action).await;

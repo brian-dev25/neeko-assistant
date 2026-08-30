@@ -406,6 +406,74 @@ body {
     border-color: #7c3aed;
 }
 
+.advanced-link-btn,
+.back-link-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px 12px;
+    border: 1px solid #4b3a74;
+    border-radius: 8px;
+    background: #202037;
+    color: #f5f5f7;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.advanced-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.advanced-link-btn:hover,
+.back-link-btn:hover {
+    border-color: #a855f7;
+}
+
+.model-runtime-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.model-runtime-grid > div {
+    min-width: 0;
+}
+
+.model-runtime-grid h4 {
+    margin: 0 0 2px;
+    color: #d8d4e8;
+    font-size: 11px;
+}
+
+.model-runtime-help {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #3b3b55;
+    border-radius: 8px;
+    background: #19192d;
+    color: #c9c3dc;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.model-runtime-help.hidden {
+    display: none;
+}
+
+.model-runtime-help p {
+    margin: 0;
+}
+
+.model-runtime-help strong {
+    color: #f5f5f7;
+}
+
 .update-section {
     display: grid;
     gap: 8px;
@@ -769,6 +837,10 @@ body {
     .llama-row {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .model-runtime-grid {
+        grid-template-columns: 1fr;
     }
 
     #input-bar {

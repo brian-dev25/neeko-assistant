@@ -1,6 +1,54 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ModelLoadEngine {
+    Llama,
+    Python,
+}
+
+impl ModelLoadEngine {
+    pub fn from_user_value(value: &str) -> Result<Self, String> {
+        match value.trim().to_lowercase().as_str() {
+            "llama" | "llama-server" => Ok(Self::Llama),
+            "python" | "llama-cpp-python" => Ok(Self::Python),
+            _ => Err("Motor de carga invalido".to_string()),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Llama => "llama",
+            Self::Python => "python",
+        }
+    }
+}
+
+fn default_model_load_engine() -> ModelLoadEngine {
+    ModelLoadEngine::Llama
+}
+
+fn default_llama_gpu_layers() -> u32 {
+    15
+}
+
+fn default_python_gpu_layers() -> u32 {
+    0
+}
+
+fn default_llama_context_size() -> u32 {
+    1024
+}
+
+fn default_python_context_size() -> u32 {
+    4096
+}
+
+fn default_model_threads() -> u32 {
+    4
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub git_pat: String,
@@ -15,6 +63,20 @@ pub struct AppConfig {
     pub riot_id: String,
     #[serde(default = "default_true")]
     pub llama_auto_start: bool,
+    #[serde(default = "default_model_load_engine")]
+    pub model_load_engine: ModelLoadEngine,
+    #[serde(default = "default_llama_gpu_layers")]
+    pub llama_gpu_layers: u32,
+    #[serde(default = "default_python_gpu_layers")]
+    pub python_gpu_layers: u32,
+    #[serde(default = "default_llama_context_size")]
+    pub llama_context_size: u32,
+    #[serde(default = "default_python_context_size")]
+    pub python_context_size: u32,
+    #[serde(default = "default_model_threads")]
+    pub llama_threads: u32,
+    #[serde(default = "default_model_threads")]
+    pub python_threads: u32,
     #[serde(default)]
     pub system_commands_enabled: bool,
 }
@@ -38,6 +100,13 @@ impl Default for AppConfig {
             lol_region: "las".to_string(),
             riot_id: String::new(),
             llama_auto_start: default_true(),
+            model_load_engine: default_model_load_engine(),
+            llama_gpu_layers: default_llama_gpu_layers(),
+            python_gpu_layers: default_python_gpu_layers(),
+            llama_context_size: default_llama_context_size(),
+            python_context_size: default_python_context_size(),
+            llama_threads: default_model_threads(),
+            python_threads: default_model_threads(),
             system_commands_enabled: false,
         }
     }

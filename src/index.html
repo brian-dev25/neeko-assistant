@@ -127,6 +127,30 @@
                         <option value="NEEKO-sitting.png">Neeko sentada</option>
                     </select>
 
+                    <label for="cfg-model-load-engine">Motor de carga:</label>
+                    <select id="cfg-model-load-engine">
+                        <option value="llama">LLaMA server</option>
+                        <option value="python">Python (CPU)</option>
+                    </select>
+
+                    <div class="installer-actions one-row">
+                        <button id="prepare-python-engine-btn" type="button">Preparar motor Python</button>
+                    </div>
+                    <div id="python-engine-status" class="download-status hidden">
+                        <div class="download-status-row">
+                            <strong id="python-engine-label">Motor Python</strong>
+                            <span id="python-engine-percent">0%</span>
+                        </div>
+                        <div class="download-bar">
+                            <div id="python-engine-bar"></div>
+                        </div>
+                        <span id="python-engine-message">Listo</span>
+                    </div>
+
+                    <button id="open-advanced-ai-btn" class="advanced-link-btn" type="button">
+                        Avanzado
+                    </button>
+
                     <label>LLaMA (IA):</label>
                     <div class="llama-row">
                         <span id="cfg-llama-state">Cargando...</span>
@@ -138,6 +162,37 @@
                     </div>
                 </section>
 
+                <section id="settings-tab-advanced" class="settings-section settings-panel" role="tabpanel" data-settings-panel="advanced" hidden>
+                    <button id="back-to-ai-btn" class="back-link-btn" type="button">Volver a IA</button>
+                    <h4>Avanzado</h4>
+                    <button id="model-runtime-help-btn" class="advanced-link-btn" type="button">Explicacion</button>
+                    <div id="model-runtime-help" class="model-runtime-help hidden">
+                        <p><strong>Capas GPU:</strong> cuantas capas del modelo pasan a la placa de video. 0 significa solo CPU. Esto controla memoria VRAM usada, no limita el porcentaje de uso de GPU: con 15 capas la GPU puede marcar 80-100% mientras genera aunque no use toda la VRAM. En este modelo, 1 capa puede rondar 75 MB de VRAM para pesos; 4 capas aprox. 300 MB, 6 capas aprox. 450 MB y 15 capas aprox. 1.1 GB, mas contexto y overhead. Si hay ruido o picos fuertes, baja capas o usa Python con 0 capas.</p>
+                        <p><strong>Contexto:</strong> cuanta conversacion puede recordar el modelo en una respuesta. Mas contexto usa mas RAM/VRAM. 4608 suele estar bien; si va pesado, baja a 2048 o 1024.</p>
+                        <p><strong>Hilos CPU:</strong> cuantos hilos del procesador usa. Mas hilos puede responder mas rapido, pero deja menos margen para juegos o apps. Si tu CPU tiene 12 hilos, 6 es una mitad razonable.</p>
+                        <p><strong>Ejemplo suave:</strong> Capas GPU 4-6, Contexto 4608, Hilos CPU 6. Depende mucho de tu grafica, VRAM, CPU y temperaturas.</p>
+                    </div>
+                    <div class="model-runtime-grid">
+                        <div>
+                            <h4>LLaMA server</h4>
+                            <label for="cfg-llama-gpu-layers">Capas GPU:</label>
+                            <input id="cfg-llama-gpu-layers" type="number" min="0" max="200" step="1">
+                            <label for="cfg-llama-context-size">Contexto:</label>
+                            <input id="cfg-llama-context-size" type="number" min="512" max="32768" step="512">
+                            <label for="cfg-llama-threads">Hilos CPU:</label>
+                            <input id="cfg-llama-threads" type="number" min="1" max="64" step="1">
+                        </div>
+                        <div>
+                            <h4>Python</h4>
+                            <label for="cfg-python-gpu-layers">Capas GPU:</label>
+                            <input id="cfg-python-gpu-layers" type="number" min="0" max="200" step="1">
+                            <label for="cfg-python-context-size">Contexto:</label>
+                            <input id="cfg-python-context-size" type="number" min="512" max="32768" step="512">
+                            <label for="cfg-python-threads">Hilos CPU:</label>
+                            <input id="cfg-python-threads" type="number" min="1" max="64" step="1">
+                        </div>
+                    </div>
+                </section>
                 <section id="settings-tab-system" class="settings-section settings-panel" role="tabpanel" data-settings-panel="system" hidden>
                     <h4 style="color:#f87171;">Comandos de sistema (Peligroso)</h4>
                     <div class="checkbox-row">
@@ -145,9 +200,8 @@
                         <label for="cfg-system-cmds">Activar comandos de sistema (apagar PC, reiniciar WiFi, etc.)</label>
                     </div>
                     <p style="color:#f87171;font-size:11px;margin-top:4px;">Permite comandos como "apaga la pc", "reiniciar wifi", "reiniciar bluetooth". Desactivado por defecto.</p>
-                </section>
 
-                <section class="settings-section update-section">
+                    <div class="update-section">
                     <h4>Actualizaciones</h4>
                     <div id="update-status" class="update-status">Versión actual: v1.0.0</div>
                     <div class="installer-actions one-row update-actions">
@@ -155,7 +209,9 @@
                         <button id="apply-update-btn" class="update-apply-btn" type="button" style="display:none;">Actualizar y reiniciar</button>
                     </div>
                     <div id="update-notes" class="update-notes"></div>
+                    </div>
                 </section>
+
             </div>
 
             <div class="modal-buttons">

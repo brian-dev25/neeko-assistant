@@ -14,6 +14,8 @@ const closeBtn = document.getElementById('close-btn');
 let isProcessing = false;
 let currentAbortController = null;
 let localAiModelAvailable = false;
+let currentModelLoadEngine = 'llama';
+let currentModelRuntimeConfig = null;
 
 const SPRITES = {
     default: "NEEKO.png",
@@ -88,6 +90,13 @@ function showBubble(text) {
     speechBubble.classList.remove('hidden');
 }
 
+function cleanAiReply(text) {
+    return String(text || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<\/?think>/gi, '')
+        .trim();
+}
+
 function setTalking(talking) {
     neekoSprite.classList.toggle('talking', talking);
 }
@@ -97,6 +106,7 @@ function setThinking(thinking) {
 }
 
 function parseNeekoResponse(text) {
+    text = cleanAiReply(text);
     const jsonMatch = text.match(/\{[\s\S]*?"action"[\s\S]*?\}/);
     if (jsonMatch) {
         try {
@@ -455,7 +465,7 @@ async function callLocalAi(message) {
 
     currentChatId = await invoke('chat_start', { messages: conversationHistory });
 
-    const reply = await invoke('chat_finish', { requestId: currentChatId });
+    const reply = cleanAiReply(await invoke('chat_finish', { requestId: currentChatId }));
     currentChatId = null;
 
     conversationHistory.push({ role: "assistant", content: reply });
@@ -643,6 +653,7 @@ const installFfmpegBtn = document.getElementById('install-ffmpeg-btn');
 const installGitBtn = document.getElementById('install-git-btn');
 const installModelBtn = document.getElementById('install-model-btn');
 const installModelFileBtn = document.getElementById('install-model-file-btn');
+const preparePythonEngineBtn = document.getElementById('prepare-python-engine-btn');
 const uninstallFfmpegBtn = document.getElementById('uninstall-ffmpeg-btn');
 const uninstallGitBtn = document.getElementById('uninstall-git-btn');
 const uninstallModelBtn = document.getElementById('uninstall-model-btn');
@@ -652,6 +663,10 @@ const dependencyDownloadPercent = document.getElementById('dependency-download-p
 const dependencyDownloadBar = document.getElementById('dependency-download-bar');
 const dependencyDownloadMessage = document.getElementById('dependency-download-message');
 const cancelDownloadBtn = document.getElementById('cancel-download-btn');
+const openAdvancedAiBtn = document.getElementById('open-advanced-ai-btn');
+const backToAiBtn = document.getElementById('back-to-ai-btn');
+const modelRuntimeHelpBtn = document.getElementById('model-runtime-help-btn');
+const modelRuntimeHelp = document.getElementById('model-runtime-help');
 const settingsTabs = Array.from(document.querySelectorAll('.settings-tab'));
 const settingsPanels = Array.from(document.querySelectorAll('.settings-panel'));
 const compactSettingsQuery = window.matchMedia('(max-width: 420px), (max-height: 620px)');
@@ -689,8 +704,54 @@ function setLocalAiModelAvailable(available) {
     }
 }
 
+function readNumberInput(id, fallback, min, max) {
+    const input = document.getElementById(id);
+    const value = Number.parseInt(input?.value, 10);
+    const normalized = Number.isFinite(value) ? value : fallback;
+    return Math.max(min, Math.min(max, normalized));
+}
+
+function applyModelRuntimeConfig(config) {
+    currentModelRuntimeConfig = {
+        llamaGpuLayers: config?.llamaGpuLayers ?? 15,
+        pythonGpuLayers: config?.pythonGpuLayers ?? 0,
+        llamaContextSize: config?.llamaContextSize ?? 1024,
+        pythonContextSize: config?.pythonContextSize ?? 4096,
+        llamaThreads: config?.llamaThreads ?? 4,
+        pythonThreads: config?.pythonThreads ?? 4,
+    };
+
+    document.getElementById('cfg-llama-gpu-layers').value = currentModelRuntimeConfig.llamaGpuLayers;
+    document.getElementById('cfg-python-gpu-layers').value = currentModelRuntimeConfig.pythonGpuLayers;
+    document.getElementById('cfg-llama-context-size').value = currentModelRuntimeConfig.llamaContextSize;
+    document.getElementById('cfg-python-context-size').value = currentModelRuntimeConfig.pythonContextSize;
+    document.getElementById('cfg-llama-threads').value = currentModelRuntimeConfig.llamaThreads;
+    document.getElementById('cfg-python-threads').value = currentModelRuntimeConfig.pythonThreads;
+}
+
+function collectModelRuntimeConfig() {
+    return {
+        llamaGpuLayers: readNumberInput('cfg-llama-gpu-layers', 15, 0, 200),
+        pythonGpuLayers: readNumberInput('cfg-python-gpu-layers', 0, 0, 200),
+        llamaContextSize: readNumberInput('cfg-llama-context-size', 1024, 512, 32768),
+        pythonContextSize: readNumberInput('cfg-python-context-size', 4096, 512, 32768),
+        llamaThreads: readNumberInput('cfg-llama-threads', 4, 1, 64),
+        pythonThreads: readNumberInput('cfg-python-threads', 4, 1, 64),
+    };
+}
+
+function modelRuntimeConfigChanged(nextConfig) {
+    return JSON.stringify(nextConfig) !== JSON.stringify(currentModelRuntimeConfig);
+}
+
 settingsTabs.forEach((tab) => {
     tab.addEventListener('click', () => setSettingsTab(tab.dataset.settingsTab));
+});
+
+openAdvancedAiBtn?.addEventListener('click', () => setSettingsTab('advanced'));
+backToAiBtn?.addEventListener('click', () => setSettingsTab('ai'));
+modelRuntimeHelpBtn?.addEventListener('click', () => {
+    modelRuntimeHelp?.classList.toggle('hidden');
 });
 
 settingsMenuBtn.addEventListener('click', () => {
@@ -757,6 +818,18 @@ settingsBtn.addEventListener('click', async () => {
         const running = await invoke('llama_status');
         updateLlamaUI(running && localAiModelAvailable);
     } catch {}
+    try {
+        currentModelLoadEngine = await invoke('get_model_load_engine');
+        document.getElementById('cfg-model-load-engine').value = currentModelLoadEngine;
+    } catch {
+        currentModelLoadEngine = 'llama';
+        document.getElementById('cfg-model-load-engine').value = currentModelLoadEngine;
+    }
+    try {
+        applyModelRuntimeConfig(await invoke('get_model_runtime_config'));
+    } catch {
+        applyModelRuntimeConfig(null);
+    }
     try {
         const autoStart = await invoke('get_llama_auto_start');
         const autoStartInput = document.getElementById('cfg-llama-autostart');
@@ -870,6 +943,19 @@ if (window.__TAURI__.event?.listen) {
     window.__TAURI__.event.listen('dependency-download-progress', (event) => {
         showDependencyProgress(event.payload || {});
     });
+    window.__TAURI__.event.listen('python-engine-progress', (event) => {
+        const p = event.payload || {};
+        const status = document.getElementById('python-engine-status');
+        const label = document.getElementById('python-engine-label');
+        const percent = document.getElementById('python-engine-percent');
+        const bar = document.getElementById('python-engine-bar');
+        const msg = document.getElementById('python-engine-message');
+        status.classList.remove('hidden');
+        if (label) label.textContent = p.step || 'Motor Python';
+        if (percent) percent.textContent = p.percent != null ? p.percent + '%' : '...';
+        if (bar) bar.style.width = (p.percent || 0) + '%';
+        if (msg) msg.textContent = p.message || '';
+    });
 }
 
 async function runInstaller(button, command, args = {}) {
@@ -939,6 +1025,25 @@ installModelFileBtn.addEventListener('click', async () => {
     }
 });
 
+preparePythonEngineBtn.addEventListener('click', async () => {
+    preparePythonEngineBtn.disabled = true;
+    preparePythonEngineBtn.textContent = 'Preparando...';
+    const status = document.getElementById('python-engine-status');
+    const msg = document.getElementById('python-engine-message');
+    status.classList.remove('hidden');
+    msg.textContent = 'Iniciando...';
+    try {
+        const message = await invoke('prepare_python_engine');
+        msg.textContent = message;
+        showBubble(message);
+    } catch (e) {
+        msg.textContent = 'Error: ' + e;
+        showBubble('Error: ' + e);
+    }
+    preparePythonEngineBtn.disabled = false;
+    preparePythonEngineBtn.textContent = 'Preparar motor Python';
+});
+
 async function runUninstaller(button, command, confirmation) {
     if (!confirm(confirmation)) return;
     setInstallerButtonsDisabled(true);
@@ -989,6 +1094,8 @@ saveSettingsBtn.addEventListener('click', async () => {
     const neekoSpriteValue = normalizeNeekoSprite(document.getElementById('cfg-neeko-sprite').value);
     const region = document.getElementById('cfg-lol-region').value;
     const riotId = document.getElementById('cfg-riot-id').value.trim();
+    const modelLoadEngine = document.getElementById('cfg-model-load-engine').value;
+    const modelRuntimeConfig = collectModelRuntimeConfig();
     const autoStartInput = document.getElementById('cfg-llama-autostart');
     let autoStart = autoStartInput.checked;
 
@@ -1008,6 +1115,25 @@ saveSettingsBtn.addEventListener('click', async () => {
         await invoke('save_environment_config', { ffmpegPath: null, ffprobePath: null });
     } catch (e) {
         showBubble("Error guardando herramientas: " + e);
+        return;
+    }
+    try {
+        const engineChanged = modelLoadEngine !== currentModelLoadEngine;
+        const runtimeChanged = modelRuntimeConfigChanged(modelRuntimeConfig);
+        const wasRunning = await invoke('llama_status').catch(() => false);
+        await invoke('set_model_load_engine', { engine: modelLoadEngine });
+        await invoke('set_model_runtime_config', modelRuntimeConfig);
+        currentModelLoadEngine = modelLoadEngine;
+        currentModelRuntimeConfig = modelRuntimeConfig;
+
+        if ((engineChanged || runtimeChanged) && wasRunning) {
+            showBubble("Cambiando motor de carga...");
+            await invoke('stop_llama_server');
+            await invoke('start_llama_server');
+            updateLlamaUI(true);
+        }
+    } catch (e) {
+        showBubble("Error guardando motor de carga: " + e);
         return;
     }
     try {

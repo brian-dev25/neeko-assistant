@@ -146,6 +146,86 @@ fn set_llama_auto_start(enabled: bool) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn get_model_load_engine() -> Result<String, String> {
+    let config = config::AppConfig::load();
+    Ok(config.model_load_engine.as_str().to_string())
+}
+
+#[tauri::command]
+fn set_model_load_engine(engine: String) -> Result<String, String> {
+    let engine = config::ModelLoadEngine::from_user_value(&engine)?;
+    let mut config = config::AppConfig::load();
+    config.model_load_engine = engine;
+    config.save().map_err(|e| e.to_string())?;
+    Ok(format!("Motor de carga: {}", engine.as_str()))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ModelRuntimeConfig {
+    llama_gpu_layers: u32,
+    python_gpu_layers: u32,
+    llama_context_size: u32,
+    python_context_size: u32,
+    llama_threads: u32,
+    python_threads: u32,
+}
+
+impl From<&config::AppConfig> for ModelRuntimeConfig {
+    fn from(config: &config::AppConfig) -> Self {
+        Self {
+            llama_gpu_layers: config.llama_gpu_layers,
+            python_gpu_layers: config.python_gpu_layers,
+            llama_context_size: config.llama_context_size,
+            python_context_size: config.python_context_size,
+            llama_threads: config.llama_threads,
+            python_threads: config.python_threads,
+        }
+    }
+}
+
+fn validate_model_runtime_value(name: &str, value: u32, min: u32, max: u32) -> Result<(), String> {
+    if (min..=max).contains(&value) {
+        Ok(())
+    } else {
+        Err(format!("{} tiene que estar entre {} y {}", name, min, max))
+    }
+}
+
+#[tauri::command]
+fn get_model_runtime_config() -> Result<ModelRuntimeConfig, String> {
+    let config = config::AppConfig::load();
+    Ok(ModelRuntimeConfig::from(&config))
+}
+
+#[tauri::command]
+fn set_model_runtime_config(
+    llama_gpu_layers: u32,
+    python_gpu_layers: u32,
+    llama_context_size: u32,
+    python_context_size: u32,
+    llama_threads: u32,
+    python_threads: u32,
+) -> Result<String, String> {
+    validate_model_runtime_value("Capas GPU de LLaMA", llama_gpu_layers, 0, 200)?;
+    validate_model_runtime_value("Capas GPU de Python", python_gpu_layers, 0, 200)?;
+    validate_model_runtime_value("Contexto de LLaMA", llama_context_size, 512, 32768)?;
+    validate_model_runtime_value("Contexto de Python", python_context_size, 512, 32768)?;
+    validate_model_runtime_value("Hilos CPU de LLaMA", llama_threads, 1, 64)?;
+    validate_model_runtime_value("Hilos CPU de Python", python_threads, 1, 64)?;
+
+    let mut config = config::AppConfig::load();
+    config.llama_gpu_layers = llama_gpu_layers;
+    config.python_gpu_layers = python_gpu_layers;
+    config.llama_context_size = llama_context_size;
+    config.python_context_size = python_context_size;
+    config.llama_threads = llama_threads;
+    config.python_threads = python_threads;
+    config.save().map_err(|e| e.to_string())?;
+    Ok("Ajustes del modelo guardados".to_string())
+}
+
+#[tauri::command]
 fn get_system_commands_enabled() -> Result<bool, String> {
     let config = config::AppConfig::load();
     Ok(config.system_commands_enabled)
@@ -192,40 +272,8 @@ async fn start_llama_server() -> Result<String, String> {
         return Err("No encontré el modelo GGUF".to_string());
     }
 
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
-        .unwrap_or_else(|| PathBuf::from("."));
-
-    let candidates_exe = [
-        exe_dir.join("binaries").join("llama-server-x86_64-pc-windows-msvc.exe"),
-        exe_dir.join("..\\..\\binaries").join("llama-server-x86_64-pc-windows-msvc.exe"),
-        PathBuf::from("D:\\NEEKO API\\neeko-assistant\\src-tauri\\binaries\\llama-server-x86_64-pc-windows-msvc.exe"),
-    ];
-
-    let sidecar_exe = candidates_exe
-        .iter()
-        .find(|p| p.exists())
-        .cloned()
-        .ok_or_else(|| "No encontré el sidecar llama-server.exe".to_string())?;
-
-    let binaries_dir = sidecar_exe.parent().unwrap().to_path_buf();
-
-    let mut command = Command::new(&sidecar_exe);
-    command.current_dir(&binaries_dir).args([
-        "-m",
-        &model_path,
-        "--host",
-        "127.0.0.1",
-        "--port",
-        "8080",
-        "-ngl",
-        "15",
-        "-c",
-        "1024",
-        "-t",
-        "4",
-    ]);
+    let config = config::AppConfig::load();
+    let mut command = build_model_server_command(&config, &model_path)?;
 
     #[cfg(target_os = "windows")]
     command.creation_flags(0x08000000);
@@ -252,6 +300,352 @@ async fn start_llama_server() -> Result<String, String> {
 
     Err("LLaMA no arrancó a tiempo".to_string())
 }
+
+fn build_model_server_command(
+    config: &config::AppConfig,
+    model_path: &str,
+) -> Result<Command, String> {
+    match config.model_load_engine {
+        config::ModelLoadEngine::Llama => build_llama_server_command(
+            model_path,
+            config.llama_gpu_layers,
+            config.llama_context_size,
+            config.llama_threads,
+        ),
+        config::ModelLoadEngine::Python => build_python_model_server_command(
+            model_path,
+            config.python_gpu_layers,
+            config.python_context_size,
+            config.python_threads,
+        ),
+    }
+}
+
+fn build_llama_server_command(
+    model_path: &str,
+    gpu_layers: u32,
+    context_size: u32,
+    threads: u32,
+) -> Result<Command, String> {
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| PathBuf::from("."));
+
+    let candidates_exe = [
+        exe_dir
+            .join("binaries")
+            .join("llama-server-x86_64-pc-windows-msvc.exe"),
+        exe_dir
+            .join("..\\..\\binaries")
+            .join("llama-server-x86_64-pc-windows-msvc.exe"),
+        PathBuf::from(
+            "D:\\NEEKO API\\neeko-assistant\\src-tauri\\binaries\\llama-server-x86_64-pc-windows-msvc.exe",
+        ),
+    ];
+
+    let sidecar_exe = candidates_exe
+        .iter()
+        .find(|p| p.exists())
+        .cloned()
+        .ok_or_else(|| "No encontre el sidecar llama-server.exe".to_string())?;
+
+    let binaries_dir = sidecar_exe
+        .parent()
+        .ok_or_else(|| "No pude resolver la carpeta de llama-server".to_string())?
+        .to_path_buf();
+
+    let mut command = Command::new(&sidecar_exe);
+    command.current_dir(&binaries_dir).args([
+        "-m",
+        model_path,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8080",
+        "-ngl",
+        &gpu_layers.to_string(),
+        "-c",
+        &context_size.to_string(),
+        "-t",
+        &threads.to_string(),
+    ]);
+    Ok(command)
+}
+
+fn find_system_python() -> Option<PathBuf> {
+    for name in &["python", "py"] {
+        let mut cmd = Command::new(name);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["--version"]);
+        if let Ok(out) = cmd.output() {
+            if out.status.success() {
+                return Some(PathBuf::from(name));
+            }
+        }
+    }
+    None
+}
+
+#[tauri::command]
+async fn prepare_python_engine(app: AppHandle) -> Result<String, String> {
+    let venv_python = neeko_python_venv();
+    let venv_dir = venv_python
+        .parent()
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .ok_or("No pude resolver la ruta del venv")?
+        .to_path_buf();
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "find_python",
+        "message": "Buscando Python en el sistema...",
+        "percent": 10,
+    }));
+
+    let system_python = find_system_python()
+        .ok_or_else(|| {
+            "No encontre Python instalado. Instala Python 3.10+ desde python.org y marca 'Add to PATH'.".to_string()
+        })?;
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "create_venv",
+        "message": format!("Usando {} — Creando venv en {}...", system_python.display(), venv_dir.display()),
+        "percent": 20,
+    }));
+
+    if venv_python.exists() {
+        let _ = app.emit("python-engine-progress", serde_json::json!({
+            "step": "venv_exists",
+            "message": "Venv ya existe, verificando...",
+            "percent": 25,
+        }));
+    } else {
+        let mut cmd = Command::new(&system_python);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["-m", "venv", venv_dir.to_string_lossy().as_ref()]);
+        let output = cmd.output().map_err(|e| format!("Error creando venv: {}", e))?;
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Error creando venv: {}", stderr));
+        }
+    }
+
+    let pip = venv_python
+        .parent()
+        .unwrap()
+        .join("pip.exe");
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "upgrade_pip",
+        "message": "Actualizando pip...",
+        "percent": 35,
+    }));
+
+    {
+        let mut cmd = Command::new(&venv_python);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["-m", "pip", "install", "--upgrade", "pip"]);
+        let _ = cmd.output();
+    }
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "install_llama_cpp",
+        "message": "Instalando llama-cpp-python (puede tardar varios minutos)...",
+        "percent": 45,
+    }));
+
+    {
+        let mut cmd = Command::new(&pip);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["install", "llama-cpp-python"]);
+        let output = cmd.output().map_err(|e| format!("Error ejecutando pip: {}", e))?;
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if stderr.contains("already satisfied") || stderr.contains("Successfully installed") {
+            } else {
+                return Err(format!("Error instalando llama-cpp-python: {}", stderr));
+            }
+        }
+    }
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "verify",
+        "message": "Verificando instalacion...",
+        "percent": 90,
+    }));
+
+    {
+        let mut cmd = Command::new(&venv_python);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["-c", "import llama_cpp; print(llama_cpp.__version__)"]);
+        let output = cmd.output().map_err(|e| format!("Error verificando: {}", e))?;
+        if !output.status.success() {
+            return Err("llama-cpp-python se instalo pero no se pudo importar.".to_string());
+        }
+    }
+
+    let _ = app.emit("python-engine-progress", serde_json::json!({
+        "step": "done",
+        "message": "Motor Python listo.",
+        "percent": 100,
+    }));
+
+    Ok(format!("Motor Python preparado en {}", venv_python.display()))
+}
+
+fn build_python_model_server_command(
+    model_path: &str,
+    gpu_layers: u32,
+    context_size: u32,
+    threads: u32,
+) -> Result<Command, String> {
+    let server_script = ensure_python_model_server_script()?;
+    let python = find_python_with_llama_cpp().ok_or_else(|| {
+        "No encontre Python con llama_cpp. Haz clic en 'Preparar motor Python' en Configuracion > IA."
+            .to_string()
+    })?;
+
+    let mut command = Command::new(python);
+    command.args([
+        server_script.to_string_lossy().as_ref(),
+        "--model",
+        model_path,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8080",
+        "--n-gpu-layers",
+        &gpu_layers.to_string(),
+        "--n-ctx",
+        &context_size.to_string(),
+        "--n-threads",
+        &threads.to_string(),
+    ]);
+    Ok(command)
+}
+
+fn ensure_python_model_server_script() -> Result<PathBuf, String> {
+    let script_path = app_data_dir().join("python_model_server.py");
+    if let Some(parent) = script_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("No pude crear la carpeta del servidor Python: {}", e))?;
+    }
+    std::fs::write(&script_path, PYTHON_MODEL_SERVER)
+        .map_err(|e| format!("No pude preparar el servidor Python: {}", e))?;
+    Ok(script_path)
+}
+
+fn neeko_python_venv() -> PathBuf {
+    app_data_dir().join("python").join("venv").join("Scripts").join("python.exe")
+}
+
+fn find_python_with_llama_cpp() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+
+    if let Ok(path) = std::env::var("NEEKO_PYTHON_PATH") {
+        candidates.push(PathBuf::from(path));
+    }
+
+    candidates.push(neeko_python_venv());
+
+    if let Some(desktop) = dirs::desktop_dir() {
+        candidates.push(
+            desktop
+                .join("PyPrueba")
+                .join("venv")
+                .join("Scripts")
+                .join("python.exe"),
+        );
+        candidates.push(
+            desktop
+                .join("PyPrueba")
+                .join("venv")
+                .join("Scripts")
+                .join("pythonw.exe"),
+        );
+    }
+
+    candidates.push(PathBuf::from("python"));
+    candidates.push(PathBuf::from("py"));
+
+    candidates.into_iter().find(|python| {
+        let mut cmd = Command::new(python);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        cmd.args(["-c", "import llama_cpp"])
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+    })
+}
+
+const PYTHON_MODEL_SERVER: &str = r#"
+import argparse
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from llama_cpp import Llama
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", required=True)
+parser.add_argument("--host", default="127.0.0.1")
+parser.add_argument("--port", type=int, default=8080)
+parser.add_argument("--n-gpu-layers", type=int, default=0)
+parser.add_argument("--n-ctx", type=int, default=4096)
+parser.add_argument("--n-threads", type=int, default=4)
+args = parser.parse_args()
+
+print("Cargando modelo con Python... (puede tardar)", flush=True)
+llm = Llama(
+    model_path=args.model,
+    n_ctx=args.n_ctx,
+    n_gpu_layers=args.n_gpu_layers,
+    n_threads=args.n_threads,
+    verbose=False,
+)
+print("Modelo listo.", flush=True)
+
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, *_):
+        return
+
+    def send_json(self, status, payload):
+        data = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path == "/health":
+            self.send_json(200, {"status": "ok"})
+            return
+        self.send_json(404, {"error": "not found"})
+
+    def do_POST(self):
+        if self.path != "/v1/chat/completions":
+            self.send_json(404, {"error": "not found"})
+            return
+
+        length = int(self.headers.get("Content-Length", "0"))
+        request = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+        output = llm.create_chat_completion(
+            messages=request.get("messages", []),
+            max_tokens=request.get("max_tokens", 512),
+        )
+        self.send_json(200, output)
+
+
+ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
+"#;
 
 #[tauri::command]
 async fn stop_llama_server() -> Result<String, String> {
@@ -518,6 +912,13 @@ fn chat_requests() -> &'static Mutex<HashMap<String, ChatRequest>> {
     CHAT_REQUESTS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
+pub(crate) fn clean_ai_reply(text: &str) -> String {
+    let Ok(re) = regex::Regex::new(r"(?is)<think>.*?</think>|</?think>") else {
+        return text.trim().to_string();
+    };
+    re.replace_all(text, "").trim().to_string()
+}
+
 #[tauri::command]
 async fn chat_start(messages: Vec<ChatMessage>) -> Result<String, String> {
     let request_id = uuid_simple();
@@ -550,10 +951,10 @@ async fn chat_start(messages: Vec<ChatMessage>) -> Result<String, String> {
         let res = match resp {
             Ok(r) if r.status().is_success() => {
                 let data: serde_json::Value = r.json().await.unwrap_or_default();
-                Ok(data["choices"][0]["message"]["content"]
+                let content = data["choices"][0]["message"]["content"]
                     .as_str()
-                    .unwrap_or("No entendí 🥺")
-                    .to_string())
+                    .unwrap_or("No entendi");
+                Ok(clean_ai_reply(content))
             }
             Ok(r) => {
                 let status = r.status();
@@ -947,10 +1348,7 @@ async fn resolve_download_url(url: &str) -> Result<String, String> {
             .build()
             .map_err(|e| e.to_string())?;
 
-        let direct_url = format!(
-            "https://drive.google.com/uc?export=download&id={}",
-            fid
-        );
+        let direct_url = format!("https://drive.google.com/uc?export=download&id={}", fid);
 
         let response = client
             .get(&direct_url)
@@ -981,10 +1379,8 @@ async fn resolve_download_url(url: &str) -> Result<String, String> {
 
         let html = response.text().await.unwrap_or_default();
 
-        let action_re = regex::Regex::new(
-            r#"action="(https?://[^"]*download[^"]*\?[^"]*)""#,
-        )
-        .map_err(|e| e.to_string())?;
+        let action_re = regex::Regex::new(r#"action="(https?://[^"]*download[^"]*\?[^"]*)""#)
+            .map_err(|e| e.to_string())?;
         if let Some(caps) = action_re.captures(&html) {
             let action_url = caps.get(1).unwrap().as_str().replace("&amp;", "&");
             return Ok(action_url);
@@ -997,8 +1393,8 @@ async fn resolve_download_url(url: &str) -> Result<String, String> {
             .map(|m| m.as_str())
             .unwrap_or("");
 
-        let confirm_re = regex::Regex::new(r#""confirm"\s*:\s*"([^"]+)""#)
-            .map_err(|e| e.to_string())?;
+        let confirm_re =
+            regex::Regex::new(r#""confirm"\s*:\s*"([^"]+)""#).map_err(|e| e.to_string())?;
         let confirm = confirm_re
             .captures(&html)
             .and_then(|c| c.get(1))
@@ -2117,7 +2513,8 @@ fn calculate_lnk_score(name: &str, target: &str, query: &str) -> i32 {
 }
 
 fn updater_endpoint() -> Option<String> {
-    let config: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).ok()?;
+    let config: serde_json::Value =
+        serde_json::from_str(include_str!("../tauri.conf.json")).ok()?;
     config
         .get("plugins")?
         .get("updater")?
@@ -2154,7 +2551,11 @@ async fn validate_updater_endpoint() -> Result<(), String> {
     }
 
     serde_json::from_str::<serde_json::Value>(&body).map_err(|e| {
-        let preview = body.chars().take(160).collect::<String>().replace('\n', " ");
+        let preview = body
+            .chars()
+            .take(160)
+            .collect::<String>()
+            .replace('\n', " ");
         format!(
             "latest.json no es JSON valido: {}. Respuesta recibida: {}",
             e, preview
@@ -2212,15 +2613,15 @@ async fn download_and_install_update(app: AppHandle) -> Result<String, String> {
 
     let version = update.version.clone();
     update
-        .download_and_install(
-            move |_chunk, _total| {},
-            || {},
-        )
+        .download_and_install(move |_chunk, _total| {}, || {})
         .await
         .map_err(|e| format!("Error al instalar la actualizacion: {}", e))?;
 
     app.request_restart();
-    Ok(format!("Actualizacion a v{} instalada. Reiniciando...", version))
+    Ok(format!(
+        "Actualizacion a v{} instalada. Reiniciando...",
+        version
+    ))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -2329,6 +2730,10 @@ pub fn run() {
             llama_status,
             get_llama_auto_start,
             set_llama_auto_start,
+            get_model_load_engine,
+            set_model_load_engine,
+            get_model_runtime_config,
+            set_model_runtime_config,
             start_llama_server,
             stop_llama_server,
             system_shutdown,
@@ -2341,6 +2746,7 @@ pub fn run() {
             cancel_download,
             check_updates,
             download_and_install_update,
+            prepare_python_engine,
         ])
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
