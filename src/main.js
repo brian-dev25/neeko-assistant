@@ -1046,12 +1046,29 @@ const applyUpdateBtn = document.getElementById('apply-update-btn');
 const updateStatus = document.getElementById('update-status');
 const updateNotes = document.getElementById('update-notes');
 
+function normalizeUpdateResult(value) {
+    if (typeof value === 'string') {
+        return JSON.parse(value);
+    }
+    return value;
+}
+
+function formatUpdateError(error) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    try {
+        return JSON.stringify(error);
+    } catch {
+        return String(error);
+    }
+}
+
 checkUpdateBtn.addEventListener('click', async () => {
     checkUpdateBtn.disabled = true;
     checkUpdateBtn.textContent = 'Buscando...';
     updateNotes.textContent = '';
     try {
-        const result = await invoke('check_updates');
+        const result = normalizeUpdateResult(await invoke('check_updates'));
         if (result.hasUpdate) {
             updateStatus.textContent = `Nueva versión: v${result.latestVersion} (actual: v${result.currentVersion})`;
             updateStatus.style.color = '#4ade80';
@@ -1065,9 +1082,10 @@ checkUpdateBtn.addEventListener('click', async () => {
             showBubble('Ya tienes la última versión');
         }
     } catch (e) {
-        updateStatus.textContent = 'Error: ' + e;
+        const message = formatUpdateError(e);
+        updateStatus.textContent = 'Error: ' + message;
         updateStatus.style.color = '#f87171';
-        showBubble('Error: ' + e);
+        showBubble('Error: ' + message);
     }
     checkUpdateBtn.disabled = false;
     checkUpdateBtn.textContent = 'Buscar actualizaciones';

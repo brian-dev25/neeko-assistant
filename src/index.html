@@ -147,14 +147,14 @@
                     <p style="color:#f87171;font-size:11px;margin-top:4px;">Permite comandos como "apaga la pc", "reiniciar wifi", "reiniciar bluetooth". Desactivado por defecto.</p>
                 </section>
 
-                <section class="settings-section">
+                <section class="settings-section update-section">
                     <h4>Actualizaciones</h4>
-                    <div id="update-status" style="color:var(--text-dim);font-size:12px;margin-bottom:8px;">Versión actual: v1.0.0</div>
-                    <div style="display:flex;gap:8px;">
+                    <div id="update-status" class="update-status">Versión actual: v1.0.0</div>
+                    <div class="installer-actions one-row update-actions">
                         <button id="check-update-btn" type="button">Buscar actualizaciones</button>
-                        <button id="apply-update-btn" type="button" style="display:none;border-color:#4ade80;color:#4ade80;">Actualizar y reiniciar</button>
+                        <button id="apply-update-btn" class="update-apply-btn" type="button" style="display:none;">Actualizar y reiniciar</button>
                     </div>
-                    <div id="update-notes" style="color:var(--text-dim);font-size:11px;margin-top:6px;max-height:60px;overflow-y:auto;"></div>
+                    <div id="update-notes" class="update-notes"></div>
                 </section>
             </div>
 
