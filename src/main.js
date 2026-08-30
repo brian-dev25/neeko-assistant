@@ -1,5 +1,13 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+let THREE = null;
+let GLTFLoaderClass = null;
+
+try {
+    THREE = await import('three');
+    const gltfMod = await import('three/addons/loaders/GLTFLoader.js');
+    GLTFLoaderClass = gltfMod.GLTFLoader;
+} catch (e) {
+    console.warn('Three.js no se pudo cargar, 3D deshabilitado:', e);
+}
 
 const { invoke } = window.__TAURI__.core;
 const { getCurrentWindow } = window.__TAURI__.window;
@@ -44,10 +52,13 @@ let neeko3dHeadTargetRotX = 0;
 let neeko3dHeadTargetRotY = 0;
 let neeko3dHeadCurrentRotX = 0;
 let neeko3dHeadCurrentRotY = 0;
-const _headOffsetQuat = new THREE.Quaternion();
-const _headSavedQuat = new THREE.Quaternion();
-const _headAxis = new THREE.Vector3(0, 1, 0);
-const _headSideAxis = new THREE.Vector3(1, 0, 0);
+let _headOffsetQuat, _headSavedQuat, _headAxis, _headSideAxis;
+if (THREE) {
+    _headOffsetQuat = new THREE.Quaternion();
+    _headSavedQuat = new THREE.Quaternion();
+    _headAxis = new THREE.Vector3(0, 1, 0);
+    _headSideAxis = new THREE.Vector3(1, 0, 0);
+}
 
 const SPRITES = {
     default: "NEEKO.png",
@@ -80,7 +91,7 @@ function applyNeekoSprite(sprite) {
 }
 
 function applyRender3D(enabled) {
-    neeko3dRendered = !!enabled;
+    neeko3dRendered = !!enabled && !!THREE;
     neekoSection.classList.toggle('render-3d', neeko3dRendered);
     neekoSprite.classList.toggle('using-3d', neeko3dRendered);
 
@@ -98,7 +109,7 @@ function applyRender3D(enabled) {
 }
 
 function initNeeko3d() {
-    if (neeko3dRenderer) return;
+    if (neeko3dRenderer || !THREE || !GLTFLoaderClass) return;
 
     neeko3dClock = new THREE.Clock();
     neeko3dScene = new THREE.Scene();
@@ -128,7 +139,7 @@ function initNeeko3d() {
     neeko3dResizeObserver.observe(neeko3d);
     resizeNeeko3d();
 
-    new GLTFLoader().load('neeko.glb', ({ scene, animations }) => {
+        new GLTFLoaderClass().load('neeko.glb', ({ scene, animations }) => {
         neeko3dModel = scene;
         neeko3dModel.rotation.y = -0.12;
 
