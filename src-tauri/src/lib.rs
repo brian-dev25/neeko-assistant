@@ -374,18 +374,87 @@ fn build_llama_server_command(
 }
 
 fn find_system_python() -> Option<PathBuf> {
-    for name in &["python", "py"] {
-        let mut cmd = Command::new(name);
-        #[cfg(target_os = "windows")]
-        cmd.creation_flags(0x08000000);
-        cmd.args(["--version"]);
-        if let Ok(out) = cmd.output() {
-            if out.status.success() {
-                return Some(PathBuf::from(name));
+    if let Ok(path) = std::env::var("NEEKO_SYSTEM_PYTHON") {
+        let candidate = PathBuf::from(path);
+        if python_can_create_venv(&candidate) {
+            return Some(candidate);
+        }
+    }
+
+    if let Some(local_data) = dirs::data_local_dir() {
+        for version in ["313", "312", "311", "310"] {
+            let candidate = local_data
+                .join("Programs")
+                .join("Python")
+                .join(format!("Python{}", version))
+                .join("python.exe");
+            if python_can_create_venv(&candidate) {
+                return Some(candidate);
             }
         }
     }
+
+    for name in &["python", "py"] {
+        let candidate = PathBuf::from(name);
+        if python_can_create_venv(&candidate) {
+            return Some(candidate);
+        }
+    }
     None
+}
+
+fn python_can_create_venv(command: &Path) -> bool {
+    let mut cmd = Command::new(command);
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(0x08000000);
+    cmd.args(["-c", "import sys, venv; print(sys.executable)"])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+fn install_python_with_winget(app: &AppHandle) -> Result<(), String> {
+    if !command_works("winget", &["--version"]) {
+        return Err("No encontre Python ni winget. Instala Python 3.10+ desde python.org y marca 'Add to PATH'.".to_string());
+    }
+
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "label": "Motor Python",
+            "message": "Python no esta instalado. Instalando Python con winget...",
+            "percent": 12,
+        }),
+    );
+
+    let mut cmd = Command::new("winget");
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(0x08000000);
+    let output = cmd
+        .args([
+            "install",
+            "--id",
+            "Python.Python.3.13",
+            "-e",
+            "--source",
+            "winget",
+            "--accept-package-agreements",
+            "--accept-source-agreements",
+            "--silent",
+        ])
+        .output()
+        .map_err(|e| format!("No pude ejecutar winget: {}", e))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        Err(format!(
+            "No pude instalar Python con winget: {}{}",
+            stdout, stderr
+        ))
+    }
 }
 
 #[tauri::command]
@@ -394,76 +463,111 @@ async fn prepare_python_engine(app: AppHandle) -> Result<String, String> {
     let venv_dir = venv_python
         .parent()
         .and_then(|p| p.parent())
-        .and_then(|p| p.parent())
         .ok_or("No pude resolver la ruta del venv")?
         .to_path_buf();
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "find_python",
-        "message": "Buscando Python en el sistema...",
-        "percent": 10,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "find_python",
+            "message": "Buscando Python en el sistema...",
+            "percent": 10,
+        }),
+    );
 
-    let system_python = find_system_python()
-        .ok_or_else(|| {
-            "No encontre Python instalado. Instala Python 3.10+ desde python.org y marca 'Add to PATH'.".to_string()
-        })?;
+    let system_python = match find_system_python() {
+        Some(python) => python,
+        None => {
+            install_python_with_winget(&app)?;
+            find_system_python().ok_or_else(|| {
+                "Instale Python, pero Windows todavia no lo encuentra. Reinicia la app e intenta de nuevo.".to_string()
+            })?
+        }
+    };
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "create_venv",
-        "message": format!("Usando {} — Creando venv en {}...", system_python.display(), venv_dir.display()),
-        "percent": 20,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "create_venv",
+            "message": "Creando entorno Python propio de Neeko...",
+            "percent": 20,
+        }),
+    );
 
     if venv_python.exists() {
-        let _ = app.emit("python-engine-progress", serde_json::json!({
-            "step": "venv_exists",
-            "message": "Venv ya existe, verificando...",
-            "percent": 25,
-        }));
+        let _ = app.emit(
+            "python-engine-progress",
+            serde_json::json!({
+                "step": "venv_exists",
+                "message": "Venv ya existe, verificando...",
+                "percent": 25,
+            }),
+        );
     } else {
+        if let Some(parent) = venv_dir.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("No pude crear la carpeta de Python: {}", e))?;
+        }
         let mut cmd = Command::new(&system_python);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(0x08000000);
         cmd.args(["-m", "venv", venv_dir.to_string_lossy().as_ref()]);
-        let output = cmd.output().map_err(|e| format!("Error creando venv: {}", e))?;
+        let output = cmd
+            .output()
+            .map_err(|e| format!("Error creando venv: {}", e))?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             return Err(format!("Error creando venv: {}", stderr));
         }
     }
 
-    let pip = venv_python
-        .parent()
-        .unwrap()
-        .join("pip.exe");
+    if !venv_python.exists() {
+        return Err(format!(
+            "El entorno Python se creo, pero no encontre {}",
+            venv_python.display()
+        ));
+    }
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "upgrade_pip",
-        "message": "Actualizando pip...",
-        "percent": 35,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "upgrade_pip",
+            "message": "Actualizando pip...",
+            "percent": 35,
+        }),
+    );
 
     {
         let mut cmd = Command::new(&venv_python);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(0x08000000);
         cmd.args(["-m", "pip", "install", "--upgrade", "pip"]);
-        let _ = cmd.output();
+        let output = cmd
+            .output()
+            .map_err(|e| format!("Error actualizando pip: {}", e))?;
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Error actualizando pip: {}", stderr));
+        }
     }
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "install_llama_cpp",
-        "message": "Instalando llama-cpp-python (puede tardar varios minutos)...",
-        "percent": 45,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "install_llama_cpp",
+            "message": "Instalando llama-cpp-python (puede tardar varios minutos)...",
+            "percent": 45,
+        }),
+    );
 
     {
-        let mut cmd = Command::new(&pip);
+        let mut cmd = Command::new(&venv_python);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(0x08000000);
-        cmd.args(["install", "llama-cpp-python"]);
-        let output = cmd.output().map_err(|e| format!("Error ejecutando pip: {}", e))?;
+        cmd.args(["-m", "pip", "install", "llama-cpp-python"]);
+        let output = cmd
+            .output()
+            .map_err(|e| format!("Error ejecutando pip: {}", e))?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             if stderr.contains("already satisfied") || stderr.contains("Successfully installed") {
@@ -473,30 +577,38 @@ async fn prepare_python_engine(app: AppHandle) -> Result<String, String> {
         }
     }
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "verify",
-        "message": "Verificando instalacion...",
-        "percent": 90,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "verify",
+            "message": "Verificando instalacion...",
+            "percent": 90,
+        }),
+    );
 
     {
         let mut cmd = Command::new(&venv_python);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(0x08000000);
         cmd.args(["-c", "import llama_cpp; print(llama_cpp.__version__)"]);
-        let output = cmd.output().map_err(|e| format!("Error verificando: {}", e))?;
+        let output = cmd
+            .output()
+            .map_err(|e| format!("Error verificando: {}", e))?;
         if !output.status.success() {
             return Err("llama-cpp-python se instalo pero no se pudo importar.".to_string());
         }
     }
 
-    let _ = app.emit("python-engine-progress", serde_json::json!({
-        "step": "done",
-        "message": "Motor Python listo.",
-        "percent": 100,
-    }));
+    let _ = app.emit(
+        "python-engine-progress",
+        serde_json::json!({
+            "step": "done",
+            "message": "Motor Python listo.",
+            "percent": 100,
+        }),
+    );
 
-    Ok(format!("Motor Python preparado en {}", venv_python.display()))
+    Ok("Motor Python listo".to_string())
 }
 
 fn build_python_model_server_command(
@@ -542,7 +654,11 @@ fn ensure_python_model_server_script() -> Result<PathBuf, String> {
 }
 
 fn neeko_python_venv() -> PathBuf {
-    app_data_dir().join("python").join("venv").join("Scripts").join("python.exe")
+    app_data_dir()
+        .join("python")
+        .join("venv")
+        .join("Scripts")
+        .join("python.exe")
 }
 
 fn find_python_with_llama_cpp() -> Option<PathBuf> {
@@ -1207,6 +1323,45 @@ fn google_drive_file_id(url: &str) -> Result<Option<String>, String> {
     Err("No pude extraer el ID del archivo de Google Drive".to_string())
 }
 
+fn html_attr_value(tag: &str, attr: &str) -> Option<String> {
+    let re = regex::Regex::new(&format!(r#"(?i)\b{}\s*=\s*["']([^"']+)["']"#, attr)).ok()?;
+    re.captures(tag)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().replace("&amp;", "&"))
+}
+
+fn google_drive_confirm_url_from_html(html: &str) -> Option<String> {
+    let form_re =
+        regex::Regex::new(r#"(?is)(<form[^>]*id=["']download-form["'][^>]*>)(.*?)</form>"#)
+            .ok()?;
+    let captures = form_re.captures(html)?;
+    let form_tag = captures.get(1)?.as_str();
+    let form_body = captures.get(2)?.as_str();
+    let action = html_attr_value(form_tag, "action")?;
+
+    let input_re = regex::Regex::new(r#"(?is)<input\b[^>]*>"#).ok()?;
+    let params = input_re
+        .find_iter(form_body)
+        .filter_map(|m| {
+            let input = m.as_str();
+            let name = html_attr_value(input, "name")?;
+            let value = html_attr_value(input, "value").unwrap_or_default();
+            Some(format!(
+                "{}={}",
+                urlencoding::encode(&name),
+                urlencoding::encode(&value)
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    if params.is_empty() {
+        return None;
+    }
+
+    let separator = if action.contains('?') { '&' } else { '?' };
+    Some(format!("{}{}{}", action, separator, params.join("&")))
+}
+
 async fn download_google_drive_file(
     app: &AppHandle,
     file_id: &str,
@@ -1261,25 +1416,12 @@ async fn download_google_drive_file(
         format!("No pude leer la pagina de Google Drive: {}", e)
     })?;
 
-    let uuid_re =
-        regex::Regex::new(r#"name="uuid"\s+value="([^"]+)""#).map_err(|e| e.to_string())?;
-    let uuid = uuid_re
-        .captures(&html)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str())
-        .unwrap_or("");
-
-    let confirm_url = if !uuid.is_empty() {
-        format!(
-            "https://drive.google.com/uc?export=download&id={}&confirm=t&uuid={}",
-            file_id, uuid
-        )
-    } else {
+    let confirm_url = google_drive_confirm_url_from_html(&html).unwrap_or_else(|| {
         format!(
             "https://drive.google.com/uc?export=download&id={}&confirm=t",
             file_id
         )
-    };
+    });
 
     emit_download_progress(
         app,
@@ -1465,10 +1607,11 @@ fn find_file_recursive(dir: &Path, file_name: &str) -> Option<PathBuf> {
 }
 
 pub(crate) async fn install_ffmpeg_impl(app: AppHandle) -> Result<String, String> {
-    let url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
+    let url =
+        "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
     let install_dir = app_data_dir().join("tools").join("ffmpeg");
     let download_dir = app_data_dir().join("downloads");
-    let zip_path = download_dir.join("ffmpeg-release-essentials.zip");
+    let zip_path = download_dir.join("ffmpeg-master-latest-win64-gpl.zip");
     let extract_dir = download_dir.join("ffmpeg-extract");
 
     download_to_file(&app, "ffmpeg", "FFmpeg + FFprobe", url, &zip_path).await?;
@@ -1573,8 +1716,14 @@ pub(crate) async fn install_git_impl(app: AppHandle) -> Result<String, String> {
         .into_iter()
         .flatten()
         .find_map(|asset| {
-            let name = asset["name"].as_str()?.to_lowercase();
-            if name.ends_with("64-bit.exe") && name.starts_with("git-") {
+            let name = asset["name"].as_str()?;
+            let lower = name.to_lowercase();
+            if lower.starts_with("git-")
+                && lower.ends_with("-64-bit.exe")
+                && !lower.contains("portable")
+                && !lower.contains("mingit")
+                && !lower.contains("arm64")
+            {
                 asset["browser_download_url"]
                     .as_str()
                     .map(|url| url.to_string())
@@ -1773,7 +1922,7 @@ pub(crate) fn uninstall_ffmpeg_impl() -> Result<String, String> {
     let install_dir = app_data_dir().join("tools").join("ffmpeg");
     let download_zip = app_data_dir()
         .join("downloads")
-        .join("ffmpeg-release-essentials.zip");
+        .join("ffmpeg-master-latest-win64-gpl.zip");
     let extract_dir = app_data_dir().join("downloads").join("ffmpeg-extract");
 
     let _ = std::fs::remove_file(download_zip);

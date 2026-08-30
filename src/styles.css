@@ -321,6 +321,7 @@ body {
 
 .settings-scroll {
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
     min-height: 0;
 }
@@ -593,6 +594,9 @@ body {
     background: #202037;
     color: #d4d4dd;
     font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
 }
 
 .download-status.hidden {
@@ -603,6 +607,22 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    min-width: 0;
+}
+
+.download-status-row strong,
+.download-status-row span,
+.download-status > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.download-status-row strong {
+    flex: 1;
+}
+
+.download-status-row span {
+    flex-shrink: 0;
 }
 
 .download-bar {
@@ -612,7 +632,8 @@ body {
     background: #151526;
 }
 
-#dependency-download-bar {
+#dependency-download-bar,
+#python-engine-bar {
     width: 0%;
     height: 100%;
     border-radius: inherit;

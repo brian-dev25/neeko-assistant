@@ -663,6 +663,11 @@ const dependencyDownloadPercent = document.getElementById('dependency-download-p
 const dependencyDownloadBar = document.getElementById('dependency-download-bar');
 const dependencyDownloadMessage = document.getElementById('dependency-download-message');
 const cancelDownloadBtn = document.getElementById('cancel-download-btn');
+const pythonEngineStatus = document.getElementById('python-engine-status');
+const pythonEngineLabel = document.getElementById('python-engine-label');
+const pythonEnginePercent = document.getElementById('python-engine-percent');
+const pythonEngineBar = document.getElementById('python-engine-bar');
+const pythonEngineMessage = document.getElementById('python-engine-message');
 const openAdvancedAiBtn = document.getElementById('open-advanced-ai-btn');
 const backToAiBtn = document.getElementById('back-to-ai-btn');
 const modelRuntimeHelpBtn = document.getElementById('model-runtime-help-btn');
@@ -784,7 +789,7 @@ settingsModalContent.addEventListener('mouseleave', () => {
 });
 
 function setInstallerButtonsDisabled(disabled) {
-    [installFfmpegBtn, installGitBtn, installModelBtn, installModelFileBtn, uninstallFfmpegBtn, uninstallGitBtn, uninstallModelBtn].forEach((btn) => {
+    [installFfmpegBtn, installGitBtn, installModelBtn, installModelFileBtn, preparePythonEngineBtn, uninstallFfmpegBtn, uninstallGitBtn, uninstallModelBtn].forEach((btn) => {
         if (btn) btn.disabled = disabled;
     });
 }
@@ -803,6 +808,16 @@ function showDependencyProgress(payload) {
     dependencyDownloadBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
     const totalText = payload.total ? ` · ${formatBytes(payload.downloaded)} / ${formatBytes(payload.total)} · faltan ${formatBytes(Math.max(0, payload.total - payload.downloaded))}` : '';
     dependencyDownloadMessage.textContent = `${payload.message || 'Descargando...'}${totalText}`;
+}
+
+function showPythonEngineProgress(payload) {
+    if (!pythonEngineStatus) return;
+    const percent = payload.percent ?? 0;
+    pythonEngineStatus.classList.remove('hidden');
+    pythonEngineLabel.textContent = payload.label || 'Motor Python';
+    pythonEnginePercent.textContent = payload.percent == null ? '...' : `${percent}%`;
+    pythonEngineBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    pythonEngineMessage.textContent = payload.message || 'Preparando...';
 }
 
 settingsBtn.addEventListener('click', async () => {
@@ -944,17 +959,7 @@ if (window.__TAURI__.event?.listen) {
         showDependencyProgress(event.payload || {});
     });
     window.__TAURI__.event.listen('python-engine-progress', (event) => {
-        const p = event.payload || {};
-        const status = document.getElementById('python-engine-status');
-        const label = document.getElementById('python-engine-label');
-        const percent = document.getElementById('python-engine-percent');
-        const bar = document.getElementById('python-engine-bar');
-        const msg = document.getElementById('python-engine-message');
-        status.classList.remove('hidden');
-        if (label) label.textContent = p.step || 'Motor Python';
-        if (percent) percent.textContent = p.percent != null ? p.percent + '%' : '...';
-        if (bar) bar.style.width = (p.percent || 0) + '%';
-        if (msg) msg.textContent = p.message || '';
+        showPythonEngineProgress(event.payload || {});
     });
 }
 
@@ -1010,6 +1015,20 @@ installModelBtn.addEventListener('click', () => {
     runInstaller(installModelBtn, 'install_model', { modelUrl: 'https://drive.google.com/file/d/1eHu-UkJ0cdK35kvpt9YPoNBVPtuTgGHe/view?usp=drive_link' });
 });
 
+preparePythonEngineBtn?.addEventListener('click', async () => {
+    setInstallerButtonsDisabled(true);
+    showPythonEngineProgress({ label: 'Motor Python', percent: 0, message: 'Preparando...' });
+    try {
+        const message = await invoke('prepare_python_engine');
+        showPythonEngineProgress({ label: 'Motor Python', percent: 100, message });
+        showBubble(message);
+    } catch (e) {
+        showPythonEngineProgress({ label: 'Motor Python', percent: null, message: 'Error: ' + e });
+        showBubble('Error: ' + e);
+    }
+    setInstallerButtonsDisabled(false);
+});
+
 document.getElementById('install-model-browser-btn').addEventListener('click', () => {
     invoke('open_url', { url: 'https://drive.google.com/file/d/1eHu-UkJ0cdK35kvpt9YPoNBVPtuTgGHe/view' });
     showBubble('Abri el navegador para descargar el modelo');
@@ -1023,25 +1042,6 @@ installModelFileBtn.addEventListener('click', async () => {
     } catch (e) {
         showBubble('Error: ' + e);
     }
-});
-
-preparePythonEngineBtn.addEventListener('click', async () => {
-    preparePythonEngineBtn.disabled = true;
-    preparePythonEngineBtn.textContent = 'Preparando...';
-    const status = document.getElementById('python-engine-status');
-    const msg = document.getElementById('python-engine-message');
-    status.classList.remove('hidden');
-    msg.textContent = 'Iniciando...';
-    try {
-        const message = await invoke('prepare_python_engine');
-        msg.textContent = message;
-        showBubble(message);
-    } catch (e) {
-        msg.textContent = 'Error: ' + e;
-        showBubble('Error: ' + e);
-    }
-    preparePythonEngineBtn.disabled = false;
-    preparePythonEngineBtn.textContent = 'Preparar motor Python';
 });
 
 async function runUninstaller(button, command, confirmation) {
