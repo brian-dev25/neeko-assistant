@@ -35,7 +35,7 @@ Si la key no tiene password, deja `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` vacio.
 
 ## 3. Publicar una version
 
-Actualiza la version en estos tres archivos:
+Actualiza la version en estos tres archivos. Las tres versiones deben coincidir:
 
 ```text
 package.json
@@ -79,3 +79,16 @@ Los archivos salen en:
 ```text
 src-tauri/target/release/bundle/nsis/
 ```
+
+## Nota sobre v1.0.0 / v1.1.0
+
+Las builds publicadas como v1.0.0 y v1.1.0 tienen una public key de updater
+incorrecta en `tauri.conf.json`. Esas instalaciones no pueden verificar updates
+firmados con la key real y muestran:
+
+```text
+The signature verification failed
+```
+
+Solucion: instalar manualmente una build nueva generada con la public key
+correcta. A partir de esa build, el updater automatico queda recuperado.

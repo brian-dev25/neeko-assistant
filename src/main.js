@@ -1180,13 +1180,17 @@ function normalizeUpdateResult(value) {
 }
 
 function formatUpdateError(error) {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    try {
-        return JSON.stringify(error);
-    } catch {
-        return String(error);
+    const raw = error instanceof Error ? error.message : (typeof error === 'string' ? error : (() => {
+        try {
+            return JSON.stringify(error);
+        } catch {
+            return String(error);
+        }
+    })());
+    if (/signature verification failed/i.test(raw)) {
+        return 'La firma de la actualizacion no coincide. Instala manualmente la ultima version una vez; despues las actualizaciones automaticas van a funcionar.';
     }
+    return raw;
 }
 
 checkUpdateBtn.addEventListener('click', async () => {
