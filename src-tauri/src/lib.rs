@@ -2116,9 +2116,58 @@ fn calculate_lnk_score(name: &str, target: &str, query: &str) -> i32 {
     score
 }
 
+fn updater_endpoint() -> Option<String> {
+    let config: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).ok()?;
+    config
+        .get("plugins")?
+        .get("updater")?
+        .get("endpoints")?
+        .as_array()?
+        .first()?
+        .as_str()
+        .map(|value| value.to_string())
+}
+
+async fn validate_updater_endpoint() -> Result<(), String> {
+    let Some(endpoint) = updater_endpoint() else {
+        return Err("No encontre endpoints en plugins.updater de tauri.conf.json".to_string());
+    };
+
+    let response = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("No pude preparar el cliente HTTP del updater: {}", e))?
+        .get(&endpoint)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| format!("No pude leer latest.json del updater: {}", e))?;
+
+    let status = response.status();
+    let body = response.text().await.unwrap_or_default();
+
+    if !status.is_success() {
+        return Err(format!(
+            "El updater no encontro latest.json en {} (HTTP {}). Publica un release con latest.json y el instalador firmado.",
+            endpoint, status
+        ));
+    }
+
+    serde_json::from_str::<serde_json::Value>(&body).map_err(|e| {
+        let preview = body.chars().take(160).collect::<String>().replace('\n', " ");
+        format!(
+            "latest.json no es JSON valido: {}. Respuesta recibida: {}",
+            e, preview
+        )
+    })?;
+
+    Ok(())
+}
+
 #[tauri::command]
 async fn check_updates(app: AppHandle) -> Result<serde_json::Value, String> {
     let current = env!("CARGO_PKG_VERSION").to_string();
+    validate_updater_endpoint().await?;
     let updater = app
         .updater()
         .map_err(|e| format!("Updater no configurado: {}", e))?;
@@ -2151,6 +2200,7 @@ async fn check_updates(app: AppHandle) -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 async fn download_and_install_update(app: AppHandle) -> Result<String, String> {
+    validate_updater_endpoint().await?;
     let updater = app
         .updater()
         .map_err(|e| format!("Updater no configurado: {}", e))?;
