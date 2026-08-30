@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+.hidden {
+    display: none !important;
+}
+
 body {
     background: #1a1a2e;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -71,7 +75,14 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     padding: 20px;
+    min-height: 0;
+}
+
+#neeko-section.render-3d {
+    justify-content: flex-end;
+    padding-bottom: 0;
 }
 
 #speech-bubble {
@@ -79,9 +90,9 @@ body {
     border: 1px solid #7c3aed;
     border-radius: 16px;
     padding: 12px 18px;
-    margin-bottom: 15px;
     max-width: 300px;
     min-width: 100px;
+    flex: 0 0 auto;
     animation: bubblePop 0.3s ease-out;
 }
 
@@ -102,9 +113,25 @@ body {
 }
 
 #neeko-sprite {
+    position: relative;
     width: 180px;
     height: 180px;
     animation: float 3s ease-in-out infinite;
+}
+
+#neeko-sprite.using-3d {
+    flex: 1 1 auto;
+    width: min(100%, 430px);
+    height: auto;
+    max-height: 100%;
+    min-height: 0;
+    aspect-ratio: 0.78;
+    margin-bottom: -1px;
+    animation: float3d 4.2s ease-in-out infinite;
+}
+
+#neeko-sprite.using-3d::before {
+    content: none;
 }
 
 #neeko-sprite.sprite-standing {
@@ -127,13 +154,67 @@ body {
     visibility: hidden;
 }
 
+#neeko-3d {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    pointer-events: none;
+    filter: none;
+}
+
+#neeko-3d canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#neeko-sprite.using-3d.sprite-standing {
+    height: auto;
+}
+
+#neeko-sprite.using-3d.sprite-sitting {
+    width: min(100%, 430px);
+    height: auto;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.checkbox-row input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-row label {
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+}
+
 @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
 }
 
+@keyframes float3d {
+    0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+    50% { transform: translateY(-8px) rotate(0.6deg); }
+}
+
 #neeko-sprite.talking {
     animation: talk 0.4s ease-in-out infinite;
+}
+
+#neeko-sprite.using-3d.talking {
+    animation: talk3d 0.45s ease-in-out infinite;
 }
 
 @keyframes talk {
@@ -141,13 +222,27 @@ body {
     50% { transform: translateY(-5px) scale(1.03); }
 }
 
+@keyframes talk3d {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-4px) scale(1.025); }
+}
+
 #neeko-sprite.thinking {
     animation: think 1.2s ease-in-out infinite;
+}
+
+#neeko-sprite.using-3d.thinking {
+    animation: think3d 1.4s ease-in-out infinite;
 }
 
 @keyframes think {
     0%, 100% { transform: translateY(0) rotate(0deg); }
     50% { transform: translateY(-6px) rotate(-3deg); }
+}
+
+@keyframes think3d {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(-1.6deg); }
 }
 
 .emotion-happy #neeko-img {
@@ -756,7 +851,12 @@ body {
 
 @media (max-width: 420px), (max-height: 620px) {
     #neeko-section {
+        gap: 10px;
         padding: 14px;
+    }
+
+    #neeko-section.render-3d {
+        padding-bottom: 0;
     }
 
     #speech-bubble {
@@ -768,6 +868,13 @@ body {
         height: 150px;
     }
 
+    #neeko-sprite.using-3d {
+        width: min(100%, 410px);
+        height: auto;
+        max-height: 100%;
+        min-height: 0;
+    }
+
     #neeko-sprite.sprite-standing {
         height: 180px;
     }
@@ -775,6 +882,15 @@ body {
     #neeko-sprite.sprite-sitting {
         width: 170px;
         height: 170px;
+    }
+
+    #neeko-sprite.using-3d.sprite-standing {
+        height: auto;
+    }
+
+    #neeko-sprite.using-3d.sprite-sitting {
+        width: min(100%, 410px);
+        height: auto;
     }
 
     .modal {

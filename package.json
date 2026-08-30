@@ -1,6 +1,6 @@
 {
   "name": "neeko-assistant",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Asistente Neeko - Tu assistente virtual estilo Clippy",
   "scripts": {
     "tauri": "tauri",
@@ -10,7 +10,8 @@
     "setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-signed.ps1"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0"
+    "@tauri-apps/api": "^2.0.0",
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"

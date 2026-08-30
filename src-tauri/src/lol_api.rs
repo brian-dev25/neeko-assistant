@@ -446,6 +446,8 @@ pub fn lol_get_config() -> Result<String, String> {
             "NEEKO-sitting.png" => "NEEKO-sitting.png",
             _ => "NEEKO.png",
         },
+        "render_3d": config.render_3d,
+        "neeko_3d_animation": config.neeko_3d_animation,
         "lol_region": config.lol_region,
         "riot_id": config.riot_id,
     })

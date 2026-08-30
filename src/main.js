@@ -1,9 +1,14 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 const { invoke } = window.__TAURI__.core;
 const { getCurrentWindow } = window.__TAURI__.window;
 const appWindow = getCurrentWindow();
 
+const neekoSection = document.getElementById('neeko-section');
 const neekoSprite = document.getElementById('neeko-sprite');
 const neekoImg = document.getElementById('neeko-img');
+const neeko3d = document.getElementById('neeko-3d');
 const speechBubble = document.getElementById('speech-bubble');
 const bubbleText = document.getElementById('bubble-text');
 const chatInput = document.getElementById('chat-input');
@@ -16,11 +21,50 @@ let currentAbortController = null;
 let localAiModelAvailable = false;
 let currentModelLoadEngine = 'llama';
 let currentModelRuntimeConfig = null;
+let neeko3dAnimationId = null;
+let neeko3dRendered = false;
+let neeko3dScene = null;
+let neeko3dCamera = null;
+let neeko3dRenderer = null;
+let neeko3dClock = null;
+let neeko3dMixer = null;
+let neeko3dModel = null;
+let neeko3dModelBaseY = 0;
+let neeko3dActions = new Map();
+let neeko3dActiveAction = null;
+let neeko3dResizeObserver = null;
+let neeko3dMouseTracking = true;
+let neeko3dMouseX = 0;
+let neeko3dMouseY = 0;
+let neeko3dSelectedIdle = 'Neeko_idle3.anm';
+let neeko3dIdleCleanup = null;
+let neeko3dHeadBone = null;
+let neeko3dNeckBone = null;
+let neeko3dHeadTargetRotX = 0;
+let neeko3dHeadTargetRotY = 0;
+let neeko3dHeadCurrentRotX = 0;
+let neeko3dHeadCurrentRotY = 0;
+const _headOffsetQuat = new THREE.Quaternion();
+const _headSavedQuat = new THREE.Quaternion();
+const _headAxis = new THREE.Vector3(0, 1, 0);
+const _headSideAxis = new THREE.Vector3(1, 0, 0);
 
 const SPRITES = {
     default: "NEEKO.png",
     standing: "NEEKO-standing-costume.png",
     sitting: "NEEKO-sitting.png",
+};
+
+const NEEKO_3D_ANIMATIONS = {
+    idle: ['Idle1_Base', 'Idle2_Base', 'Neeko_idle3.anm'],
+    thinking: 'Idlein_Animal',
+    talking: 'Joke_Loop',
+};
+
+const NEEKO_3D_PORTRAIT = {
+    centerX: 0,
+    centerY: 5.9,
+    viewHeight: 4,
 };
 
 function normalizeNeekoSprite(sprite) {
@@ -33,6 +77,229 @@ function applyNeekoSprite(sprite) {
     neekoImg.classList.remove('sprite-loading');
     neekoSprite.classList.toggle('sprite-standing', selected === SPRITES.standing);
     neekoSprite.classList.toggle('sprite-sitting', selected === SPRITES.sitting);
+}
+
+function applyRender3D(enabled) {
+    neeko3dRendered = !!enabled;
+    neekoSection.classList.toggle('render-3d', neeko3dRendered);
+    neekoSprite.classList.toggle('using-3d', neeko3dRendered);
+
+    if (neeko3dRendered) {
+        neekoImg.style.display = 'none';
+        neeko3d.style.display = 'block';
+        initNeeko3d();
+        syncNeeko3dAnimation();
+        startNeeko3dIdle();
+    } else {
+        neekoImg.style.display = '';
+        neeko3d.style.display = 'none';
+        stopNeeko3dIdle();
+    }
+}
+
+function initNeeko3d() {
+    if (neeko3dRenderer) return;
+
+    neeko3dClock = new THREE.Clock();
+    neeko3dScene = new THREE.Scene();
+
+    neeko3dCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 50);
+    neeko3dCamera.position.set(0, NEEKO_3D_PORTRAIT.centerY, 7);
+    neeko3dCamera.lookAt(0, NEEKO_3D_PORTRAIT.centerY, 0);
+
+    neeko3dRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    neeko3dRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    neeko3dRenderer.setClearColor(0x000000, 0);
+    neeko3dRenderer.outputColorSpace = THREE.SRGBColorSpace;
+    neeko3d.appendChild(neeko3dRenderer.domElement);
+
+    const ambientLight = new THREE.HemisphereLight(0xdff7ff, 0x2a2140, 2.5);
+    neeko3dScene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    keyLight.position.set(2.5, 4.5, 5);
+    neeko3dScene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x8fdcff, 1.2);
+    fillLight.position.set(-3, 2.4, 3);
+    neeko3dScene.add(fillLight);
+
+    neeko3dResizeObserver = new ResizeObserver(resizeNeeko3d);
+    neeko3dResizeObserver.observe(neeko3d);
+    resizeNeeko3d();
+
+    new GLTFLoader().load('neeko.glb', ({ scene, animations }) => {
+        neeko3dModel = scene;
+        neeko3dModel.rotation.y = -0.12;
+
+        const box = new THREE.Box3().setFromObject(neeko3dModel);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const avatarHeight = 2.95;
+        const modelScale = avatarHeight / Math.max(size.y, 0.001);
+
+        neeko3dModel.scale.setScalar(modelScale);
+        neeko3dModel.position.set(-center.x * modelScale, -box.min.y * modelScale - 0.08, -center.z * modelScale);
+        neeko3dModelBaseY = neeko3dModel.position.y;
+
+        neeko3dHeadBone = null;
+        neeko3dNeckBone = null;
+
+        const boneNames = [];
+        neeko3dModel.traverse((child) => {
+            const name = child.name.toLowerCase();
+            if (child.isMesh) {
+                child.frustumCulled = false;
+            }
+            if (child.name && !child.isMesh && !child.isLight && !child.isCamera) {
+                boneNames.push(child.name);
+            }
+            if (!neeko3dHeadBone && (name.includes('head') || name.includes('cabeza'))) {
+                neeko3dHeadBone = child;
+            }
+            if (!neeko3dNeckBone && (name.includes('neck') || name.includes('cuello'))) {
+                neeko3dNeckBone = child;
+            }
+        });
+        console.log('Bones found:', boneNames);
+        console.log('Head bone:', neeko3dHeadBone?.name, 'Neck bone:', neeko3dNeckBone?.name);
+
+        neeko3dScene.add(neeko3dModel);
+        neeko3dMixer = new THREE.AnimationMixer(neeko3dModel);
+        animations.forEach((clip) => {
+            neeko3dActions.set(clip.name, neeko3dMixer.clipAction(clip));
+        });
+        syncNeeko3dAnimation();
+    }, undefined, (error) => {
+        console.error('No pude cargar neeko.glb:', error);
+        neekoImg.style.display = '';
+        neeko3d.style.display = 'none';
+    });
+}
+
+function resizeNeeko3d() {
+    if (!neeko3dRenderer || !neeko3dCamera) return;
+
+    const rect = neeko3d.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(rect.width));
+    const height = Math.max(1, Math.floor(rect.height));
+    const aspect = width / height;
+    const viewHeight = NEEKO_3D_PORTRAIT.viewHeight;
+    const viewWidth = viewHeight * aspect;
+
+    neeko3dRenderer.setSize(width, height, false);
+    neeko3dCamera.position.x = NEEKO_3D_PORTRAIT.centerX;
+    neeko3dCamera.position.y = NEEKO_3D_PORTRAIT.centerY;
+    neeko3dCamera.lookAt(NEEKO_3D_PORTRAIT.centerX, NEEKO_3D_PORTRAIT.centerY, 0);
+    neeko3dCamera.left = -viewWidth / 2;
+    neeko3dCamera.right = viewWidth / 2;
+    neeko3dCamera.top = viewHeight / 2;
+    neeko3dCamera.bottom = -viewHeight / 2;
+    neeko3dCamera.updateProjectionMatrix();
+}
+
+function setNeeko3dAnimation(name) {
+    const nextAction = neeko3dActions.get(name);
+    if (!nextAction || neeko3dActiveAction === nextAction) return;
+
+    nextAction.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(0.25).play();
+    if (neeko3dActiveAction) {
+        neeko3dActiveAction.fadeOut(0.25);
+    }
+    neeko3dActiveAction = nextAction;
+}
+
+function syncNeeko3dAnimation() {
+    if (!neeko3dRendered) return;
+
+    if (neekoSprite.classList.contains('talking')) {
+        setNeeko3dAnimation(NEEKO_3D_ANIMATIONS.talking);
+        NEEKO_3D_PORTRAIT.centerX = 0.5;
+        NEEKO_3D_PORTRAIT.centerY = 9;
+        NEEKO_3D_PORTRAIT.viewHeight = 4;
+    } else if (neekoSprite.classList.contains('thinking')) {
+        setNeeko3dAnimation(NEEKO_3D_ANIMATIONS.thinking);
+        NEEKO_3D_PORTRAIT.centerX = 0;
+        NEEKO_3D_PORTRAIT.centerY = 3.5;
+        NEEKO_3D_PORTRAIT.viewHeight = 5;
+    } else {
+        setNeeko3dAnimation(neeko3dSelectedIdle);
+        NEEKO_3D_PORTRAIT.centerX = 0;
+        NEEKO_3D_PORTRAIT.centerY = 5.9;
+        NEEKO_3D_PORTRAIT.viewHeight = 4;
+    }
+    resizeNeeko3d();
+}
+
+function startNeeko3dIdle() {
+    if (neeko3dAnimationId) return;
+
+    const onmousemove = (e) => {
+        neeko3dMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        neeko3dMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', onmousemove);
+    neeko3dIdleCleanup = () => window.removeEventListener('mousemove', onmousemove);
+
+    const animate = (time) => {
+        if (!neeko3dRendered) {
+            neeko3dAnimationId = null;
+            return;
+        }
+
+        const seconds = time / 1000;
+        const talking = neekoSprite.classList.contains('talking');
+        const thinking = neekoSprite.classList.contains('thinking');
+
+        const delta = neeko3dClock.getDelta();
+        if (neeko3dMixer) {
+            neeko3dMixer.update(delta);
+        }
+        if (neeko3dModel) {
+            const talkSway = talking ? Math.sin(seconds * 7) * 0.025 : 0;
+            neeko3dModel.rotation.y = -0.12 + Math.sin(seconds * 0.8) * 0.035;
+            neeko3dModel.position.y = neeko3dModelBaseY + Math.sin(seconds * 1.2) * 0.025 + talkSway;
+
+            if (neeko3dMouseTracking && (neeko3dHeadBone || neeko3dNeckBone)) {
+                neeko3dHeadTargetRotY = neeko3dMouseX * 0.35;
+                neeko3dHeadTargetRotX = -neeko3dMouseY * 0.2;
+            } else {
+                neeko3dHeadTargetRotX = 0;
+                neeko3dHeadTargetRotY = 0;
+            }
+
+            const lerpFactor = 1 - Math.pow(0.001, delta);
+            neeko3dHeadCurrentRotX += (neeko3dHeadTargetRotX - neeko3dHeadCurrentRotX) * lerpFactor;
+            neeko3dHeadCurrentRotY += (neeko3dHeadTargetRotY - neeko3dHeadCurrentRotY) * lerpFactor;
+
+            if (neeko3dHeadBone) {
+                neeko3dHeadBone.rotation.y = neeko3dHeadCurrentRotY;
+                neeko3dHeadBone.rotation.x = neeko3dHeadCurrentRotX;
+            }
+            if (neeko3dNeckBone) {
+                neeko3dNeckBone.rotation.y = neeko3dHeadCurrentRotY * 0.4;
+                neeko3dNeckBone.rotation.x = neeko3dHeadCurrentRotX * 0.3;
+            }
+        }
+        if (neeko3dRenderer && neeko3dScene && neeko3dCamera) {
+            neeko3dRenderer.render(neeko3dScene, neeko3dCamera);
+        }
+
+        neeko3dAnimationId = requestAnimationFrame(animate);
+    };
+
+    neeko3dAnimationId = requestAnimationFrame(animate);
+}
+
+function stopNeeko3dIdle() {
+    if (neeko3dAnimationId) {
+        cancelAnimationFrame(neeko3dAnimationId);
+        neeko3dAnimationId = null;
+    }
+    if (neeko3dIdleCleanup) {
+        neeko3dIdleCleanup();
+        neeko3dIdleCleanup = null;
+    }
 }
 
 function getSystemPrompt() {
@@ -99,10 +366,12 @@ function cleanAiReply(text) {
 
 function setTalking(talking) {
     neekoSprite.classList.toggle('talking', talking);
+    syncNeeko3dAnimation();
 }
 
 function setThinking(thinking) {
     neekoSprite.classList.toggle('thinking', thinking);
+    syncNeeko3dAnimation();
 }
 
 function parseNeekoResponse(text) {
@@ -114,7 +383,7 @@ function parseNeekoResponse(text) {
             const afterJson = text.substring(text.indexOf(jsonMatch[0]) + jsonMatch[0].length);
             const message = afterJson.replace(/^\|+/, '').trim();
             return { action, message };
-        } catch {}
+        } catch { }
     }
     return { action: null, message: text };
 }
@@ -189,34 +458,58 @@ function detectActionFromText(text) {
     // ─── LOL Detection ───
     const lolPatterns = [
         // With name#tag and optional region
-        { pattern: /(?:ultima|última)\s+partida\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-          handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 }) },
-        { pattern: /(?:historial|partidas?|games?)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-          handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 5 }) },
-        { pattern: /(?:como\s+)?(?:va|está|esta)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-          handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 }) },
+        {
+            pattern: /(?:ultima|última)\s+partida\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
+            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 })
+        },
+        {
+            pattern: /(?:historial|partidas?|games?)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
+            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 5 })
+        },
+        {
+            pattern: /(?:como\s+)?(?:va|está|esta)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
+            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 })
+        },
         // Without name (use config default) — "mi ultima partida", "ultima partida", "mis partidas"
-        { pattern: /(?:mi\s+)?(?:ultima|última)\s+partida$/i,
-          handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 }) },
-        { pattern: /(?:mi\s+)?(?:historial|partidas?|games?)$/i,
-          handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 5 }) },
-        { pattern: /(?:como\s+)?(?:va|está|esta)\s+(?:mi\s+)?(?:lol|partidas?)$/i,
-          handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 }) },
+        {
+            pattern: /(?:mi\s+)?(?:ultima|última)\s+partida$/i,
+            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 })
+        },
+        {
+            pattern: /(?:mi\s+)?(?:historial|partidas?|games?)$/i,
+            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 5 })
+        },
+        {
+            pattern: /(?:como\s+)?(?:va|está|esta)\s+(?:mi\s+)?(?:lol|partidas?)$/i,
+            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 })
+        },
 
         // Rank / Elo — with name#tag
-        { pattern: /(?:elo|rang[oa]?|clasificaci[oó]n|tier|rank)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
-          handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/,'kr') || null }) },
-        { pattern: /(?:que\s+)?(?:rang[oa]?|tier|elo)\s+(?:tiene|está|esta|es)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
-          handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/,'kr') || null }) },
+        {
+            pattern: /(?:elo|rang[oa]?|clasificaci[oó]n|tier|rank)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
+            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/, 'kr') || null })
+        },
+        {
+            pattern: /(?:que\s+)?(?:rang[oa]?|tier|elo)\s+(?:tiene|está|esta|es)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
+            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/, 'kr') || null })
+        },
         // Rank / Elo — without name (self)
-        { pattern: /(?:mi\s+)?(?:elo|rang[oa]?|clasificaci[oó]n|tier|rank)(?:\s+(?:de\s+)?lol)?$/i,
-          handler: () => ({ action: "lol_rank", riot_id: null, region: null }) },
-        { pattern: /(?:que\s+)?(?:rang[oa]?|tier|elo)\s+(?:tengo|soy|estoy)/i,
-          handler: () => ({ action: "lol_rank", riot_id: null, region: null }) },
-        { pattern: /(?:en\s+que\s+)?(?:rang[oa]?|tier|elo)\s+(?:estoy|soy|está)/i,
-          handler: () => ({ action: "lol_rank", riot_id: null, region: null }) },
-        { pattern: /(?:cual\s+es\s+)?(?:mi\s+)?(?:rang[oa]?|tier|elo)\s+(?:de\s+)?lol$/i,
-          handler: () => ({ action: "lol_rank", riot_id: null, region: null }) },
+        {
+            pattern: /(?:mi\s+)?(?:elo|rang[oa]?|clasificaci[oó]n|tier|rank)(?:\s+(?:de\s+)?lol)?$/i,
+            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
+        },
+        {
+            pattern: /(?:que\s+)?(?:rang[oa]?|tier|elo)\s+(?:tengo|soy|estoy)/i,
+            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
+        },
+        {
+            pattern: /(?:en\s+que\s+)?(?:rang[oa]?|tier|elo)\s+(?:estoy|soy|está)/i,
+            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
+        },
+        {
+            pattern: /(?:cual\s+es\s+)?(?:mi\s+)?(?:rang[oa]?|tier|elo)\s+(?:de\s+)?lol$/i,
+            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
+        },
     ];
 
     for (const { pattern, handler } of lolPatterns) {
@@ -226,16 +519,26 @@ function detectActionFromText(text) {
 
     // ─── Video Compression Detection ───
     const compressPatterns = [
-        { pattern: /comprim(?:í|i|ir|e|o)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-          handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() }) },
-        { pattern: /comprim(?:í|i|ir|e|o)\s+(.+)\s+para\s+discord/i,
-          handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() }) },
-        { pattern: /comprim(?:í|i|ir|e|o)\s+(.+\.\w+)/i,
-          handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() }) },
-        { pattern: /achic(?:á|a|ar)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-          handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() }) },
-        { pattern: /achic(?:á|a|ar)\s+(.+\.\w+)/i,
-          handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() }) },
+        {
+            pattern: /comprim(?:í|i|ir|e|o)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
+            handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+        },
+        {
+            pattern: /comprim(?:í|i|ir|e|o)\s+(.+)\s+para\s+discord/i,
+            handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+        },
+        {
+            pattern: /comprim(?:í|i|ir|e|o)\s+(.+\.\w+)/i,
+            handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+        },
+        {
+            pattern: /achic(?:á|a|ar)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
+            handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+        },
+        {
+            pattern: /achic(?:á|a|ar)\s+(.+\.\w+)/i,
+            handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+        },
     ];
 
     for (const { pattern, handler } of compressPatterns) {
@@ -422,7 +725,7 @@ async function executeAction(action) {
                     const config = JSON.parse(await invoke('lol_get_config'));
                     if (!region) region = config.lol_region || 'las';
                     if (!riotId) riotId = config.riot_id;
-                } catch {}
+                } catch { }
                 if (!riotId) return "No tenés tu Riot ID configurado. Ponelo en Configuración ⚙️";
                 return await invoke('lol_get_match_history', { riotId, region, count: action.count || 5 });
             }
@@ -433,7 +736,7 @@ async function executeAction(action) {
                     const config = JSON.parse(await invoke('lol_get_config'));
                     if (!region) region = config.lol_region || 'las';
                     if (!riotId) riotId = config.riot_id;
-                } catch {}
+                } catch { }
                 if (!riotId) return "No tenés tu Riot ID configurado. Ponelo en Configuración ⚙️";
                 return await invoke('lol_get_rank', { riotId, region });
             }
@@ -558,7 +861,7 @@ async function sendMessage() {
 
 function cancelRequest() {
     if (currentChatId) {
-        invoke('chat_cancel', { requestId: currentChatId }).catch(() => {});
+        invoke('chat_cancel', { requestId: currentChatId }).catch(() => { });
         currentChatId = null;
     }
     if (currentAbortController) {
@@ -578,8 +881,11 @@ async function init() {
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
         applyNeekoSprite(config.neeko_sprite);
+        neeko3dSelectedIdle = config.neeko_3d_animation || 'Neeko_idle3.anm';
+        applyRender3D(config.render_3d);
     } catch {
         applyNeekoSprite(SPRITES.default);
+        applyRender3D(false);
     }
 
     try {
@@ -602,7 +908,7 @@ async function init() {
             setLocalAiModelAvailable(false);
             try {
                 await invoke('set_llama_auto_start', { enabled: false });
-            } catch {}
+            } catch { }
             showBubble("No encontré el modelo GGUF 🦎");
         } else {
             showBubble("¡Hola! Soy Neeko 🦎");
@@ -826,13 +1132,17 @@ settingsBtn.addEventListener('click', async () => {
         document.getElementById('cfg-git-pat').value = '';
         document.getElementById('cfg-git-path').value = config.git_default_path || '';
         document.getElementById('cfg-neeko-sprite').value = normalizeNeekoSprite(config.neeko_sprite);
+        document.getElementById('cfg-render-3d').checked = !!config.render_3d;
+        document.getElementById('cfg-neeko-3d-animation').value = config.neeko_3d_animation || 'Neeko_idle3.anm';
+        document.getElementById('cfg-mouse-tracking').checked = neeko3dMouseTracking;
+        document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !config.render_3d);
         document.getElementById('cfg-lol-region').value = config.lol_region || 'las';
         document.getElementById('cfg-riot-id').value = config.riot_id || '';
-    } catch {}
+    } catch { }
     try {
         const running = await invoke('llama_status');
         updateLlamaUI(running && localAiModelAvailable);
-    } catch {}
+    } catch { }
     try {
         currentModelLoadEngine = await invoke('get_model_load_engine');
         document.getElementById('cfg-model-load-engine').value = currentModelLoadEngine;
@@ -850,11 +1160,11 @@ settingsBtn.addEventListener('click', async () => {
         const autoStartInput = document.getElementById('cfg-llama-autostart');
         autoStartInput.disabled = !localAiModelAvailable;
         autoStartInput.checked = autoStart && localAiModelAvailable;
-    } catch {}
+    } catch { }
     try {
         const sysCmds = await invoke('get_system_commands_enabled');
         document.getElementById('cfg-system-cmds').checked = sysCmds;
-    } catch {}
+    } catch { }
     settingsModal.classList.remove('hidden');
     setSettingsTab('tools');
     setSettingsMenuOpen(false);
@@ -873,12 +1183,12 @@ function updateLlamaUI(running) {
         try {
             try {
                 await invoke('get_model_path_cmd');
-                    setLocalAiModelAvailable(true);
+                setLocalAiModelAvailable(true);
             } catch (error) {
                 if (error === "no_model") {
                     setLocalAiModelAvailable(false);
                     if (running) {
-                        await invoke('stop_llama_server').catch(() => {});
+                        await invoke('stop_llama_server').catch(() => { });
                     }
                     showBubble("No encontre el modelo GGUF. Instala la IA primero.");
                     updateLlamaUI(false);
@@ -943,6 +1253,10 @@ async function checkEnvironmentTools(showMessage = true) {
     }
     checkToolsBtn.disabled = false;
 }
+
+document.getElementById('cfg-render-3d').addEventListener('change', (e) => {
+    document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !e.target.checked);
+});
 
 closeSettingsBtn.addEventListener('click', () => {
     setSettingsMenuOpen(false);
@@ -1092,6 +1406,7 @@ saveSettingsBtn.addEventListener('click', async () => {
     const pat = document.getElementById('cfg-git-pat').value.trim();
     const gitPath = document.getElementById('cfg-git-path').value.trim();
     const neekoSpriteValue = normalizeNeekoSprite(document.getElementById('cfg-neeko-sprite').value);
+    const render3d = document.getElementById('cfg-render-3d').checked;
     const region = document.getElementById('cfg-lol-region').value;
     const riotId = document.getElementById('cfg-riot-id').value.trim();
     const modelLoadEngine = document.getElementById('cfg-model-load-engine').value;
@@ -1111,6 +1426,21 @@ saveSettingsBtn.addEventListener('click', async () => {
     } catch (e) {
         showBubble("Error guardando config: " + e);
     }
+    try {
+        await invoke('set_render_3d', { enabled: render3d });
+        applyRender3D(render3d);
+    } catch (e) {
+        showBubble("Error guardando render 3D: " + e);
+    }
+    try {
+        const anim = document.getElementById('cfg-neeko-3d-animation').value;
+        await invoke('set_neeko_3d_animation', { animation: anim });
+        neeko3dSelectedIdle = anim;
+        syncNeeko3dAnimation();
+    } catch (e) {
+        showBubble("Error guardando animacion 3D: " + e);
+    }
+    neeko3dMouseTracking = document.getElementById('cfg-mouse-tracking').checked;
     try {
         await invoke('save_environment_config', { ffmpegPath: null, ffprobePath: null });
     } catch (e) {
@@ -1156,11 +1486,11 @@ saveSettingsBtn.addEventListener('click', async () => {
             }
         }
         await invoke('set_llama_auto_start', { enabled: autoStart });
-    } catch (e) {}
+    } catch (e) { }
     try {
         const sysCmds = document.getElementById('cfg-system-cmds').checked;
         await invoke('set_system_commands_enabled', { enabled: sysCmds });
-    } catch (e) {}
+    } catch (e) { }
     showBubble("Configuración guardada ✅");
     setSettingsMenuOpen(false);
     settingsModal.classList.add('hidden');

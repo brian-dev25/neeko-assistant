@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neeko Assistant</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./vendor/three/three.module.js",
+                "three/addons/": "./vendor/three/addons/"
+            }
+        }
+    </script>
 </head>
 <body>
     <div id="app">
@@ -23,6 +31,7 @@
             </div>
             <div id="neeko-sprite">
                 <img alt="Neeko" id="neeko-img" class="sprite-loading">
+                <div id="neeko-3d" aria-label="Neeko 3D"></div>
             </div>
         </div>
 
@@ -127,6 +136,29 @@
                         <option value="NEEKO-sitting.png">Neeko sentada</option>
                     </select>
 
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="cfg-render-3d">
+                        <label for="cfg-render-3d">Renderizar Neeko en 3D</label>
+                    </div>
+
+                    <div id="neeko-3d-animation-row" class="hidden">
+                        <label for="cfg-neeko-3d-animation">Animacion 3D:</label>
+                        <select id="cfg-neeko-3d-animation">
+                            <option value="Idle1_Base">Idle 1</option>
+                            <option value="Idle2_Base">Idle 2</option>
+                            <option value="Neeko_idle3.anm">Idle 3</option>
+                            <option value="Idlein_Animal">Thinking</option>
+                            <option value="Joke_Loop">Talking</option>
+                            <option value="Dance_Loop">Dance</option>
+                            <option value="Laugh">Laugh</option>
+                            <option value="Taunt">Taunt</option>
+                        </select>
+                        <div class="checkbox-row" style="margin-top:4px">
+                            <input type="checkbox" id="cfg-mouse-tracking" checked>
+                            <label for="cfg-mouse-tracking">Seguir mouse</label>
+                        </div>
+                    </div>
+
                     <label for="cfg-model-load-engine">Motor de carga:</label>
                     <select id="cfg-model-load-engine">
                         <option value="llama">LLaMA server</option>
@@ -221,6 +253,6 @@
         </div>
     </div>
 
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

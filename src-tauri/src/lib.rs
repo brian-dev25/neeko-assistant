@@ -245,6 +245,57 @@ fn set_system_commands_enabled(enabled: bool) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn get_render_3d() -> Result<bool, String> {
+    let config = config::AppConfig::load();
+    Ok(config.render_3d)
+}
+
+#[tauri::command]
+fn set_render_3d(enabled: bool) -> Result<String, String> {
+    let mut config = config::AppConfig::load();
+    config.render_3d = enabled;
+    config.save().map_err(|e| e.to_string())?;
+    Ok(if enabled {
+        "Render 3D activado"
+    } else {
+        "Render 3D desactivado"
+    }
+    .to_string())
+}
+
+fn is_valid_neeko_3d_animation(animation: &str) -> bool {
+    matches!(
+        animation,
+        "Idle1_Base"
+            | "Idle2_Base"
+            | "Neeko_idle3.anm"
+            | "Idlein_Animal"
+            | "Joke_Loop"
+            | "Dance_Loop"
+            | "Laugh"
+            | "Taunt"
+    )
+}
+
+#[tauri::command]
+fn get_neeko_3d_animation() -> Result<String, String> {
+    let config = config::AppConfig::load();
+    Ok(config.neeko_3d_animation)
+}
+
+#[tauri::command]
+fn set_neeko_3d_animation(animation: String) -> Result<String, String> {
+    if !is_valid_neeko_3d_animation(&animation) {
+        return Err("Animacion 3D de Neeko no valida".to_string());
+    }
+
+    let mut config = config::AppConfig::load();
+    config.neeko_3d_animation = animation;
+    config.save().map_err(|e| e.to_string())?;
+    Ok("Animacion 3D guardada".to_string())
+}
+
+#[tauri::command]
 async fn start_llama_server() -> Result<String, String> {
     let model_path = get_model_path();
     if model_path.is_empty() {
@@ -2892,6 +2943,10 @@ pub fn run() {
             system_restart_bluetooth,
             get_system_commands_enabled,
             set_system_commands_enabled,
+            get_render_3d,
+            set_render_3d,
+            get_neeko_3d_animation,
+            set_neeko_3d_animation,
             cancel_download,
             check_updates,
             download_and_install_update,
