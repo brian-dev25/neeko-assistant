@@ -2,20 +2,16 @@
 !include LogicLib.nsh
 
 Var NeekoRetroDialog
-Var NeekoRetroControl
+Var NeekoRetroFontTitle
+Var NeekoRetroFontMono
 
 Page custom NeekoRetroPageCreate NeekoRetroPageLeave
-
-Function NeekoRetroStyleControl
-  Exch $NeekoRetroControl
-  SetCtlColors $NeekoRetroControl 0xEDE9FE 0x07050C
-FunctionEnd
 
 Function NeekoRetroPageCreate
   IfSilent 0 +2
     Abort
 
-  !insertmacro MUI_HEADER_TEXT "Neeko Assistant" "Visual activation"
+  !insertmacro MUI_HEADER_TEXT "Neeko Assistant" "Retro visual activation"
 
   nsDialogs::Create 1018
   Pop $NeekoRetroDialog
@@ -23,59 +19,60 @@ Function NeekoRetroPageCreate
     Abort
   ${EndIf}
 
-  SetCtlColors $NeekoRetroDialog 0xEDE9FE 0x07050C
+  CreateFont $NeekoRetroFontTitle "Georgia" 22 800
+  CreateFont $NeekoRetroFontMono "Consolas" 8 400
 
-  ${NSD_CreateLabel} 0u 0u 100% 14u "NEEKO Products Keygen v1.0 - VISUAL MODE"
-  Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SetCtlColors $NeekoRetroDialog 0xF5F3FF 0x0B0712
 
-  ${NSD_CreateLabel} 0u 20u 100% 34u "neeko"
+  ${NSD_CreateLabel} 10u 8u -10u 10u "NEEKO ASSISTANT v1.0 - VISUAL MODE"
   Pop $0
-  CreateFont $1 "Times New Roman" 30 800
-  SendMessage $0 ${WM_SETFONT} $1 1
-  SetCtlColors $0 0xA855F7 0x07050C
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xC4B5FD 0x0B0712
 
-  ${NSD_CreateLabel} 0u 62u 100% 9u "Program:"
+  ${NSD_CreateLabel} 10u 22u -10u 25u "neeko"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
-  ${NSD_CreateText} 0u 73u 100% 12u "Neeko Assistant"
-  Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontTitle 1
+  SetCtlColors $0 0xA855F7 0x0B0712
 
-  ${NSD_CreateLabel} 0u 91u 100% 9u "Install path:"
+  ${NSD_CreateLabel} 10u 55u 42u 9u "Program"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
-  ${NSD_CreateText} 0u 102u 100% 12u "$INSTDIR"
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x0B0712
+  ${NSD_CreateText} 62u 53u -10u 12u "Neeko Assistant"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x120C1D
 
-  ${NSD_CreateLabel} 0u 120u 100% 9u "Serial:"
+  ${NSD_CreateLabel} 10u 77u 42u 9u "Install path"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
-  ${NSD_CreateText} 0u 131u 100% 12u "NEEKO-ASSISTANT-VISUAL-ONLY"
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x0B0712
+  ${NSD_CreateText} 62u 75u -10u 12u "$INSTDIR"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x120C1D
 
-  ${NSD_CreateLabel} 0u 149u 100% 9u "Activation code:"
+  ${NSD_CreateLabel} 10u 99u 42u 9u "Serial"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
-  ${NSD_CreateText} 0u 160u 100% 12u "No real activation required"
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x0B0712
+  ${NSD_CreateText} 62u 97u -10u 12u "NEEKO-ASSISTANT-VISUAL-ONLY"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x120C1D
 
-  ${NSD_CreateLabel} 0u 184u 100% 18u "This screen is cosmetic. Click Next to continue installing Neeko."
+  ${NSD_CreateLabel} 10u 121u 42u 9u "Activation"
   Pop $0
-  Push $0
-  Call NeekoRetroStyleControl
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x0B0712
+  ${NSD_CreateText} 62u 119u -10u 12u "COSMETIC-SCREEN-ONLY"
+  Pop $0
+  SendMessage $0 ${WM_SETFONT} $NeekoRetroFontMono 1
+  SetCtlColors $0 0xF5F3FF 0x120C1D
+
+  ${NSD_CreateLabel} 10u 150u -10u 20u "No license check runs here. This is just a cosmetic retro screen for Neeko."
+  Pop $0
+  SetCtlColors $0 0xC4B5FD 0x0B0712
 
   nsDialogs::Show
 FunctionEnd
