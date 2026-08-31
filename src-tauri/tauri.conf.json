@@ -40,8 +40,8 @@
       "binaries/llama-server"
     ],
     "resources": {
-      "../addons/quick-notes/": "addons/addons/quick-notes/",
-      "../addons/discord-rich-presence/": "addons/addons/discord-rich-presence/"
+      "../addons/quick-notes/": "addons/quick-notes/",
+      "../addons/discord-rich-presence/": "addons/discord-rich-presence/"
     },
     "windows": {
       "nsis": {
