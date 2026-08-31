@@ -104,8 +104,8 @@ impl AddonManager {
 
         let mut addon_dirs = vec![config_dir.clone()];
         if let Some(resource_dir) = resource_dir {
+            addon_dirs.push(resource_dir.join("addons").join("addons"));
             addon_dirs.push(resource_dir.join("addons"));
-            addon_dirs.push(resource_dir.join("_up_").join("addons"));
         }
         for candidate in Self::dev_addon_dirs() {
             if !addon_dirs.iter().any(|dir| dir == &candidate) {
