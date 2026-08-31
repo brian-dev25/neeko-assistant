@@ -2982,6 +2982,9 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_drpc::init())
         .setup(|app| {
+            let resource_dir = app.path().resource_dir().ok();
+            let _ = ADDON_MANAGER.set(addon_manager::AddonManager::with_resource_dir(resource_dir));
+
             let app_handle = app.handle().clone();
             std::thread::spawn(move || {
                 let rt = tokio::runtime::Runtime::new().unwrap();

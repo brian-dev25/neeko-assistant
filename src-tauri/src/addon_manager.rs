@@ -91,6 +91,10 @@ pub struct AddonManager {
 
 impl AddonManager {
     pub fn new() -> Self {
+        Self::with_resource_dir(None)
+    }
+
+    pub fn with_resource_dir(resource_dir: Option<PathBuf>) -> Self {
         let config_dir = dirs::config_dir()
             .or_else(|| dirs::data_dir())
             .or_else(|| dirs::home_dir())
@@ -99,6 +103,9 @@ impl AddonManager {
             .join("addons");
 
         let mut addon_dirs = vec![config_dir.clone()];
+        if let Some(resource_dir) = resource_dir {
+            addon_dirs.push(resource_dir.join("addons"));
+        }
         for candidate in Self::dev_addon_dirs() {
             if !addon_dirs.iter().any(|dir| dir == &candidate) {
                 addon_dirs.push(candidate);

@@ -39,6 +39,9 @@
     "externalBin": [
       "binaries/llama-server"
     ],
+    "resources": [
+      "../addons"
+    ],
     "windows": {
       "nsis": {
         "installerHooks": "windows/nsis-hooks.nsh"
