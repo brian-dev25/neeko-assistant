@@ -1,6 +1,13 @@
 # Dependencies
 node_modules/
 
+# Local scripts / launchers
+scripts/
+/*.bat
+/*.cmd
+/*.vbs
+/*.ps1
+
 # Build output
 src-tauri/target/
 src-tauri/binaries/
