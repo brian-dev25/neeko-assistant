@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use tauri::AppHandle;
 use tauri_plugin_notification::NotificationExt;
@@ -23,8 +23,30 @@ use tokio::sync::broadcast;
 use tokio::sync::Mutex as AsyncMutex;
 use tower_http::cors::{Any, CorsLayer};
 
-const PASSWORD: &str = "Lorena25";
 const PORT: u16 = 1414;
+const PASSWORD_CHARS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+static WEB_PASSWORD: OnceLock<String> = OnceLock::new();
+
+pub(crate) fn web_password() -> &'static str {
+    WEB_PASSWORD.get_or_init(generate_web_password).as_str()
+}
+
+fn generate_web_password() -> String {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_nanos() as u64)
+        .unwrap_or(0);
+    let mut seed = nanos ^ ((std::process::id() as u64) << 32);
+
+    (0..4)
+        .map(|_| {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            PASSWORD_CHARS[(seed as usize) % PASSWORD_CHARS.len()] as char
+        })
+        .collect()
+}
 
 fn files_dir() -> std::path::PathBuf {
     std::env::temp_dir().join("neeko-files")
@@ -212,7 +234,7 @@ async fn auth_middleware(
 
     if let Some(auth) = headers.get("Authorization") {
         if let Ok(auth_str) = auth.to_str() {
-            if auth_str == format!("Bearer {}", PASSWORD) {
+            if auth_str == format!("Bearer {}", web_password()) {
                 return Ok(next.run(request).await);
             }
         }
@@ -225,10 +247,10 @@ async fn login_handler(
     State(_state): State<AppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, StatusCode> {
-    if payload.password == PASSWORD {
+    if payload.password.trim() == web_password() {
         Ok(Json(LoginResponse {
             success: true,
-            token: PASSWORD.to_string(),
+            token: web_password().to_string(),
         }))
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -939,10 +961,11 @@ async fn chat_handler(
 
     if is_ip_command {
         let ip = get_local_ip();
+        let password = web_password();
         let msg = if is_english {
-            format!("The IP to connect is: http://{}:1414", ip)
+            format!("The IP to connect is: http://{}:1414\nPassword: {}", ip, password)
         } else {
-            format!("La IP para conectarte es: http://{}:1414", ip)
+            format!("La IP para conectarte es: http://{}:1414\nContraseña: {}", ip, password)
         };
         return Ok(Json(ApiResponse {
             ok: true,
@@ -1783,6 +1806,8 @@ pub async fn start_web_server(app_handle: AppHandle) {
         get_local_ip(),
         PORT
     );
+
+    eprintln!("[NEEKO] Web password: {}", web_password());
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();

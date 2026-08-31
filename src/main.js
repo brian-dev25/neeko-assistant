@@ -415,6 +415,7 @@ const I18N = {
         downloading: 'Descargando...',
         searching: 'Buscando...',
         connectingIp: 'La IP para conectarte es:',
+        webPassword: 'Contraseña web:',
         phoneOpenAddress: 'Desde el celular, abri esa direccion en el navegador',
         openingYoutube: 'Abriendo YouTube con:',
         actionError: 'No pude hacer eso:',
@@ -530,6 +531,7 @@ const I18N = {
         downloading: 'Downloading...',
         searching: 'Searching...',
         connectingIp: 'The IP to connect is:',
+        webPassword: 'Web password:',
         phoneOpenAddress: 'From your phone, open that address in the browser',
         openingYoutube: 'Opening YouTube with:',
         actionError: 'I could not do that:',
@@ -1939,7 +1941,8 @@ async function executeAction(action) {
         switch (action.action) {
             case "get_ip":
                 const localIP = await invoke('get_local_ip');
-                return `${t('connectingIp')} http://${localIP}:1414\n\n${t('phoneOpenAddress')} 🦎`;
+                const webPassword = await invoke('get_web_password');
+                return `${t('connectingIp')} http://${localIP}:1414\n${t('webPassword')} ${webPassword}\n\n${t('phoneOpenAddress')} 🦎`;
             case "open_app":
                 return await invoke('open_any_app', { appName: action.app });
             case "open_url":

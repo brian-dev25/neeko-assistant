@@ -2255,6 +2255,11 @@ fn get_local_ip() -> Result<String, String> {
     Err("No pude obtener la IP".to_string())
 }
 
+#[tauri::command]
+fn get_web_password() -> String {
+    web_server::web_password().to_string()
+}
+
 fn check_system_commands_enabled() -> Result<(), String> {
     let config = config::AppConfig::load();
     if !config.system_commands_enabled {
@@ -3074,6 +3079,7 @@ pub fn run() {
             save_environment_config,
             open_any_app,
             get_local_ip,
+            get_web_password,
             git_commands::git_check_installed,
             git_commands::git_init,
             git_commands::git_add,
