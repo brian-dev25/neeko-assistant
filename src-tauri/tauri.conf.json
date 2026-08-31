@@ -39,9 +39,10 @@
     "externalBin": [
       "binaries/llama-server"
     ],
-    "resources": [
-      "../addons"
-    ],
+    "resources": {
+      "../addons/quick-notes/": "addons/quick-notes/",
+      "../addons/discord-rich-presence/": "addons/discord-rich-presence/"
+    },
     "windows": {
       "nsis": {
         "installerHooks": "windows/nsis-hooks.nsh"
