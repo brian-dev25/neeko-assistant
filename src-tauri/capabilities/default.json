@@ -19,6 +19,12 @@
     "shell:default",
     "updater:default",
     "updater:allow-check",
-    "updater:allow-download-and-install"
+    "updater:allow-download-and-install",
+    "drpc:default",
+    "drpc:allow-clear-activity",
+    "drpc:allow-destroy-thread",
+    "drpc:allow-is-running",
+    "drpc:allow-set-activity",
+    "drpc:allow-spawn-thread"
   ]
 }

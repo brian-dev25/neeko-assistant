@@ -16,8 +16,10 @@ use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::{broadcast, watch};
 
+mod addon_manager;
 mod config;
 mod git_commands;
+mod knowledge;
 mod lol_api;
 mod video_compress;
 mod web_server;
@@ -28,6 +30,11 @@ static LLAMA_PROCESS: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 static EXIT_REQUESTED: AtomicBool = AtomicBool::new(false);
 static DOWNLOAD_PROGRESS: OnceLock<broadcast::Sender<DownloadProgress>> = OnceLock::new();
 static CANCEL_DOWNLOADS: OnceLock<Mutex<HashMap<String, watch::Sender<bool>>>> = OnceLock::new();
+static ADDON_MANAGER: OnceLock<addon_manager::AddonManager> = OnceLock::new();
+
+pub fn addon_manager() -> &'static addon_manager::AddonManager {
+    ADDON_MANAGER.get_or_init(|| addon_manager::AddonManager::new())
+}
 
 pub fn llama_process() -> &'static Mutex<Option<Child>> {
     LLAMA_PROCESS.get_or_init(|| Mutex::new(None))
@@ -66,6 +73,11 @@ fn stop_tracked_llama_process() {
 
 pub(crate) fn notify_system(app: &AppHandle, title: &str, body: &str) {
     let _ = app.notification().builder().title(title).body(body).show();
+}
+
+pub(crate) fn language_is_english() -> bool {
+    let config = config::AppConfig::load();
+    config::normalize_language(&config.language) == Some("en")
 }
 
 #[cfg(windows)]
@@ -143,6 +155,18 @@ fn set_llama_auto_start(enabled: bool) -> Result<String, String> {
         "Auto-start desactivado"
     }
     .to_string())
+}
+
+fn set_llama_was_running_value(enabled: bool) {
+    let mut config = config::AppConfig::load();
+    config.llama_was_running = enabled;
+    let _ = config.save();
+}
+
+#[tauri::command]
+fn get_llama_start_on_launch() -> Result<bool, String> {
+    let config = config::AppConfig::load();
+    Ok(config.llama_auto_start || config.llama_was_running)
 }
 
 #[tauri::command]
@@ -300,6 +324,7 @@ async fn start_llama_server() -> Result<String, String> {
     let model_path = get_model_path();
     if model_path.is_empty() {
         stop_tracked_llama_process();
+        set_llama_was_running_value(false);
         return Err("No encontre el modelo GGUF".to_string());
     }
 
@@ -315,6 +340,7 @@ async fn start_llama_server() -> Result<String, String> {
         .await
     {
         if resp.status().is_success() {
+            set_llama_was_running_value(true);
             return Ok("LLaMA ya está corriendo 🦎".to_string());
         }
     }
@@ -344,6 +370,7 @@ async fn start_llama_server() -> Result<String, String> {
             .await
         {
             if resp.status().is_success() {
+                set_llama_was_running_value(true);
                 return Ok("LLaMA iniciado 🦎".to_string());
             }
         }
@@ -816,6 +843,7 @@ ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 
 #[tauri::command]
 async fn stop_llama_server() -> Result<String, String> {
+    set_llama_was_running_value(false);
     let mut process = llama_process().lock().unwrap();
     if let Some(mut child) = process.take() {
         eprintln!("[NEEKO] Cerrando llama-server...");
@@ -960,7 +988,9 @@ fn open_app(app: String) -> Result<String, String> {
     };
 
     match result {
-        Ok(_) => Ok(format!("Abrí {}", app)),
+        Ok(_) if language_is_english() => Ok(format!("Opened {}", app)),
+        Ok(_) => Ok(format!("Abri {}", app)),
+        Err(e) if language_is_english() => Err(format!("I could not open {}: {}", app, e)),
         Err(e) => Err(format!("No pude abrir {}: {}", app, e)),
     }
 }
@@ -974,7 +1004,9 @@ fn open_url(url: String) -> Result<String, String> {
     };
 
     match open::that(&full_url) {
-        Ok(_) => Ok(format!("Abrí {}", full_url)),
+        Ok(_) if language_is_english() => Ok(format!("Opened {}", full_url)),
+        Ok(_) => Ok(format!("Abri {}", full_url)),
+        Err(e) if language_is_english() => Err(format!("I could not open the URL: {}", e)),
         Err(e) => Err(format!("No pude abrir la URL: {}", e)),
     }
 }
@@ -986,7 +1018,9 @@ fn search_web(query: String) -> Result<String, String> {
         query.replace(" ", "+")
     );
     match open::that(&url) {
-        Ok(_) => Ok(format!("Busqué: {}", query)),
+        Ok(_) if language_is_english() => Ok(format!("Searched: {}", query)),
+        Ok(_) => Ok(format!("Busque: {}", query)),
+        Err(e) if language_is_english() => Err(format!("I could not search: {}", e)),
         Err(e) => Err(format!("No pude buscar: {}", e)),
     }
 }
@@ -1003,11 +1037,17 @@ fn open_folder(folder: String) -> Result<String, String> {
 
     if let Some(p) = path {
         match Command::new("explorer").arg(p).output() {
-            Ok(_) => Ok(format!("Abrí la carpeta {}", folder)),
+            Ok(_) if language_is_english() => Ok(format!("Opened folder {}", folder)),
+            Ok(_) => Ok(format!("Abri la carpeta {}", folder)),
+            Err(e) if language_is_english() => Err(format!("I could not open the folder: {}", e)),
             Err(e) => Err(format!("No pude abrir la carpeta: {}", e)),
         }
     } else {
-        Err(format!("No conozco la carpeta: {}", folder))
+        Err(if language_is_english() {
+            format!("I do not know this folder: {}", folder)
+        } else {
+            format!("No conozco la carpeta: {}", folder)
+        })
     }
 }
 
@@ -1383,8 +1423,7 @@ fn html_attr_value(tag: &str, attr: &str) -> Option<String> {
 
 fn google_drive_confirm_url_from_html(html: &str) -> Option<String> {
     let form_re =
-        regex::Regex::new(r#"(?is)(<form[^>]*id=["']download-form["'][^>]*>)(.*?)</form>"#)
-            .ok()?;
+        regex::Regex::new(r#"(?is)(<form[^>]*id=["']download-form["'][^>]*>)(.*?)</form>"#).ok()?;
     let captures = form_re.captures(html)?;
     let form_tag = captures.get(1)?.as_str();
     let form_body = captures.get(2)?.as_str();
@@ -2401,7 +2440,12 @@ async fn open_any_app_impl(app_name: String) -> Result<String, String> {
     let query = app_name.trim().to_lowercase();
 
     if query.is_empty() {
-        return Err("No me dijiste qué abrir 🦎".to_string());
+        return Err(if language_is_english() {
+            "Tell me what to open."
+        } else {
+            "No me dijiste que abrir."
+        }
+        .to_string());
     }
 
     // 1. Buscar en accesos directos del Menú Inicio (.lnk) - lanzar .exe directo SIN cmd
@@ -2419,18 +2463,34 @@ async fn open_any_app_impl(app_name: String) -> Result<String, String> {
         if resolved.to_lowercase().ends_with(".exe") {
             let result = Command::new(&resolved).current_dir(parent_dir).spawn();
             match result {
-                Ok(_) => return Ok(format!("¡Encontré y abrí {}! 🦎", app_name)),
+                Ok(_) => {
+                    return Ok(if language_is_english() {
+                        format!("Found and opened {}!", app_name)
+                    } else {
+                        format!("Encontre y abri {}!", app_name)
+                    })
+                }
                 Err(e) => {
                     eprintln!("[NEEKO] Failed to launch {}: {}", resolved, e);
                     if open::that(&resolved).is_ok() {
-                        return Ok(format!("¡Encontré y abrí {}! 🦎", app_name));
+                        return Ok(if language_is_english() {
+                            format!("Found and opened {}!", app_name)
+                        } else {
+                            format!("Encontre y abri {}!", app_name)
+                        });
                     }
                 }
             }
         } else {
             // Target no es .exe (protocolo, URL, etc.) - usar open
             match open::that(&resolved) {
-                Ok(_) => return Ok(format!("¡Encontré y abrí {}! 🦎", app_name)),
+                Ok(_) => {
+                    return Ok(if language_is_english() {
+                        format!("Found and opened {}!", app_name)
+                    } else {
+                        format!("Encontre y abri {}!", app_name)
+                    })
+                }
                 Err(e) => eprintln!("[NEEKO] Failed to open {}: {}", resolved, e),
             }
         }
@@ -2440,10 +2500,18 @@ async fn open_any_app_impl(app_name: String) -> Result<String, String> {
 
     // 2. Intentar abrir directamente con open
     if open::that(&app_name).is_ok() {
-        return Ok(format!("Intenté abrir {} 🦎", app_name));
+        return Ok(if language_is_english() {
+            format!("Tried to open {}.", app_name)
+        } else {
+            format!("Intente abrir {}.", app_name)
+        });
     }
 
-    Err(format!("No encontré \"{}\" en el sistema 🥺", app_name))
+    Err(if language_is_english() {
+        format!("I could not find \"{}\" on this system.", app_name)
+    } else {
+        format!("No encontre \"{}\" en el sistema.", app_name)
+    })
 }
 
 /// Busca una app en los accesos directos del Menú Inicio
@@ -2824,6 +2892,82 @@ async fn download_and_install_update(app: AppHandle) -> Result<String, String> {
     ))
 }
 
+#[tauri::command]
+fn addon_list() -> Result<Vec<addon_manager::AddonInfo>, String> {
+    Ok(addon_manager().scan_addons())
+}
+
+#[tauri::command]
+fn addon_enable(addon_id: String) -> Result<String, String> {
+    addon_manager().enable_addon(&addon_id)?;
+    Ok(format!("Addon {} habilitado", addon_id))
+}
+
+#[tauri::command]
+fn addon_disable(addon_id: String) -> Result<String, String> {
+    addon_manager().disable_addon(&addon_id)?;
+    Ok(format!("Addon {} deshabilitado", addon_id))
+}
+
+#[tauri::command]
+fn addon_get_js(addon_id: String) -> Result<String, String> {
+    addon_manager()
+        .get_addon_js(&addon_id)
+        .ok_or_else(|| format!("Addon {} no tiene main.js", addon_id))
+}
+
+#[tauri::command]
+fn addon_get_css(addon_id: String) -> Result<String, String> {
+    addon_manager()
+        .get_addon_css(&addon_id)
+        .ok_or_else(|| format!("Addon {} no tiene styles.css", addon_id))
+}
+
+#[tauri::command]
+fn addon_get_all_js() -> Result<String, String> {
+    Ok(addon_manager().get_all_js())
+}
+
+#[tauri::command]
+fn addon_get_all_css() -> Result<String, String> {
+    Ok(addon_manager().get_all_css())
+}
+
+#[tauri::command]
+fn knowledge_list() -> Result<Vec<knowledge::KnowledgeFact>, String> {
+    Ok(knowledge::list_facts())
+}
+
+#[tauri::command]
+fn knowledge_add(category: String, key: String, value: String) -> Result<knowledge::KnowledgeFact, String> {
+    Ok(knowledge::add_fact(&category, &key, &value, "manual"))
+}
+
+#[tauri::command]
+fn knowledge_delete(id: String) -> Result<bool, String> {
+    Ok(knowledge::delete_fact(&id))
+}
+
+#[tauri::command]
+fn knowledge_search(query: String) -> Result<Vec<knowledge::KnowledgeFact>, String> {
+    Ok(knowledge::search_facts(&query))
+}
+
+#[tauri::command]
+fn knowledge_clear() -> Result<bool, String> {
+    Ok(knowledge::clear_all())
+}
+
+#[tauri::command]
+fn knowledge_export() -> Result<String, String> {
+    knowledge::export_json()
+}
+
+#[tauri::command]
+fn knowledge_import(json: String) -> Result<usize, String> {
+    knowledge::import_json(&json)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(windows)]
@@ -2836,6 +2980,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_drpc::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
             std::thread::spawn(move || {
@@ -2887,6 +3032,20 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            addon_list,
+            addon_enable,
+            addon_disable,
+            addon_get_js,
+            addon_get_css,
+            addon_get_all_js,
+            addon_get_all_css,
+            knowledge_list,
+            knowledge_add,
+            knowledge_delete,
+            knowledge_search,
+            knowledge_clear,
+            knowledge_export,
+            knowledge_import,
             minimize_window,
             close_window,
             open_app,
@@ -2930,6 +3089,7 @@ pub fn run() {
             llama_status,
             get_llama_auto_start,
             set_llama_auto_start,
+            get_llama_start_on_launch,
             get_model_load_engine,
             set_model_load_engine,
             get_model_runtime_config,

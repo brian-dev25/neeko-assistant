@@ -80,6 +80,16 @@ struct CancelDownloadRequest {
     id: String,
 }
 
+#[derive(Deserialize)]
+struct WebConfigRequest {
+    language: Option<String>,
+}
+
+#[derive(Serialize)]
+struct WebConfigResponse {
+    language: String,
+}
+
 #[derive(Serialize)]
 struct LoginResponse {
     success: bool,
@@ -452,6 +462,39 @@ async fn llama_status_handler() -> Result<Json<LlamaStatus>, StatusCode> {
     }))
 }
 
+async fn get_config_handler() -> Json<WebConfigResponse> {
+    let config = crate::config::AppConfig::load();
+    Json(WebConfigResponse {
+        language: crate::config::normalize_language(&config.language)
+            .unwrap_or("es")
+            .to_string(),
+    })
+}
+
+async fn save_config_handler(Json(payload): Json<WebConfigRequest>) -> Json<ApiResponse> {
+    let mut config = crate::config::AppConfig::load();
+    if let Some(language) = payload.language {
+        let Some(language) = crate::config::normalize_language(&language) else {
+            return Json(ApiResponse {
+                ok: false,
+                message: "Idioma no valido".to_string(),
+            });
+        };
+        config.language = language.to_string();
+    }
+
+    match config.save() {
+        Ok(()) => Json(ApiResponse {
+            ok: true,
+            message: "Configuracion guardada".to_string(),
+        }),
+        Err(error) => Json(ApiResponse {
+            ok: false,
+            message: error,
+        }),
+    }
+}
+
 async fn llama_start_handler(
     State(state): State<AppState>,
 ) -> Result<Json<ApiResponse>, StatusCode> {
@@ -759,17 +802,25 @@ enum SystemChatAction {
     RestartBluetooth,
 }
 
-fn detect_system_chat_action(lower: &str) -> Option<SystemChatAction> {
-    if regex::Regex::new(r"cancel(?:ar)?\s+(?:el\s+)?(?:apagado|shutdown|apaga)")
+fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChatAction> {
+    let cancel_pattern = if is_english {
+        r"cancel\s+(?:shutdown|shut\s*down)"
+    } else {
+        r"cancel(?:ar)?\s+(?:el\s+)?(?:apagado|apaga)"
+    };
+    if regex::Regex::new(cancel_pattern)
         .ok()?
         .is_match(lower)
     {
         return Some(SystemChatAction::CancelShutdown);
     }
 
-    if let Ok(re) = regex::Regex::new(
-        r"apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)",
-    ) {
+    let shutdown_timer_pattern = if is_english {
+        r"(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)"
+    } else {
+        r"apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)"
+    };
+    if let Ok(re) = regex::Regex::new(shutdown_timer_pattern) {
         if let Some(caps) = re.captures(lower) {
             let mut seconds = caps
                 .get(1)
@@ -785,32 +836,48 @@ fn detect_system_chat_action(lower: &str) -> Option<SystemChatAction> {
         }
     }
 
-    if regex::Regex::new(r"apag(?:a|ar|o)\s+(?:la\s+)?pc")
+    let shutdown_now_pattern = if is_english {
+        r"(?:shutdown|shut\s*down)\s+(?:the\s+)?pc"
+    } else {
+        r"apag(?:a|ar|o)\s+(?:la\s+)?pc"
+    };
+    if regex::Regex::new(shutdown_now_pattern)
         .ok()?
         .is_match(lower)
     {
         return Some(SystemChatAction::Shutdown(Some(0)));
     }
 
-    if regex::Regex::new(
-        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)",
-    )
+    let explorer_pattern = if is_english {
+        r"restart\s+(?:explorer|icons?|taskbar|desktop|windows\s*explorer)"
+    } else {
+        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)"
+    };
+    if regex::Regex::new(explorer_pattern)
     .ok()?
     .is_match(lower)
     {
         return Some(SystemChatAction::RestartExplorer);
     }
 
-    if regex::Regex::new(
-        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:wifi|wi-fi|internet|red|conexion|conexi[oó]n)",
-    )
+    let wifi_pattern = if is_english {
+        r"restart\s+(?:wifi|wi-fi|internet|network|connection)"
+    } else {
+        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:wifi|wi-fi|internet|red|conexion|conexi[oó]n)"
+    };
+    if regex::Regex::new(wifi_pattern)
     .ok()?
     .is_match(lower)
     {
         return Some(SystemChatAction::RestartWifi);
     }
 
-    if regex::Regex::new(r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:bluetooth|blue\s*tooth)")
+    let bluetooth_pattern = if is_english {
+        r"restart\s+(?:bluetooth|blue\s*tooth)"
+    } else {
+        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:bluetooth|blue\s*tooth)"
+    };
+    if regex::Regex::new(bluetooth_pattern)
         .ok()?
         .is_match(lower)
     {
@@ -842,33 +909,48 @@ async fn chat_handler(
         .unwrap_or("")
         .to_string();
     let lower = user_msg.to_lowercase();
+    let is_english = crate::language_is_english();
 
     // Check if llama is running before trying to use AI
     let llama_running = crate::is_llama_server_running();
 
-    if lower == "ip"
-        || lower == "mi ip"
-        || lower == "la ip"
-        || (lower.contains("ip")
-            && (lower.contains("cuál")
-                || lower.contains("cual")
-                || lower.contains("que")
-                || lower.contains("cómo")
-                || lower.contains("como")
-                || lower.contains("connect")
-                || lower.contains("conect")
-                || lower.contains("dirección")
-                || lower.contains("direccion")))
-    {
+    let is_ip_command = if is_english {
+        lower == "ip"
+            || lower == "my ip"
+            || lower == "local ip"
+            || (lower.contains("ip")
+                && (lower.contains("what")
+                    || lower.contains("connect")
+                    || lower.contains("address")))
+    } else {
+        lower == "ip"
+            || lower == "mi ip"
+            || lower == "la ip"
+            || (lower.contains("ip")
+                && (lower.contains("cuál")
+                    || lower.contains("cual")
+                    || lower.contains("que")
+                    || lower.contains("cómo")
+                    || lower.contains("como")
+                    || lower.contains("conect")
+                    || lower.contains("dirección")
+                    || lower.contains("direccion")))
+    };
+
+    if is_ip_command {
         let ip = get_local_ip();
-        let msg = format!("La IP para conectarte es: http://{}:1414", ip);
+        let msg = if is_english {
+            format!("The IP to connect is: http://{}:1414", ip)
+        } else {
+            format!("La IP para conectarte es: http://{}:1414", ip)
+        };
         return Ok(Json(ApiResponse {
             ok: true,
             message: msg,
         }));
     }
 
-    if let Some(action) = detect_system_chat_action(&lower) {
+    if let Some(action) = detect_system_chat_action(&lower, is_english) {
         return Ok(Json(ApiResponse {
             ok: true,
             message: execute_system_chat_action(action),
@@ -876,15 +958,37 @@ async fn chat_handler(
     }
 
     // Llama control from chat
-    if lower.contains("cierra") && lower.contains("llama") {
+    if lower.contains("llama")
+        && ((is_english && (lower.contains("close") || lower.contains("stop")))
+            || (!is_english && (lower.contains("cierra") || lower.contains("deten"))))
+    {
         let result = crate::stop_llama_server().await;
         return Ok(Json(ApiResponse {
             ok: true,
             message: result.unwrap_or_else(|e| e),
         }));
     }
-    if lower.contains("abre") && lower.contains("llama") {
+    if lower.contains("llama")
+        && ((is_english && (lower.contains("open") || lower.contains("start")))
+            || (!is_english && (lower.contains("abre") || lower.contains("abri") || lower.contains("iniciar"))))
+    {
         let result = crate::start_llama_server().await;
+        return Ok(Json(ApiResponse {
+            ok: true,
+            message: result.unwrap_or_else(|e| e),
+        }));
+    }
+
+    if let Some((riot_id, region)) = detect_web_lol_rank(&lower, is_english) {
+        let result = crate::lol_api::lol_get_rank(riot_id, region).await;
+        return Ok(Json(ApiResponse {
+            ok: true,
+            message: result.unwrap_or_else(|e| e),
+        }));
+    }
+
+    if let Some((riot_id, region, count)) = detect_web_lol_matches(&lower, is_english) {
+        let result = crate::lol_api::lol_get_match_history(riot_id, region, Some(count)).await;
         return Ok(Json(ApiResponse {
             ok: true,
             message: result.unwrap_or_else(|e| e),
@@ -932,22 +1036,33 @@ async fn chat_handler(
         "git",
     ];
 
-    let open_patterns = [
-        r"abr[ií]?\s+(.+)",
-        r"abre\s+(.+)",
-        r"abrir\s+(.+)",
-        r"abrime\s+(.+)",
-        r"pone[r]?\s+(.+)",
-        r"iniciar\s+(.+)",
-        r"ejecutar\s+(.+)",
-    ];
+    let open_patterns: &[&str] = if is_english {
+        &[r"open\s+(.+)", r"start\s+(.+)", r"launch\s+(.+)"]
+    } else {
+        &[
+            r"abr[ií]?\s+(.+)",
+            r"abre\s+(.+)",
+            r"abrir\s+(.+)",
+            r"abrime\s+(.+)",
+            r"pone[r]?\s+(.+)",
+            r"iniciar\s+(.+)",
+            r"ejecutar\s+(.+)",
+        ]
+    };
 
     for app in &known_apps {
-        if lower == *app
-            || lower == format!("abri {}", app)
-            || lower == format!("abre {}", app)
-            || lower == format!("abrir {}", app)
-        {
+        let app_matches = if is_english {
+            lower == *app
+                || lower == format!("open {}", app)
+                || lower == format!("start {}", app)
+                || lower == format!("launch {}", app)
+        } else {
+            lower == *app
+                || lower == format!("abri {}", app)
+                || lower == format!("abre {}", app)
+                || lower == format!("abrir {}", app)
+        };
+        if app_matches {
             let result = crate::open_any_app_with_notify(None, app.to_string()).await;
             return Ok(Json(ApiResponse {
                 ok: true,
@@ -956,7 +1071,7 @@ async fn chat_handler(
         }
     }
 
-    for pattern in &open_patterns {
+    for pattern in open_patterns {
         if let Ok(re) = regex::Regex::new(pattern) {
             if let Some(caps) = re.captures(&lower) {
                 if let Some(app_name) = caps.get(1) {
@@ -973,11 +1088,15 @@ async fn chat_handler(
         }
     }
 
-    let search_in_patterns = [
-        r"busca[r]?\s+en\s+([^:]+)\s*:\s*(.+)",
-        r"buscar\s+en\s+([^:]+)\s*:\s*(.+)",
-    ];
-    for pattern in &search_in_patterns {
+    let search_in_patterns: &[&str] = if is_english {
+        &[r"search\s+(?:on|in)\s+([^:]+)\s*:\s*(.+)"]
+    } else {
+        &[
+            r"busca[r]?\s+en\s+([^:]+)\s*:\s*(.+)",
+            r"buscar\s+en\s+([^:]+)\s*:\s*(.+)",
+        ]
+    };
+    for pattern in search_in_patterns {
         if let Ok(re) = regex::Regex::new(pattern) {
             if let Some(caps) = re.captures(&lower) {
                 if let (Some(site), Some(query)) = (caps.get(1), caps.get(2)) {
@@ -987,15 +1106,23 @@ async fn chat_handler(
                     let _ = open::that(&url);
                     return Ok(Json(ApiResponse {
                         ok: true,
-                        message: format!("Busque en {}: {}", site, query),
+                        message: if is_english {
+                            format!("Searched on {}: {}", site, query)
+                        } else {
+                            format!("Busque en {}: {}", site, query)
+                        },
                     }));
                 }
             }
         }
     }
 
-    let search_patterns = [r"busca[r]?\s+(.+)", r"investigar\s+(.+)"];
-    for pattern in &search_patterns {
+    let search_patterns: &[&str] = if is_english {
+        &[r"search\s+(.+)", r"look\s+up\s+(.+)"]
+    } else {
+        &[r"busca[r]?\s+(.+)", r"investigar\s+(.+)"]
+    };
+    for pattern in search_patterns {
         if let Ok(re) = regex::Regex::new(pattern) {
             if let Some(caps) = re.captures(&lower) {
                 if let Some(query) = caps.get(1) {
@@ -1004,7 +1131,11 @@ async fn chat_handler(
                     let _ = open::that(&url);
                     return Ok(Json(ApiResponse {
                         ok: true,
-                        message: format!("Busque: {}", q),
+                        message: if is_english {
+                            format!("Searched: {}", q)
+                        } else {
+                            format!("Busque: {}", q)
+                        },
                     }));
                 }
             }
@@ -1014,7 +1145,12 @@ async fn chat_handler(
     if !llama_running {
         return Ok(Json(ApiResponse {
             ok: true,
-            message: "LLaMA está apagado. Decí 'abre llama' para activarlo.".to_string(),
+            message: if is_english {
+                "LLaMA is off. Say 'start llama' to turn it on."
+            } else {
+                "LLaMA esta apagado. Deci 'abre llama' para activarlo."
+            }
+            .to_string(),
         }));
     }
 
@@ -1045,6 +1181,16 @@ async fn chat_handler(
     let reply = crate::clean_ai_reply(&reply);
 
     if let Some(action) = extract_action(&reply) {
+        if !web_action_allowed_for_language(&lower, is_english, &action) {
+            return Ok(Json(ApiResponse {
+                ok: true,
+                message: if is_english {
+                    "That command is not available in this language.".to_string()
+                } else {
+                    "Ese comando no esta disponible en este idioma.".to_string()
+                },
+            }));
+        }
         let result = execute_web_action(&action).await;
         if let Some(msg) = result {
             return Ok(Json(ApiResponse {
@@ -1058,6 +1204,150 @@ async fn chat_handler(
         ok: true,
         message: reply,
     }))
+}
+
+fn web_action_allowed_for_language(
+    lower: &str,
+    is_english: bool,
+    action: &serde_json::Value,
+) -> bool {
+    let action_name = action["action"].as_str().unwrap_or("");
+    match action_name {
+        "open_app" => {
+            if is_english {
+                lower.starts_with("open ")
+                    || lower.starts_with("start ")
+                    || lower.starts_with("launch ")
+            } else {
+                lower.starts_with("abri ")
+                    || lower.starts_with("abrí ")
+                    || lower.starts_with("abre ")
+                    || lower.starts_with("abrir ")
+                    || lower.starts_with("abrime ")
+                    || lower.starts_with("pone ")
+                    || lower.starts_with("poner ")
+                    || lower.starts_with("iniciar ")
+                    || lower.starts_with("ejecutar ")
+            }
+        }
+        "search" => {
+            if is_english {
+                lower.starts_with("search ") || lower.starts_with("look up ")
+            } else {
+                lower.starts_with("busca ")
+                    || lower.starts_with("buscar ")
+                    || lower.starts_with("investigar ")
+            }
+        }
+        "play_music" => {
+            if is_english {
+                lower.starts_with("play ") || lower.starts_with("listen to ")
+            } else {
+                lower.starts_with("pone musica ")
+                    || lower.starts_with("poné musica ")
+                    || lower.starts_with("poné música ")
+                    || lower.starts_with("reproducir ")
+                    || lower.starts_with("escuchar ")
+            }
+        }
+        "open_url" => {
+            if is_english {
+                lower.starts_with("open ") || lower.starts_with("go to ")
+            } else {
+                lower.starts_with("abri ") || lower.starts_with("abrí ") || lower.starts_with("abrir ")
+            }
+        }
+        _ => true,
+    }
+}
+
+fn web_lol_defaults() -> Option<(String, String)> {
+    let config = crate::config::AppConfig::load();
+    let riot_id = config.riot_id.trim().to_string();
+    if riot_id.is_empty() {
+        return None;
+    }
+    let region = if config.lol_region.trim().is_empty() {
+        "las".to_string()
+    } else {
+        config.lol_region.trim().to_string()
+    };
+    Some((riot_id, region))
+}
+
+fn normalize_web_lol_region(region: Option<&str>) -> String {
+    region
+        .unwrap_or("")
+        .trim()
+        .to_lowercase()
+        .replace("korea", "kr")
+        .replace("corea", "kr")
+}
+
+fn detect_web_lol_rank(lower: &str, is_english: bool) -> Option<(String, String)> {
+    if is_english {
+        if matches!(lower, "my elo" | "my rank" | "my tier" | "what rank am i" | "what elo am i" | "what tier am i") {
+            return web_lol_defaults();
+        }
+        let re = regex::Regex::new(
+            r"^(?:rank|elo|tier)\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$",
+        )
+        .ok()?;
+        let caps = re.captures(lower)?;
+        let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+        let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
+        return Some((riot_id, region));
+    }
+
+    if matches!(lower, "mi elo" | "mi rango" | "que rango soy" | "que elo soy" | "en que rango estoy" | "en que elo estoy") {
+        return web_lol_defaults();
+    }
+    let re = regex::Regex::new(
+        r"^(?:elo|rang[oa]?|clasificaci[oó]n)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$",
+    )
+    .ok()?;
+    let caps = re.captures(lower)?;
+    let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+    let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
+    Some((riot_id, region))
+}
+
+fn detect_web_lol_matches(lower: &str, is_english: bool) -> Option<(String, String, i32)> {
+    if is_english {
+        if matches!(lower, "my last match" | "last match") {
+            let (riot_id, region) = web_lol_defaults()?;
+            return Some((riot_id, region, 1));
+        }
+        if matches!(lower, "my games" | "my matches" | "my match history" | "my lol") {
+            let (riot_id, region) = web_lol_defaults()?;
+            return Some((riot_id, region, 5));
+        }
+        let re = regex::Regex::new(
+            r"^last\s+match\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$",
+        )
+        .ok()?;
+        let caps = re.captures(lower)?;
+        let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+        let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
+        return Some((riot_id, region, 1));
+    }
+
+    if matches!(lower, "mi ultima partida" | "mi última partida" | "ultima partida" | "última partida") {
+        let (riot_id, region) = web_lol_defaults()?;
+        return Some((riot_id, region, 1));
+    }
+    if matches!(lower, "mis partidas" | "mi historial" | "como va mi lol" | "cómo va mi lol") {
+        let (riot_id, region) = web_lol_defaults()?;
+        return Some((riot_id, region, 5));
+    }
+    let re = regex::Regex::new(
+        r"^(?:ultima|última)\s+partida\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$",
+    )
+    .ok()?;
+    let caps = re.captures(lower)?;
+    let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+    let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
+    Some((riot_id, region, 1))
 }
 
 fn extract_action(text: &str) -> Option<serde_json::Value> {
@@ -1089,12 +1379,20 @@ async fn execute_web_action(action: &serde_json::Value) -> Option<String> {
                 query.replace(' ', "+")
             );
             let _ = open::that(&url);
-            Some(format!("Busque: {}", query))
+            Some(if crate::language_is_english() {
+                format!("Searched: {}", query)
+            } else {
+                format!("Busque: {}", query)
+            })
         }
         "open_url" => {
             let url = action["url"].as_str()?;
             let _ = open::that(url);
-            Some(format!("Abrí: {}", url))
+            Some(if crate::language_is_english() {
+                format!("Opened: {}", url)
+            } else {
+                format!("Abri: {}", url)
+            })
         }
         "play_music" => {
             let query = action["query"].as_str()?;
@@ -1103,7 +1401,11 @@ async fn execute_web_action(action: &serde_json::Value) -> Option<String> {
                 query.replace(' ', "+")
             );
             let _ = open::that(&url);
-            Some(format!("Buscando música: {}", query))
+            Some(if crate::language_is_english() {
+                format!("Searching music: {}", query)
+            } else {
+                format!("Buscando musica: {}", query)
+            })
         }
         "shutdown" => {
             let seconds = action["seconds"].as_u64();
@@ -1168,7 +1470,11 @@ async fn search_handler(
     match open::that(&url) {
         Ok(_) => Ok(Json(ApiResponse {
             ok: true,
-            message: format!("Busque: {}", payload.query),
+            message: if crate::language_is_english() {
+                format!("Searched: {}", payload.query)
+            } else {
+                format!("Busque: {}", payload.query)
+            },
         })),
         Err(e) => Ok(Json(ApiResponse {
             ok: false,
@@ -1188,7 +1494,11 @@ async fn open_url_handler(
     match open::that(&full_url) {
         Ok(_) => Ok(Json(ApiResponse {
             ok: true,
-            message: format!("Abrí {}", full_url),
+            message: if crate::language_is_english() {
+                format!("Opened {}", full_url)
+            } else {
+                format!("Abri {}", full_url)
+            },
         })),
         Err(e) => Ok(Json(ApiResponse {
             ok: false,
@@ -1433,6 +1743,7 @@ pub async fn start_web_server(app_handle: AppHandle) {
         .route("/files", get(list_files_handler))
         .route("/files/events", get(file_events_handler))
         .route("/free-games", get(free_games_handler))
+        .route("/config", get(get_config_handler).post(save_config_handler))
         .route(
             "/free-games/test-notification",
             post(test_free_games_notification_handler),

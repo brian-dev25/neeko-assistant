@@ -52,6 +52,15 @@ fn format_duration(seconds: u64) -> String {
     format!("{:02}:{:02}", mins, secs)
 }
 
+fn current_language() -> &'static str {
+    let config = AppConfig::load();
+    crate::config::normalize_language(&config.language).unwrap_or("es")
+}
+
+fn is_english(language: &str) -> bool {
+    language == "en"
+}
+
 fn days_in_month(year: u64, month: u64) -> u64 {
     match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
@@ -85,17 +94,27 @@ fn to_epoch_seconds(year: u64, month: u64, day: u64) -> u64 {
     total_days * 86400
 }
 
-fn parse_opgg_date(date_str: &str) -> String {
+fn parse_opgg_date(date_str: &str, language: &str) -> String {
     // ISO 8601: "2026-08-26T14:07:34+09:00"
     let date_time = if let Some(t_pos) = date_str.find('T') {
         &date_str[..t_pos]
     } else {
-        return "desconocido".to_string();
+        return if is_english(language) {
+            "unknown"
+        } else {
+            "desconocido"
+        }
+        .to_string();
     };
 
     let dt_parts: Vec<&str> = date_time.split('-').collect();
     if dt_parts.len() < 3 {
-        return "desconocido".to_string();
+        return if is_english(language) {
+            "unknown"
+        } else {
+            "desconocido"
+        }
+        .to_string();
     }
 
     let year: u64 = dt_parts[0].parse().unwrap_or(0);
@@ -112,26 +131,51 @@ fn parse_opgg_date(date_str: &str) -> String {
     let diff = now.saturating_sub(game_secs);
 
     if diff < 60 {
-        "hace un momento".to_string()
+        if is_english(language) {
+            "just now".to_string()
+        } else {
+            "hace un momento".to_string()
+        }
     } else if diff < 3600 {
-        format!("hace {}m", diff / 60)
+        if is_english(language) {
+            format!("{}m ago", diff / 60)
+        } else {
+            format!("hace {}m", diff / 60)
+        }
     } else if diff < 86400 {
-        format!("hace {}h", diff / 3600)
+        if is_english(language) {
+            format!("{}h ago", diff / 3600)
+        } else {
+            format!("hace {}h", diff / 3600)
+        }
     } else if diff < 604800 {
-        format!("hace {}d", diff / 86400)
+        if is_english(language) {
+            format!("{}d ago", diff / 86400)
+        } else {
+            format!("hace {}d", diff / 86400)
+        }
     } else {
-        format!("hace {}sem", diff / 604800)
+        if is_english(language) {
+            format!("{}w ago", diff / 604800)
+        } else {
+            format!("hace {}sem", diff / 604800)
+        }
     }
 }
 
 static CHAMPION_CACHE: std::sync::OnceLock<
-    tokio::sync::Mutex<Option<HashMap<u32, (String, String)>>>,
+    tokio::sync::Mutex<HashMap<String, HashMap<u32, (String, String)>>>,
 > = std::sync::OnceLock::new();
 
-async fn get_champion_map() -> Result<HashMap<u32, (String, String)>, String> {
-    let lock = CHAMPION_CACHE.get_or_init(|| tokio::sync::Mutex::new(None));
+async fn get_champion_map(language: &str) -> Result<HashMap<u32, (String, String)>, String> {
+    let locale = if is_english(language) {
+        "en_US"
+    } else {
+        "es_MX"
+    };
+    let lock = CHAMPION_CACHE.get_or_init(|| tokio::sync::Mutex::new(HashMap::new()));
     let mut cache = lock.lock().await;
-    if let Some(ref map) = *cache {
+    if let Some(map) = cache.get(locale) {
         return Ok(map.clone());
     }
 
@@ -156,8 +200,8 @@ async fn get_champion_map() -> Result<HashMap<u32, (String, String)>, String> {
 
     let data: serde_json::Value = client
         .get(format!(
-            "https://ddragon.leagueoflegends.com/cdn/{}/data/es_MX/champion.json",
-            version
+            "https://ddragon.leagueoflegends.com/cdn/{}/data/{}/champion.json",
+            version, locale
         ))
         .send()
         .await
@@ -182,7 +226,7 @@ async fn get_champion_map() -> Result<HashMap<u32, (String, String)>, String> {
         }
     }
 
-    *cache = Some(map.clone());
+    cache.insert(locale.to_string(), map.clone());
     Ok(map)
 }
 
@@ -263,6 +307,12 @@ pub async fn lol_get_match_history(
     region: String,
     count: Option<i32>,
 ) -> Result<String, String> {
+    let language = current_language();
+    let opgg_locale = if is_english(language) {
+        "en_US"
+    } else {
+        "es_MX"
+    };
     let region = normalize_region(&region);
     let count = count.unwrap_or(5).min(20);
 
@@ -281,9 +331,10 @@ pub async fn lol_get_match_history(
     };
 
     let search_url = format!(
-        "https://lol-api-summoner.op.gg/api/v3/{}/summoners?riot_id={}&hl=es_MX",
+        "https://lol-api-summoner.op.gg/api/v3/{}/summoners?riot_id={}&hl={}",
         region,
-        urlencoding::encode(&format!("{}#{}", game_name, tag_line))
+        urlencoding::encode(&format!("{}#{}", game_name, tag_line)),
+        opgg_locale
     );
 
     let search_data: OpggSummonerSearch = client
@@ -296,10 +347,17 @@ pub async fn lol_get_match_history(
         .map_err(|e| format!("Error parseando respuesta de summoner: {}", e))?;
 
     let summoner = search_data.data.first().ok_or_else(|| {
-        format!(
-            "No encontré al jugador {}#{} en {}",
-            game_name, tag_line, region
-        )
+        if is_english(language) {
+            format!(
+                "I could not find player {}#{} in {}",
+                game_name, tag_line, region
+            )
+        } else {
+            format!(
+                "No encontre al jugador {}#{} en {}",
+                game_name, tag_line, region
+            )
+        }
     })?;
 
     eprintln!(
@@ -310,8 +368,8 @@ pub async fn lol_get_match_history(
     let player_puuid = summoner.puuid.clone();
 
     let games_url = format!(
-        "https://lol-api-summoner.op.gg/api/v3/{}/summoners/{}/games?limit={}&game_type=total&hl=es_MX",
-        region, player_puuid, count
+        "https://lol-api-summoner.op.gg/api/v3/{}/summoners/{}/games?limit={}&game_type=total&hl={}",
+        region, player_puuid, count, opgg_locale
     );
 
     let games_resp = client
@@ -328,7 +386,7 @@ pub async fn lol_get_match_history(
     let games_response: OpggGamesResponse = serde_json::from_str(&games_text)
         .map_err(|e| format!("Error parseando partidas: {}", e))?;
 
-    let champion_map = get_champion_map().await.unwrap_or_default();
+    let champion_map = get_champion_map(language).await.unwrap_or_default();
 
     let mut lines = Vec::new();
     lines.push(format!(
@@ -362,17 +420,24 @@ pub async fn lol_get_match_history(
             (p.stats.kill + p.stats.assist) as f64 / p.stats.death as f64
         };
 
-        let date_str = parse_opgg_date(&game.created_at);
+        let date_str = parse_opgg_date(&game.created_at, language);
+        let result_label = if p.stats.result == "WIN" {
+            if is_english(language) {
+                "Win"
+            } else {
+                "Victoria"
+            }
+        } else if is_english(language) {
+            "Loss"
+        } else {
+            "Derrota"
+        };
 
         lines.push(format!(
             "\n{} {} {} | {}/{}/{} ({:.1}) | {} | {}",
             result_emoji,
             champ_name,
-            if p.stats.result == "WIN" {
-                "Victoria"
-            } else {
-                "Derrota"
-            },
+            result_label,
             p.stats.kill,
             p.stats.death,
             p.stats.assist,
@@ -383,7 +448,11 @@ pub async fn lol_get_match_history(
     }
 
     if lines.len() <= 1 {
-        return Ok("No encontré partidas recientes para este jugador 🥺".to_string());
+        return Ok(if is_english(language) {
+            "I could not find recent matches for this player".to_string()
+        } else {
+            "No encontre partidas recientes para este jugador".to_string()
+        });
     }
 
     Ok(lines.join("\n"))
@@ -396,6 +465,7 @@ pub fn lol_save_config(
     git_pat: Option<String>,
     riot_id: Option<String>,
     neeko_sprite: Option<String>,
+    language: Option<String>,
 ) -> Result<String, String> {
     let mut config = AppConfig::load();
     if let Some(r) = region {
@@ -417,6 +487,11 @@ pub fn lol_save_config(
             }
             _ => return Err("Sprite de Neeko no valido".to_string()),
         }
+    }
+    if let Some(language) = language {
+        config.language = crate::config::normalize_language(&language)
+            .ok_or_else(|| "Idioma no valido".to_string())?
+            .to_string();
     }
     config.save()?;
     Ok("Configuración guardada ✅".to_string())
@@ -450,11 +525,16 @@ pub fn lol_get_config() -> Result<String, String> {
         "neeko_3d_animation": config.neeko_3d_animation,
         "lol_region": config.lol_region,
         "riot_id": config.riot_id,
+        "language": crate::config::normalize_language(&config.language).unwrap_or("es"),
     })
     .to_string())
 }
 
-fn tier_name(tier: &str) -> &str {
+fn tier_name<'a>(tier: &'a str, language: &str) -> &'a str {
+    if is_english(language) {
+        return tier;
+    }
+
     match tier.to_uppercase().as_str() {
         "IRON" => "Hierro",
         "BRONZE" => "Bronce",
@@ -472,6 +552,12 @@ fn tier_name(tier: &str) -> &str {
 
 #[tauri::command]
 pub async fn lol_get_rank(riot_id: String, region: String) -> Result<String, String> {
+    let language = current_language();
+    let opgg_locale = if is_english(language) {
+        "en_US"
+    } else {
+        "es_MX"
+    };
     let region = normalize_region(&region);
 
     let client = reqwest::Client::builder()
@@ -489,9 +575,10 @@ pub async fn lol_get_rank(riot_id: String, region: String) -> Result<String, Str
     };
 
     let search_url = format!(
-        "https://lol-api-summoner.op.gg/api/v3/{}/summoners?riot_id={}&hl=es_MX",
+        "https://lol-api-summoner.op.gg/api/v3/{}/summoners?riot_id={}&hl={}",
         region,
-        urlencoding::encode(&format!("{}#{}", game_name, tag_line))
+        urlencoding::encode(&format!("{}#{}", game_name, tag_line)),
+        opgg_locale
     );
 
     let search_data: OpggSummonerSearch = client
@@ -504,17 +591,31 @@ pub async fn lol_get_rank(riot_id: String, region: String) -> Result<String, Str
         .map_err(|e| format!("Error parseando respuesta de summoner: {}", e))?;
 
     let summoner = search_data.data.first().ok_or_else(|| {
-        format!(
-            "No encontré al jugador {}#{} en {}",
-            game_name, tag_line, region
-        )
+        if is_english(language) {
+            format!(
+                "I could not find player {}#{} in {}",
+                game_name, tag_line, region
+            )
+        } else {
+            format!(
+                "No encontre al jugador {}#{} en {}",
+                game_name, tag_line, region
+            )
+        }
     })?;
 
     let tier_info = summoner.solo_tier_info.as_ref().ok_or_else(|| {
-        format!(
-            "{}#{} no tiene clasificación activa este season",
-            summoner.game_name, summoner.tagline
-        )
+        if is_english(language) {
+            format!(
+                "{}#{} has no active ranked placement this season",
+                summoner.game_name, summoner.tagline
+            )
+        } else {
+            format!(
+                "{}#{} no tiene clasificacion activa este season",
+                summoner.game_name, summoner.tagline
+            )
+        }
     })?;
 
     let tier = tier_info.tier.as_deref().unwrap_or("UNRANKED");
@@ -522,13 +623,20 @@ pub async fn lol_get_rank(riot_id: String, region: String) -> Result<String, Str
     let lp = tier_info.lp.unwrap_or(0);
 
     let rank_str = if tier == "MASTER" || tier == "GRANDMASTER" || tier == "CHALLENGER" {
-        format!("{} {} LP", tier_name(tier), lp)
+        format!("{} {} LP", tier_name(tier, language), lp)
     } else {
-        format!("{} {} - {} LP", tier_name(tier), division, lp)
+        format!("{} {} - {} LP", tier_name(tier, language), division, lp)
     };
 
-    Ok(format!(
-        "🏆 {}#{} está en {} este season",
-        summoner.game_name, summoner.tagline, rank_str
-    ))
+    if is_english(language) {
+        Ok(format!(
+            "🏆 {}#{} is in {} this season",
+            summoner.game_name, summoner.tagline, rank_str
+        ))
+    } else {
+        Ok(format!(
+            "🏆 {}#{} esta en {} este season",
+            summoner.game_name, summoner.tagline, rank_str
+        ))
+    }
 }

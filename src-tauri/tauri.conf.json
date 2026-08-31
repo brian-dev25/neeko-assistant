@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicklasonmedia/tauri/dev/crates/tauri-cli/schema.json",
   "productName": "Neeko Assistant",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "identifier": "com.neeko.assistant",
   "app": {
     "withGlobalTauri": true,
@@ -48,7 +48,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyNzVBRTRGMkFCRUFERTcKUldUbnJiNHFUNjUxRXZkNlUrU1VIL1NENkxnaHFmUFdIQ2RJSE9LdkRHb0dRcVJxK1pIeVk4bTIK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVCMTgzNkNGNDM0NUNBNkQKUldSdHlrVkR6ellZNjlXZ2dwWVN2ZjJMNU80S3dmMkRjcEpkOWFiaVdmcWFYUGtEK1BmY2VWaTYK",
       "endpoints": [
         "https://github.com/brian-dev25/neeko-assistant/releases/latest/download/latest.json"
       ],

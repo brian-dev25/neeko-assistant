@@ -1,0 +1,21 @@
+{
+  "id": "my-addon",
+  "name": "Mi Addon / My Addon",
+  "version": "1.0.0",
+  "description": "Descripcion de lo que hace tu addon / Description of what your addon does",
+  "author": "Tu Nombre",
+  "minAppVersion": "1.2.0",
+  "enabled": false,
+  "icon": "icon.png",
+  "permissions": ["chat:commands", "ui:tabs", "ui:bubble"],
+  "commands": [
+    {
+      "id": "my-command",
+      "description": "Descripcion del comando / Command description",
+      "patterns": {
+        "es": ["mi\\s+comando\\s+(.+)"],
+        "en": ["my\\s+command\\s+(.+)"]
+      }
+    }
+  ]
+}

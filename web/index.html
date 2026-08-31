@@ -904,22 +904,25 @@
         <!-- TABS -->
         <div class="tabs">
             <div class="tab active" onclick="switchTab('chat')">
-                <span class="tab-icon">💬</span>Chat
+                <span class="tab-icon">💬</span><span data-i18n="tabChat">Chat</span>
             </div>
             <div class="tab" onclick="switchTab('files')">
-                <span class="tab-icon">📁</span>Archivos
+                <span class="tab-icon">📁</span><span data-i18n="tabFiles">Archivos</span>
             </div>
             <div class="tab" onclick="switchTab('games')">
-                <span class="tab-icon">🎮</span>Juegos gratis
+                <span class="tab-icon">🎮</span><span data-i18n="tabGames">Juegos gratis</span>
             </div>
             <div class="tab" onclick="switchTab('removebg')">
-                <span class="tab-icon">✂️</span>Quitar fondo
+                <span class="tab-icon">✂️</span><span data-i18n="tabRemoveBg">Quitar fondo</span>
             </div>
             <div class="tab" onclick="switchTab('install')">
-                <span class="tab-icon">⬇️</span>Instalar
+                <span class="tab-icon">⬇️</span><span data-i18n="tabInstall">Instalar</span>
+            </div>
+            <div class="tab" onclick="switchTab('settings')">
+                <span class="tab-icon">⚙</span><span data-i18n="tabSettings">Configuracion</span>
             </div>
             <div class="tab" onclick="switchTab('help')">
-                <span class="tab-icon">❓</span>Ayuda
+                <span class="tab-icon">❓</span><span data-i18n="tabHelp">Ayuda</span>
             </div>
         </div>
 
@@ -991,7 +994,6 @@
                 <div class="games-header">
                     <h3>Juegos gratis</h3>
                     <div class="games-actions">
-                        <button class="games-refresh" onclick="testNativeNotification()">Probar aviso</button>
                         <button class="games-refresh" onclick="loadFreeGames(true)">Actualizar</button>
                     </div>
                 </div>
@@ -1161,6 +1163,20 @@
                         <a href="https://github.com/Tamersoul/magic-wand-js" target="_blank" style="color:var(--neeko-light);">magic-wand-js</a> (MIT) ·
                         <a href="https://github.com/bhj/gl-chromakey" target="_blank" style="color:var(--neeko-light);">gl-chromakey</a> (MIT)
                     </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;">
+                <h3 style="font-size:18px;" data-i18n="settingsTitle">Configuracion</h3>
+                <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                    <label for="web-language" style="font-size:13px;color:var(--text-dim);" data-i18n="languageLabel">Idioma</label>
+                    <select id="web-language" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;">
+                        <option value="es">Espa&ntilde;ol</option>
+                        <option value="en">English</option>
+                    </select>
+                    <button class="quick-btn" onclick="saveWebConfig()" data-i18n="saveSettings">Guardar</button>
                 </div>
             </div>
         </div>
@@ -1361,6 +1377,409 @@
         let freeGamesInterval = null;
         let installEventSource = null;
         let webLlamaModelAvailable = false;
+        let currentLanguage = 'es';
+
+        const I18N = {
+            es: {
+                locale: 'es-AR',
+                tabChat: 'Chat',
+                tabSettings: 'Configuracion',
+                settingsTitle: 'Configuracion',
+                languageLabel: 'Idioma',
+                saveSettings: 'Guardar',
+                chatPlaceholder: 'Escribi tu mensaje...',
+                hello: 'Hola! Soy Neeko, tu asistente. Que necesitas?',
+                configSaved: 'Configuracion guardada',
+                passwordPlaceholder: 'Contraseña...',
+                login: 'Entrar',
+                badPassword: 'Contraseña incorrecta',
+                tabFiles: 'Archivos',
+                tabGames: 'Juegos gratis',
+                tabRemoveBg: 'Quitar fondo',
+                tabInstall: 'Instalar',
+                tabHelp: 'Ayuda',
+                quickFolder: 'Archivos',
+                uploadFiles: 'Toca para subir archivos',
+                dragFiles: 'o arrastra archivos aqui',
+                uploading: 'Subiendo...',
+                sharedFiles: 'Archivos compartidos',
+                noFiles: 'No hay archivos todavia',
+                freeGames: 'Juegos gratis',
+                refresh: 'Actualizar',
+                loadingFreeGames: 'Cargando juegos gratis...',
+                freeLabel: 'Gratis',
+                untilLabel: 'Hasta',
+                installs: 'Instalaciones',
+                installIntro: 'Descarga dependencias en la PC donde corre Neeko.',
+                ffmpegHelp: 'Necesarios para comprimir, inspeccionar y procesar video.',
+                gitHelp: 'Necesario para comandos de repositorios.',
+                downloadFfmpeg: 'Descargar FFmpeg',
+                uninstallFfmpeg: 'Desinstalar FFmpeg',
+                downloadGit: 'Descargar Git',
+                uninstallGit: 'Desinstalar Git',
+                fixedModel: 'Modelo fijo en Google Drive (~2.5 GB).',
+                downloadModel: 'Descargar modelo',
+                openBrowser: 'Abrir en navegador',
+                installFromFile: 'Instalar desde archivo',
+                uninstallModel: 'Desinstalar modelo',
+                installing: 'Instalando...',
+                preparing: 'Preparando...',
+                cancel: 'Cancelar',
+                removeBgTitle: 'Quitar fondo de imagen',
+                removeBgIntro: 'Elegi una libreria y procesa en tu navegador. La imagen nunca sale de tu dispositivo.',
+                removeBgButton: 'Quitar fondo',
+                result: 'Resultado',
+                original: 'Original',
+                downloadPng: 'Descargar PNG',
+                anotherImage: 'Otra imagen',
+                updates: 'Actualizaciones',
+                currentVersion: 'Version actual: v1.0.0',
+                checkUpdates: 'Buscar actualizaciones',
+                commandsAvailable: 'Comandos disponibles',
+                checkingUpdates: 'Buscando...',
+                newVersion: 'Nueva version',
+                currentShort: 'actual',
+                latestVersion: 'Estas en la ultima version',
+                download: 'Descarga',
+                downloading: 'Descargando...',
+                remaining: 'faltan',
+                downloadingModel: 'Descargando modelo...',
+                installingKind: 'Instalando {kind}...',
+                installWait: 'Esto puede tardar. Deja Neeko abierta mientras descarga.',
+                canceling: 'Cancelando...',
+                cancelError: 'Error al cancelar',
+                done: 'Listo',
+                error: 'Error',
+                selectGguf: 'Selecciona un archivo .gguf',
+                uploadingFile: 'Subiendo {file}...',
+                uploadingRemaining: 'faltan',
+                errorUpload: 'No pude subir el modelo',
+                errorConnect: 'Error al conectar con Neeko 🥺',
+                errorNotRunning: 'No pude conectar. ¿Está corriendo Neeko?',
+                uninstalling: 'Desinstalando',
+                ready: 'Listo',
+                pickColorFirst: 'Elegí primero el color a eliminar con el cuentagotas.',
+                pickBgFirst: 'Elegí primero una zona de fondo con el cuentagotas.',
+                removingColor: 'Eliminando color seleccionado...',
+                selectingBg: 'Seleccionando fondo conectado...',
+                generatingPng: 'Generando PNG...',
+                downloadingModel40mb: 'Descargando modelo ~40MB (primera vez)...',
+                loadingModel: 'Cargando modelo...',
+                errorLoadGames: 'No pude cargar los juegos gratis',
+                errorRefreshGames: 'No pude actualizar la lista',
+                errorNativeNotif: 'No pude enviar el aviso nativo:',
+                uploadingPct: 'Subiendo {file}... 0%',
+                uploadingOnly: 'Subiendo',
+            },
+            en: {
+                locale: 'en-US',
+                tabChat: 'Chat',
+                tabSettings: 'Settings',
+                settingsTitle: 'Settings',
+                languageLabel: 'Language',
+                saveSettings: 'Save',
+                chatPlaceholder: 'Type your message...',
+                hello: 'Hi! I am Neeko, your assistant. What do you need?',
+                configSaved: 'Settings saved',
+                passwordPlaceholder: 'Password...',
+                login: 'Log in',
+                badPassword: 'Incorrect password',
+                tabFiles: 'Files',
+                tabGames: 'Free games',
+                tabRemoveBg: 'Remove bg',
+                tabInstall: 'Install',
+                tabHelp: 'Help',
+                quickFolder: 'Files',
+                uploadFiles: 'Tap to upload files',
+                dragFiles: 'or drag files here',
+                uploading: 'Uploading...',
+                sharedFiles: 'Shared files',
+                noFiles: 'No files yet',
+                freeGames: 'Free games',
+                refresh: 'Refresh',
+                loadingFreeGames: 'Loading free games...',
+                freeLabel: 'Free',
+                untilLabel: 'Until',
+                installs: 'Installs',
+                installIntro: 'Download dependencies on the PC running Neeko.',
+                ffmpegHelp: 'Needed to compress, inspect, and process video.',
+                gitHelp: 'Needed for repository commands.',
+                downloadFfmpeg: 'Download FFmpeg',
+                uninstallFfmpeg: 'Uninstall FFmpeg',
+                downloadGit: 'Download Git',
+                uninstallGit: 'Uninstall Git',
+                fixedModel: 'Fixed model on Google Drive (~2.5 GB).',
+                downloadModel: 'Download model',
+                openBrowser: 'Open in browser',
+                installFromFile: 'Install from file',
+                uninstallModel: 'Uninstall model',
+                installing: 'Installing...',
+                preparing: 'Preparing...',
+                cancel: 'Cancel',
+                removeBgTitle: 'Remove image background',
+                removeBgIntro: 'Choose a library and process in your browser. The image never leaves your device.',
+                removeBgButton: 'Remove background',
+                result: 'Result',
+                original: 'Original',
+                downloadPng: 'Download PNG',
+                anotherImage: 'Another image',
+                updates: 'Updates',
+                currentVersion: 'Current version: v1.0.0',
+                checkUpdates: 'Check for updates',
+                commandsAvailable: 'Available commands',
+                checkingUpdates: 'Checking...',
+                newVersion: 'New version',
+                currentShort: 'current',
+                latestVersion: 'You are on the latest version',
+                download: 'Download',
+                downloading: 'Downloading...',
+                remaining: 'remaining',
+                downloadingModel: 'Downloading model...',
+                installingKind: 'Installing {kind}...',
+                installWait: 'This can take a while. Keep Neeko open while it downloads.',
+                canceling: 'Canceling...',
+                cancelError: 'Cancel failed',
+                done: 'Done',
+                error: 'Error',
+                selectGguf: 'Select a .gguf file',
+                uploadingFile: 'Uploading {file}...',
+                uploadingRemaining: 'remaining',
+                errorUpload: 'Could not upload the model',
+                errorConnect: 'Error connecting to Neeko',
+                errorNotRunning: 'Could not connect. Is Neeko running?',
+                uninstalling: 'Uninstalling',
+                ready: 'Done',
+                pickColorFirst: 'Pick the color to remove first with the eyedropper.',
+                pickBgFirst: 'Pick a background area first with the eyedropper.',
+                removingColor: 'Removing selected color...',
+                selectingBg: 'Selecting connected background...',
+                generatingPng: 'Generating PNG...',
+                downloadingModel40mb: 'Downloading model ~40MB (first time)...',
+                loadingModel: 'Loading model...',
+                errorLoadGames: 'Could not load free games',
+                errorRefreshGames: 'Could not refresh the list',
+                errorNativeNotif: 'Could not send native notification:',
+                uploadingPct: 'Uploading {file}... 0%',
+                uploadingOnly: 'Uploading',
+            },
+        };
+
+        function normalizeLanguage(language) {
+            return I18N[language] ? language : 'es';
+        }
+
+        function t(key) {
+            return I18N[currentLanguage]?.[key] ?? I18N.es[key] ?? key;
+        }
+
+        function renderHelpContent() {
+            const helpTab = document.getElementById('help-tab');
+            if (!helpTab) return;
+
+            const help = currentLanguage === 'en'
+                ? {
+                    updates: 'Updates',
+                    currentVersion: 'Current version: v1.0.0',
+                    checkUpdates: 'Check for updates',
+                    commands: 'Available commands',
+                    sections: [
+                        ['&#127760; IP / Connection', 'ip &middot; my ip &middot; local ip', 'Shows the local IP to connect from other devices'],
+                        ['&#128193; Files / Sharing', 'upload file &middot; upload video', 'From the Files tab you can upload files by dragging them or tapping the upload area'],
+                        ['&#127918; Open apps', 'open spotify &middot; open discord &middot; open chrome', 'Opens any installed app. Also: "start vscode", "launch steam"'],
+                        ['&#128269; Search', 'search cats &middot; look up recipes', 'Searches Google'],
+                        ['&#128269; Site search', 'search on youtube: rust tutorial', 'Searches specific sites: youtube, github, reddit, wikipedia, spotify, steam'],
+                        ['&#9881; Git', 'git init &middot; git add . &middot; git commit "message" &middot; git push &middot; git pull', 'Standard git commands'],
+                        ['&#127942; League of Legends', 'last match of Faker#KR1 in kr', 'Shows match history for any player'],
+                        ['&#127942; Your LoL account', 'my last match &middot; my games &middot; my lol', 'Uses your configured Riot ID'],
+                        ['&#127942; Rank / Elo', 'rank of Faker#KR1 in korea &middot; my elo &middot; my rank', 'Shows the rank for any player or for your configured Riot ID'],
+                        ['&#127909; Video', 'compress video: C:\\path\\video.mp4', 'Compresses video files when FFmpeg is installed'],
+                        ['&#129302; LLaMA', 'start llama &middot; stop llama', 'Starts or stops the local model service']
+                    ],
+                    apps: 'Known apps: spotify, discord, steam, chrome, firefox, edge, vscode, obs, youtube, league of legends, lol, riot client, obsidian, brave, 7-zip, winrar, roblox, fightcade, qbittorrent, virtualbox, node, python, git, and more',
+                    regions: 'Regions: las, euw, na, br, kr, korea, jp, oce, tr, ru, eune'
+                }
+                : {
+                    updates: 'Actualizaciones',
+                    currentVersion: 'Version actual: v1.0.0',
+                    checkUpdates: 'Buscar actualizaciones',
+                    commands: 'Comandos disponibles',
+                    sections: [
+                        ['&#127760; IP / Conexion', 'ip &middot; mi ip &middot; la ip', 'Muestra la IP local para conectarte desde otros dispositivos'],
+                        ['&#128193; Archivos / Compartir', 'subir archivo &middot; sube el video &middot; subilo', 'Desde la pestana Archivos podes subir archivos arrastrando o tocando la zona de upload'],
+                        ['&#127918; Abrir apps', 'abri spotify &middot; abre discord &middot; abrir chrome', 'Abre cualquier app instalada. Tambien: "pone vscode", "iniciar steam"'],
+                        ['&#128269; Buscar', 'busca gatitos &middot; buscar recetas', 'Busca en Google'],
+                        ['&#128269; Buscar en sitios', 'busca en youtube: tutorial rust', 'Busca en sitios especificos: youtube, github, reddit, wikipedia, spotify, steam'],
+                        ['&#9881; Git', 'git init &middot; git add . &middot; git commit "mensaje" &middot; git push &middot; git pull', 'Comandos git estandar'],
+                        ['&#127942; League of Legends', 'ultima partida de Faker#KR1 en kr', 'Historial de partidas de un jugador'],
+                        ['&#127942; Tu cuenta de LoL', 'mi ultima partida &middot; mis partidas &middot; como va mi lol', 'Usa tu Riot ID configurado'],
+                        ['&#127942; Rango / Elo', 'elo de Faker#KR1 en korea &middot; mi elo &middot; que rango soy', 'Muestra el rango de cualquier jugador o el tuyo configurado'],
+                        ['&#127909; Video', 'comprimir video: C:\\ruta\\video.mp4', 'Comprime videos cuando FFmpeg esta instalado'],
+                        ['&#129302; LLaMA', 'iniciar llama &middot; detener llama', 'Inicia o detiene el servicio del modelo local']
+                    ],
+                    apps: 'Apps conocidas: spotify, discord, steam, chrome, firefox, edge, vscode, obs, youtube, league of legends, lol, riot client, obsidian, brave, 7-zip, winrar, roblox, fightcade, qbittorrent, virtualbox, node, python, git, y mas',
+                    regions: 'Regiones: las, euw, na, br, kr, korea, corea, jp, oce, tr, ru, eune'
+                };
+
+            const sectionHtml = help.sections.map(([title, command, description]) => `
+                <div style="margin-bottom:20px;">
+                    <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">${title}</h4>
+                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <code style="color:var(--text);font-size:13px;">${command}</code>
+                        <span style="color:var(--text-dim);font-size:12px;">${description}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            helpTab.innerHTML = `
+                <div class="help-container" style="flex:1;overflow-y:auto;padding:16px;">
+                    <div class="update-card">
+                        <strong>${help.updates}</strong>
+                        <span id="web-update-status" class="update-status">${help.currentVersion}</span>
+                        <button id="web-check-update-btn" class="quick-btn" onclick="checkWebUpdate()">${help.checkUpdates}</button>
+                        <span id="web-update-notes" class="update-notes"></span>
+                    </div>
+                    <h3 style="margin-bottom:16px;font-size:18px;">${help.commands}</h3>
+                    ${sectionHtml}
+                    <div style="margin-top:-10px;margin-bottom:18px;color:var(--text-dim);font-size:12px;padding-left:8px;">${help.apps}</div>
+                    <div style="margin-top:-10px;margin-bottom:18px;color:var(--text-dim);font-size:12px;padding-left:8px;">${help.regions}</div>
+                </div>
+            `;
+        }
+
+        function getWebSystemPrompt() {
+            const now = new Date();
+            const locale = t('locale');
+            const date = now.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const time = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+            if (currentLanguage === 'en') {
+                return `You are Neeko, a vastaya from the Oovi-Kat tribe in League of Legends.
+You are playful, curious, cheerful, and a little childlike.
+Always speak in English, with short, sweet, fun replies.
+Use the lizard emoji often and phrases like "Neeko is Neeko!".
+
+CURRENT DATE AND TIME: ${date}, ${time}.
+
+ACTIONS (answer with JSON at the start of the response, separated by |||):
+- open_app: {"action": "open_app", "app": "name"}|||reply
+- play_music: {"action": "play_music", "query": "song or artist"}|||reply
+- open_url: {"action": "open_url", "url": "https://..."}|||reply
+- search: {"action": "search", "query": "search query"}|||reply
+
+If it is not an action, reply normally as Neeko.`;
+            }
+
+            return `Sos Neeko, una vastaya de la tribu Oovi-Kat de League of Legends.
+Sos juguetona, curiosa, alegre y un poco infantil.
+Hablas siempre en espanol, de forma corta, carinosa y divertida.
+Usas mucho el emoji de lagartija y frases como "Neeko es Neeko!".
+
+FECHA Y HORA ACTUAL: ${date}, son las ${time}.
+
+ACCIONES (responde con JSON al inicio de la respuesta, separado por |||):
+- open_app: {"action": "open_app", "app": "nombre"}|||respuesta
+- play_music: {"action": "play_music", "query": "cancion o artista"}|||respuesta
+- open_url: {"action": "open_url", "url": "https://..."}|||respuesta
+- search: {"action": "search", "query": "busqueda"}|||respuesta
+
+Si no es una accion, responde normal como Neeko.`;
+        }
+
+        function resetWebChatPrompt() {
+            chatHistory = [{ role: 'system', content: getWebSystemPrompt() }];
+        }
+
+        function applyLanguage(language) {
+            currentLanguage = normalizeLanguage(language);
+            document.documentElement.lang = currentLanguage;
+            document.querySelectorAll('[data-i18n]').forEach((el) => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            const setText = (selector, key) => {
+                const el = document.querySelector(selector);
+                if (el) el.textContent = t(key);
+            };
+            const setPlaceholder = (selector, key) => {
+                const el = document.querySelector(selector);
+                if (el) el.placeholder = t(key);
+            };
+
+            setPlaceholder('#password', 'passwordPlaceholder');
+            setText('#login-screen button', 'login');
+            setText('#login-error', 'badPassword');
+            renderHelpContent();
+            const quickFolder = document.querySelector('.quick-actions .quick-btn:nth-child(6)');
+            if (quickFolder) quickFolder.textContent = `📁 ${t('quickFolder')}`;
+            setText('#upload-zone .text', 'uploadFiles');
+            setText('#upload-zone .hint', 'dragFiles');
+            setText('#progress-text', 'uploading');
+            setText('#tab-files .files-header h3', 'sharedFiles');
+            setText('#tab-files .empty-state .text', 'noFiles');
+            setText('#tab-games .games-header h3', 'freeGames');
+            setText('#tab-games .games-actions button:nth-child(1)', 'refresh');
+            setText('#games-list .empty-state .text', 'loadingFreeGames');
+            setText('#tab-install h3', 'installs');
+            setText('#tab-install p', 'installIntro');
+            setText('#tab-install .file-item:nth-child(1) span', 'ffmpegHelp');
+            setText('#tab-install .file-item:nth-child(1) button:nth-of-type(1)', 'downloadFfmpeg');
+            setText('#tab-install .file-item:nth-child(1) button:nth-of-type(2)', 'uninstallFfmpeg');
+            setText('#tab-install .file-item:nth-child(2) span', 'gitHelp');
+            setText('#tab-install .file-item:nth-child(2) button:nth-of-type(1)', 'downloadGit');
+            setText('#tab-install .file-item:nth-child(2) button:nth-of-type(2)', 'uninstallGit');
+            setText('#tab-install .file-item:nth-of-type(3) span', 'fixedModel');
+            setText('#tab-install .file-item:nth-of-type(3) button:nth-of-type(1)', 'downloadModel');
+            setText('#tab-install .file-item:nth-of-type(3) button:nth-of-type(2)', 'openBrowser');
+            setText('#tab-install .file-item:nth-of-type(3) button:nth-of-type(3)', 'installFromFile');
+            setText('#tab-install .file-item:nth-of-type(3) button:nth-of-type(4)', 'uninstallModel');
+            setText('#web-install-title', 'installing');
+            setText('#web-install-message', 'preparing');
+            setText('#web-cancel-download-btn', 'cancel');
+            setText('#tab-removebg h3', 'removeBgTitle');
+            setText('#tab-removebg > div > p', 'removeBgIntro');
+            setText('#rbg-process-btn', 'removeBgButton');
+            setText('#rbg-download-btn', 'downloadPng');
+            setText('#rbg-preview button:last-child', 'anotherImage');
+
+            const input = document.getElementById('chat-input');
+            if (input) input.placeholder = t('chatPlaceholder');
+            const firstMessage = document.querySelector('#messages .msg.neeko');
+            if (firstMessage && document.querySelectorAll('#messages .msg').length === 1) {
+                firstMessage.innerHTML = `<div class="label">Neeko</div>${escapeHtml(t('hello'))} 🦎`;
+            }
+            const languageInput = document.getElementById('web-language');
+            if (languageInput) languageInput.value = currentLanguage;
+        }
+
+        async function loadWebConfig() {
+            try {
+                const resp = await fetch('/api/config', { headers: apiHeaders() });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const config = await resp.json();
+                applyLanguage(config.language || 'es');
+            } catch {
+                applyLanguage('es');
+            }
+            resetWebChatPrompt();
+        }
+
+        async function saveWebConfig() {
+            const language = normalizeLanguage(document.getElementById('web-language').value);
+            const resp = await fetch('/api/config', {
+                method: 'POST',
+                headers: apiHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ language })
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                applyLanguage(language);
+                resetWebChatPrompt();
+                showBubble(t('configSaved'));
+            } else {
+                showBubble(data.message || 'Error');
+            }
+        }
+
+        resetWebChatPrompt();
 
         // LLaMA status
         async function checkLlama() {
@@ -1446,6 +1865,7 @@
         function showApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'flex';
+            loadWebConfig();
             document.getElementById('chat-input').focus();
             document.getElementById('bottom-bar').innerHTML = `🌐 <span>${location.hostname}:${location.port || '1414'}</span> <span id="llama-status" style="cursor:pointer;padding:4px 10px;border-radius:8px;background:#1a1a25;border:1px solid #2a2a3a;font-size:12px;margin-left:8px;" onclick="toggleLlama()">🦎 LLaMA: <span id="llama-state">?</span></span>`;
             loadFiles();
@@ -1703,14 +2123,14 @@
             if (!rbgFile || !rbgLib) return;
             if (rbgLib === 'chroma') {
                 if (!rbgRemoveColor) {
-                    rbgUIError('Elegí primero el color a eliminar con el cuentagotas.');
+                    rbgUIError(t('pickColorFirst'));
                     return;
                 }
                 return processRbgByColor();
             }
             if (rbgLib === 'wand') {
                 if (!rbgRemoveColor || !rbgRemovePoint) {
-                    rbgUIError('Elegí primero una zona de fondo con el cuentagotas.');
+                    rbgUIError(t('pickBgFirst'));
                     return;
                 }
                 return processRbgMagicWand();
@@ -1744,7 +2164,7 @@
             document.getElementById('rbg-result').style.display = 'block';
             document.getElementById('rbg-result-placeholder').style.display = 'none';
             document.getElementById('rbg-download-btn').style.display = 'inline-block';
-            rbgUIProgress(100, '¡Listo!');
+            rbgUIProgress(100, t('done'));
             document.getElementById('rbg-status').textContent = `Resultado: ${(blob.size / 1024).toFixed(0)} KB (PNG)`;
             applyRbgBg();
         }
@@ -1760,7 +2180,7 @@
         }
 
         async function processRbgByColor() {
-            rbgUIStart('Eliminando color seleccionado...');
+            rbgUIStart(t('removingColor'));
             let worker = null;
             let workerUrl = null;
             try {
@@ -1802,7 +2222,7 @@
                     }, [imageData.data.buffer]);
                 });
 
-                rbgUIProgress(70, 'Generando PNG...');
+                rbgUIProgress(70, t('generatingPng'));
                 const outCanvas = document.createElement('canvas');
                 outCanvas.width = result.width;
                 outCanvas.height = result.height;
@@ -1824,7 +2244,7 @@
         }
 
         async function processRbgMagicWand() {
-            rbgUIStart('Seleccionando fondo conectado...');
+            rbgUIStart(t('selectingBg'));
             let worker = null;
             let workerUrl = null;
             try {
@@ -1912,7 +2332,7 @@
                     }, [imageData.data.buffer]);
                 });
 
-                rbgUIProgress(70, 'Generando PNG...');
+                rbgUIProgress(70, t('generatingPng'));
                 const outCanvas = document.createElement('canvas');
                 outCanvas.width = result.width;
                 outCanvas.height = result.height;
@@ -1934,10 +2354,10 @@
         }
 
         async function processRbgImgly() {
-            rbgUIStart('Descargando modelo ~40MB (primera vez)...');
+                rbgUIStart(t('downloadingModel40mb'));
             try {
                 const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
-                rbgUIProgress(30, 'Cargando modelo...');
+                rbgUIProgress(30, t('loadingModel'));
                 document.getElementById('rbg-status').textContent = 'Procesando con @imgly...';
 
                 const blob = await removeBackground(rbgFile, {
@@ -2022,8 +2442,12 @@
                 document.querySelectorAll('.tab')[4].classList.add('active');
                 document.getElementById('tab-install').classList.add('active');
                 stopFilesPoll();
-            } else {
+            } else if (tab === 'settings') {
                 document.querySelectorAll('.tab')[5].classList.add('active');
+                document.getElementById('tab-settings').classList.add('active');
+                stopFilesPoll();
+            } else {
+                document.querySelectorAll('.tab')[6].classList.add('active');
                 document.getElementById('help-tab').classList.add('active');
             }
         }
@@ -2086,12 +2510,12 @@
             if (!status || !payload) return;
 
             const percent = payload.percent ?? 0;
-            const totalText = payload.total ? ` · ${formatDownloadBytes(payload.downloaded)} / ${formatDownloadBytes(payload.total)} · faltan ${formatDownloadBytes(Math.max(0, payload.total - payload.downloaded))}` : '';
+            const totalText = payload.total ? ` · ${formatDownloadBytes(payload.downloaded)} / ${formatDownloadBytes(payload.total)} · ${t('remaining')} ${formatDownloadBytes(Math.max(0, payload.total - payload.downloaded))}` : '';
             status.style.display = 'flex';
-            title.textContent = payload.label || 'Descarga';
+            title.textContent = payload.label || t('download');
             percentEl.textContent = payload.percent == null ? '...' : `${percent}%`;
             bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-            message.textContent = `${payload.message || 'Descargando...'}${totalText}`;
+            message.textContent = `${payload.message || t('downloading')}${totalText}`;
         }
 
         function startInstallEvents() {
@@ -2113,8 +2537,8 @@
             const notes = document.getElementById('web-update-notes');
             const button = document.getElementById('web-check-update-btn');
             button.disabled = true;
-            button.textContent = 'Buscando...';
-            status.textContent = 'Buscando...';
+            button.textContent = t('checkingUpdates');
+            status.textContent = t('checkingUpdates');
             notes.textContent = '';
             try {
                 const resp = await fetch('/api/check-update', { method: 'POST', headers: apiHeaders({}) });
@@ -2122,11 +2546,11 @@
                 if (data.ok) {
                     const result = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
                     if (result.hasUpdate) {
-                        status.textContent = `Nueva versión: v${result.latestVersion} (actual: v${result.currentVersion})`;
+                        status.textContent = `${t('newVersion')}: v${result.latestVersion} (${t('currentShort')}: v${result.currentVersion})`;
                         status.style.color = '#4ade80';
                         notes.textContent = result.notes || '';
                     } else {
-                        status.textContent = `Estás en la última versión (v${result.currentVersion})`;
+                        status.textContent = `${t('latestVersion')} (v${result.currentVersion})`;
                         status.style.color = '#aab';
                     }
                 } else {
@@ -2138,7 +2562,7 @@
                 status.style.color = '#f87171';
             } finally {
                 button.disabled = false;
-                button.textContent = 'Buscar actualizaciones';
+                button.textContent = t('checkUpdates');
             }
         }
 
@@ -2151,10 +2575,10 @@
             const message = document.getElementById('web-install-message');
             const cancelBtn = document.getElementById('web-cancel-download-btn');
             status.style.display = 'flex';
-            title.textContent = kind === 'model' ? 'Descargando modelo...' : `Instalando ${kind}...`;
+            title.textContent = kind === 'model' ? t('downloadingModel') : t('installingKind').replace('{kind}', kind);
             percent.textContent = '...';
             bar.style.width = '0%';
-            message.textContent = 'Esto puede tardar. Dejá Neeko abierta mientras descarga.';
+            message.textContent = t('installWait');
             cancelBtn.style.display = 'inline-block';
             cancelBtn.onclick = async () => {
                 try {
@@ -2164,9 +2588,9 @@
                         body: JSON.stringify({ id: kind })
                     });
                     const data = await resp.json();
-                    message.textContent = data.message || 'Cancelando...';
+                    message.textContent = data.message || t('canceling');
                 } catch (e) {
-                    message.textContent = 'Error al cancelar';
+                    message.textContent = t('cancelError');
                 }
             };
 
@@ -2182,7 +2606,7 @@
             try {
                 const resp = await fetch(url, options);
                 const data = await resp.json();
-                title.textContent = data.ok ? 'Listo' : 'Error';
+                title.textContent = data.ok ? t('done') : t('error');
                 percent.textContent = data.ok ? '100%' : '';
                 if (data.ok) bar.style.width = '100%';
                 message.textContent = data.message;
@@ -2192,7 +2616,7 @@
                 }
                 showBubble(data.message);
             } catch (e) {
-                title.textContent = 'Error';
+                title.textContent = t('error');
                 percent.textContent = '';
                 message.textContent = e.message;
                 showBubble('Error: ' + e.message);
@@ -2203,7 +2627,7 @@
         function installWebModelFromFile(file) {
             if (!file) return;
             if (!file.name.toLowerCase().endsWith('.gguf')) {
-                showBubble('Selecciona un archivo .gguf');
+                showBubble(t('selectGguf'));
                 return;
             }
 
@@ -2213,10 +2637,10 @@
             const bar = document.getElementById('web-install-bar');
             const message = document.getElementById('web-install-message');
             status.style.display = 'flex';
-            title.textContent = 'Instalando modelo...';
+            title.textContent = t('installing');
             percent.textContent = '0%';
             bar.style.width = '0%';
-            message.textContent = `Subiendo ${file.name}...`;
+            message.textContent = t('uploadingFile').replace('{file}', file.name);
 
             const form = new FormData();
             form.append('model', file, file.name);
@@ -2227,18 +2651,18 @@
             xhr.upload.onprogress = (event) => {
                 if (!event.lengthComputable) {
                     percent.textContent = '...';
-                    message.textContent = `Subiendo ${file.name}... ${formatDownloadBytes(event.loaded)}`;
+                    message.textContent = t('uploadingFile').replace('{file}', file.name) + ` ${formatDownloadBytes(event.loaded)}`;
                     return;
                 }
                 const pct = Math.round((event.loaded / event.total) * 100);
                 percent.textContent = `${pct}%`;
                 bar.style.width = `${pct}%`;
-                message.textContent = `${formatDownloadBytes(event.loaded)} / ${formatDownloadBytes(event.total)} · faltan ${formatDownloadBytes(Math.max(0, event.total - event.loaded))}`;
+                message.textContent = `${formatDownloadBytes(event.loaded)} / ${formatDownloadBytes(event.total)} · ${t('uploadingRemaining')} ${formatDownloadBytes(Math.max(0, event.total - event.loaded))}`;
             };
             xhr.onload = () => {
                 let data = { ok: false, message: `HTTP ${xhr.status}` };
                 try { data = JSON.parse(xhr.responseText); } catch {}
-                title.textContent = data.ok ? 'Listo' : 'Error';
+                title.textContent = data.ok ? t('done') : t('error');
                 percent.textContent = data.ok ? '100%' : '';
                 if (data.ok) bar.style.width = '100%';
                 message.textContent = data.message;
@@ -2249,21 +2673,23 @@
                 showBubble(data.message);
             };
             xhr.onerror = () => {
-                title.textContent = 'Error';
+                title.textContent = t('error');
                 percent.textContent = '';
-                message.textContent = 'No pude subir el modelo';
-                showBubble('Error: no pude subir el modelo');
+                message.textContent = t('errorUpload');
+                showBubble('Error: ' + t('errorUpload'));
             };
             xhr.send(form);
         }
 
         async function runWebUninstaller(kind) {
             const labels = {
-                ffmpeg: 'el FFmpeg descargado por Neeko',
-                git: 'Git desde Windows',
-                model: 'los modelos GGUF descargados por Neeko'
+                ffmpeg: 'FFmpeg',
+                git: 'Git',
+                model: 'GGUF models'
             };
-            if (!confirm(`¿Desinstalar ${labels[kind] || kind}?`)) return;
+            const label = currentLanguage === 'en' ? labels[kind] || kind : kind === 'ffmpeg' ? 'el FFmpeg descargado por Neeko' : kind === 'git' ? 'Git desde Windows' : 'los modelos GGUF descargados por Neeko';
+            const msg = currentLanguage === 'en' ? `Uninstall ${label}?` : `¿Desinstalar ${label}?`;
+            if (!confirm(msg)) return;
 
             const status = document.getElementById('web-install-status');
             const title = document.getElementById('web-install-title');
@@ -2271,10 +2697,10 @@
             const bar = document.getElementById('web-install-bar');
             const message = document.getElementById('web-install-message');
             status.style.display = 'flex';
-            title.textContent = `Desinstalando ${kind}...`;
+            title.textContent = currentLanguage === 'en' ? `Uninstalling ${kind}...` : `Desinstalando ${kind}...`;
             percent.textContent = '';
             bar.style.width = '0%';
-            message.textContent = 'Preparando...';
+            message.textContent = t('preparing');
 
             try {
                 const resp = await fetch(`/api/uninstall/${kind}`, {
@@ -2282,7 +2708,7 @@
                     headers: apiHeaders({ 'Content-Type': 'application/json' })
                 });
                 const data = await resp.json();
-                title.textContent = data.ok ? 'Listo' : 'Error';
+                title.textContent = data.ok ? t('done') : t('error');
                 message.textContent = data.message;
                 if (kind === 'model') {
                     webLlamaModelAvailable = false;
@@ -2330,8 +2756,8 @@
                             <div class="game-meta">
                                 <span class="game-chip">${escapeHtml(game.store)}</span>
                                 ${price}
-                                <span class="game-chip game-free">Gratis</span>
-                                <span class="game-chip">Hasta ${escapeHtml(formatExpiration(game.expires_at))}</span>
+                                <span class="game-chip game-free">${escapeHtml(t('freeLabel'))}</span>
+                                <span class="game-chip">${escapeHtml(t('untilLabel'))} ${escapeHtml(formatExpiration(game.expires_at))}</span>
                             </div>
                         </div>
                     </a>
@@ -2342,7 +2768,7 @@
         async function loadFreeGames(manual = false) {
             const list = document.getElementById('games-list');
             if (manual && list) {
-                list.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div class="text">Buscando juegos gratis...</div></div>';
+                list.innerHTML = `<div class="empty-state"><div class="icon">🎮</div><div class="text">${escapeHtml(t('loadingFreeGames'))}</div></div>`;
             }
 
             try {
@@ -2356,9 +2782,9 @@
 
             } catch (e) {
                 if (list) {
-                    list.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div class="text">No pude cargar los juegos gratis</div></div>';
+                    list.innerHTML = `<div class="empty-state"><div class="icon">🎮</div><div class="text">${escapeHtml(t('errorLoadGames'))}</div></div>`;
                 }
-                if (manual) showToast('Juegos gratis', 'No pude actualizar la lista');
+                if (manual) showToast(t('freeGames'), t('errorRefreshGames'));
             }
         }
 
@@ -2370,7 +2796,7 @@
                 });
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
             } catch (e) {
-                console.error('No pude enviar el aviso nativo:', e);
+                console.error(t('errorNativeNotif'), e);
             }
         }
 
@@ -2426,11 +2852,11 @@
                     localStorage.removeItem('neeko_token');
                     location.reload();
                 } else {
-                    addMessage('neeko', 'Error al conectar con Neeko 🥺');
+                    addMessage('neeko', t('errorConnect'));
                 }
             } catch (e) {
                 hideTyping();
-                addMessage('neeko', 'No pude conectar. ¿Está corriendo Neeko?');
+                addMessage('neeko', t('errorNotRunning'));
             }
 
             document.getElementById('send-btn').disabled = false;
@@ -2475,7 +2901,7 @@
             const totalSize = files.reduce((s, f) => s + f.size, 0);
 
             for (const file of files) {
-                progressText.textContent = `Subiendo ${file.name}... 0%`;
+                progressText.textContent = t('uploadingPct').replace('{file}', file.name);
 
                 try {
                     const resp = await fetch('/api/upload', {
@@ -2497,7 +2923,7 @@
                     progressFill.style.width = Math.round((totalDone / totalSize) * 100) + '%';
                 } catch (e) {
                     progress.classList.remove('active');
-                    progressText.textContent = 'Error al subir: ' + e.message;
+                    progressText.textContent = t('error') + ': ' + e.message;
                     return;
                 }
             }
@@ -2519,7 +2945,7 @@
                 count.textContent = files.length;
 
                 if (files.length === 0) {
-                    list.innerHTML = '<div class="empty-state"><div class="icon">📂</div><div class="text">No hay archivos todavía</div></div>';
+                    list.innerHTML = `<div class="empty-state"><div class="icon">📂</div><div class="text">${escapeHtml(t('noFiles'))}</div></div>`;
                     return;
                 }
 

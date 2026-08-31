@@ -56,42 +56,54 @@
             <div id="settings-menu-scrim" class="settings-menu-scrim"></div>
 
             <div class="settings-tabs" role="tablist" aria-label="Secciones de configuracion">
-                <button class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settings-tab-tools" data-settings-tab="tools">Herramientas</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-general" data-settings-tab="general" data-i18n="tabGeneral">General</button>
+                <button class="settings-tab active" type="button" role="tab" aria-selected="true" aria-controls="settings-tab-tools" data-settings-tab="tools" data-i18n="tabTools">Herramientas</button>
                 <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-git" data-settings-tab="git">Git</button>
                 <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-lol" data-settings-tab="lol">LoL</button>
-                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-ai" data-settings-tab="ai">IA</button>
-                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-system" data-settings-tab="system">Sistema</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-ai" data-settings-tab="ai" data-i18n="tabAi">IA</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-system" data-settings-tab="system" data-i18n="tabSystem">Sistema</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-addons" data-settings-tab="addons" data-i18n="tabAddons">Addons</button>
+                <button class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-tab-memory" data-settings-tab="memory" data-i18n="tabMemory">Memoria</button>
             </div>
 
             <div class="settings-scroll">
+                <section id="settings-tab-general" class="settings-section settings-panel" role="tabpanel" data-settings-panel="general" hidden>
+                    <h4 data-i18n="generalTitle">General</h4>
+                    <label for="cfg-language" data-i18n="languageLabel">Idioma:</label>
+                    <select id="cfg-language">
+                        <option value="es">Espa&ntilde;ol</option>
+                        <option value="en">English</option>
+                    </select>
+                </section>
+
                 <section id="settings-tab-tools" class="settings-section settings-panel active" role="tabpanel" data-settings-panel="tools">
-                    <h4>Herramientas</h4>
+                    <h4 data-i18n="toolsTitle">Herramientas</h4>
                     <div class="installer-actions">
-                        <button id="install-ffmpeg-btn" type="button">Descargar FFmpeg + FFprobe</button>
-                        <button id="uninstall-ffmpeg-btn" type="button">Desinstalar FFmpeg + FFprobe</button>
-                        <button id="install-git-btn" type="button">Descargar Git</button>
-                        <button id="uninstall-git-btn" type="button">Desinstalar Git</button>
+                        <button id="install-ffmpeg-btn" type="button" data-i18n="downloadFfmpeg">Descargar FFmpeg + FFprobe</button>
+                        <button id="uninstall-ffmpeg-btn" type="button" data-i18n="uninstallFfmpeg">Desinstalar FFmpeg + FFprobe</button>
+                        <button id="install-git-btn" type="button" data-i18n="downloadGit">Descargar Git</button>
+                        <button id="uninstall-git-btn" type="button" data-i18n="uninstallGit">Desinstalar Git</button>
                     </div>
 
-                    <p style="color: #aab; font-size: 0.85rem; margin: 0 0 6px 0;">Modelo fijo en Google Drive</p>
+                    <p style="color: #aab; font-size: 0.85rem; margin: 0 0 6px 0;" data-i18n="fixedModel">Modelo fijo en Google Drive</p>
                     <div class="installer-actions one-row">
-                        <button id="install-model-btn" type="button">Descargar modelo</button>
-                        <button id="install-model-browser-btn" type="button" style="border-color:#38bdf8;color:#38bdf8;">Abrir en navegador</button>
-                        <button id="install-model-file-btn" type="button">Instalar desde archivo</button>
-                        <button id="uninstall-model-btn" type="button">Desinstalar modelo</button>
+                        <button id="install-model-btn" type="button" data-i18n="downloadModel">Descargar modelo</button>
+                        <button id="install-model-browser-btn" type="button" style="border-color:#38bdf8;color:#38bdf8;" data-i18n="openBrowser">Abrir en navegador</button>
+                        <button id="install-model-file-btn" type="button" data-i18n="installFromFile">Instalar desde archivo</button>
+                        <button id="uninstall-model-btn" type="button" data-i18n="uninstallModel">Desinstalar modelo</button>
                     </div>
 
                     <div id="dependency-download-status" class="download-status hidden">
                         <div class="download-status-row">
-                            <strong id="dependency-download-label">Descarga</strong>
+                            <strong id="dependency-download-label" data-i18n="downloadLabel">Descarga</strong>
                             <span id="dependency-download-percent">0%</span>
                         </div>
                         <div class="download-bar">
                             <div id="dependency-download-bar"></div>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <span id="dependency-download-message">Listo</span>
-                            <button id="cancel-download-btn" type="button" style="display:none;padding:4px 10px;border-radius:6px;border:1px solid #f87171;background:transparent;color:#f87171;cursor:pointer;font-size:0.8rem;">Cancelar</button>
+                            <span id="dependency-download-message" data-i18n="ready">Listo</span>
+                            <button id="cancel-download-btn" type="button" style="display:none;padding:4px 10px;border-radius:6px;border:1px solid #f87171;background:transparent;color:#f87171;cursor:pointer;font-size:0.8rem;" data-i18n="cancel">Cancelar</button>
                         </div>
                     </div>
 
@@ -103,16 +115,16 @@
                     <label for="cfg-git-pat">GitHub Personal Access Token:</label>
                     <input type="password" id="cfg-git-pat" placeholder="ghp_xxxx">
 
-                    <label for="cfg-git-path">Ruta Git por defecto:</label>
+                    <label for="cfg-git-path" data-i18n="defaultGitPath">Ruta Git por defecto:</label>
                     <input type="text" id="cfg-git-path" placeholder="D:\projects\myrepo">
                 </section>
 
                 <section id="settings-tab-lol" class="settings-section settings-panel" role="tabpanel" data-settings-panel="lol" hidden>
                     <h4>League of Legends</h4>
-                    <label for="cfg-riot-id">Riot ID (Usuario#Tag):</label>
+                    <label for="cfg-riot-id" data-i18n="riotIdLabel">Riot ID (Usuario#Tag):</label>
                     <input type="text" id="cfg-riot-id" placeholder="NotNeeko#LAS">
 
-                    <label for="cfg-lol-region">Region LOL:</label>
+                    <label for="cfg-lol-region" data-i18n="lolRegion">Region LOL:</label>
                     <select id="cfg-lol-region">
                         <option value="las">LAS</option>
                         <option value="la1">LAN</option>
@@ -128,8 +140,8 @@
                 </section>
 
                 <section id="settings-tab-ai" class="settings-section settings-panel" role="tabpanel" data-settings-panel="ai" hidden>
-                    <h4>Apariencia de IA</h4>
-                    <label for="cfg-neeko-sprite">Sprite de Neeko:</label>
+                    <h4 data-i18n="aiAppearance">Apariencia de IA</h4>
+                    <label for="cfg-neeko-sprite" data-i18n="neekoSprite">Sprite de Neeko:</label>
                     <select id="cfg-neeko-sprite">
                         <option value="NEEKO.png">Neeko con clip</option>
                         <option value="NEEKO-standing-costume.png">Neeko parada</option>
@@ -138,11 +150,11 @@
 
                     <div class="checkbox-row">
                         <input type="checkbox" id="cfg-render-3d">
-                        <label for="cfg-render-3d">Renderizar Neeko en 3D</label>
+                        <label for="cfg-render-3d" data-i18n="render3d">Renderizar Neeko en 3D</label>
                     </div>
 
                     <div id="neeko-3d-animation-row" class="hidden">
-                        <label for="cfg-neeko-3d-animation">Animacion 3D:</label>
+                        <label for="cfg-neeko-3d-animation" data-i18n="animation3d">Animacion 3D:</label>
                         <select id="cfg-neeko-3d-animation">
                             <option value="Idle1_Base">Idle 1</option>
                             <option value="Idle2_Base">Idle 2</option>
@@ -155,18 +167,18 @@
                         </select>
                         <div class="checkbox-row" style="margin-top:4px">
                             <input type="checkbox" id="cfg-mouse-tracking" checked>
-                            <label for="cfg-mouse-tracking">Seguir mouse</label>
+                            <label for="cfg-mouse-tracking" data-i18n="mouseTracking">Seguir mouse</label>
                         </div>
                     </div>
 
-                    <label for="cfg-model-load-engine">Motor de carga:</label>
+                    <label for="cfg-model-load-engine" data-i18n="loadEngine">Motor de carga:</label>
                     <select id="cfg-model-load-engine">
                         <option value="llama">LLaMA server</option>
                         <option value="python">Python (CPU)</option>
                     </select>
 
                     <div class="installer-actions one-row">
-                        <button id="prepare-python-engine-btn" type="button">Preparar motor Python</button>
+                        <button id="prepare-python-engine-btn" type="button" data-i18n="preparePython">Preparar motor Python</button>
                     </div>
                     <div id="python-engine-status" class="download-status hidden">
                         <div class="download-status-row">
@@ -176,11 +188,11 @@
                         <div class="download-bar">
                             <div id="python-engine-bar"></div>
                         </div>
-                        <span id="python-engine-message">Listo</span>
+                        <span id="python-engine-message" data-i18n="ready">Listo</span>
                     </div>
 
                     <button id="open-advanced-ai-btn" class="advanced-link-btn" type="button">
-                        Avanzado
+                        <span data-i18n="advanced">Avanzado</span>
                     </button>
 
                     <label>LLaMA (IA):</label>
@@ -190,14 +202,14 @@
                     </div>
                     <div class="checkbox-row">
                         <input type="checkbox" id="cfg-llama-autostart">
-                        <label for="cfg-llama-autostart">Auto-iniciar LLaMA al abrir la app</label>
+                        <label for="cfg-llama-autostart" data-i18n="autostartLlama">Auto-iniciar LLaMA al abrir la app</label>
                     </div>
                 </section>
 
                 <section id="settings-tab-advanced" class="settings-section settings-panel" role="tabpanel" data-settings-panel="advanced" hidden>
-                    <button id="back-to-ai-btn" class="back-link-btn" type="button">Volver a IA</button>
-                    <h4>Avanzado</h4>
-                    <button id="model-runtime-help-btn" class="advanced-link-btn" type="button">Explicacion</button>
+                    <button id="back-to-ai-btn" class="back-link-btn" type="button" data-i18n="backToAi">Volver a IA</button>
+                    <h4 data-i18n="advanced">Avanzado</h4>
+                    <button id="model-runtime-help-btn" class="advanced-link-btn" type="button" data-i18n="explanation">Explicacion</button>
                     <div id="model-runtime-help" class="model-runtime-help hidden">
                         <p><strong>Capas GPU:</strong> cuantas capas del modelo pasan a la placa de video. 0 significa solo CPU. Esto controla memoria VRAM usada, no limita el porcentaje de uso de GPU: con 15 capas la GPU puede marcar 80-100% mientras genera aunque no use toda la VRAM. En este modelo, 1 capa puede rondar 75 MB de VRAM para pesos; 4 capas aprox. 300 MB, 6 capas aprox. 450 MB y 15 capas aprox. 1.1 GB, mas contexto y overhead. Si hay ruido o picos fuertes, baja capas o usa Python con 0 capas.</p>
                         <p><strong>Contexto:</strong> cuanta conversacion puede recordar el modelo en una respuesta. Mas contexto usa mas RAM/VRAM. 4608 suele estar bien; si va pesado, baja a 2048 o 1024.</p>
@@ -207,40 +219,65 @@
                     <div class="model-runtime-grid">
                         <div>
                             <h4>LLaMA server</h4>
-                            <label for="cfg-llama-gpu-layers">Capas GPU:</label>
+                            <label for="cfg-llama-gpu-layers" data-i18n="gpuLayers">Capas GPU:</label>
                             <input id="cfg-llama-gpu-layers" type="number" min="0" max="200" step="1">
-                            <label for="cfg-llama-context-size">Contexto:</label>
+                            <label for="cfg-llama-context-size" data-i18n="contextSize">Contexto:</label>
                             <input id="cfg-llama-context-size" type="number" min="512" max="32768" step="512">
-                            <label for="cfg-llama-threads">Hilos CPU:</label>
+                            <label for="cfg-llama-threads" data-i18n="cpuThreads">Hilos CPU:</label>
                             <input id="cfg-llama-threads" type="number" min="1" max="64" step="1">
                         </div>
                         <div>
                             <h4>Python</h4>
-                            <label for="cfg-python-gpu-layers">Capas GPU:</label>
+                            <label for="cfg-python-gpu-layers" data-i18n="gpuLayers">Capas GPU:</label>
                             <input id="cfg-python-gpu-layers" type="number" min="0" max="200" step="1">
-                            <label for="cfg-python-context-size">Contexto:</label>
+                            <label for="cfg-python-context-size" data-i18n="contextSize">Contexto:</label>
                             <input id="cfg-python-context-size" type="number" min="512" max="32768" step="512">
-                            <label for="cfg-python-threads">Hilos CPU:</label>
+                            <label for="cfg-python-threads" data-i18n="cpuThreads">Hilos CPU:</label>
                             <input id="cfg-python-threads" type="number" min="1" max="64" step="1">
                         </div>
                     </div>
                 </section>
                 <section id="settings-tab-system" class="settings-section settings-panel" role="tabpanel" data-settings-panel="system" hidden>
-                    <h4 style="color:#f87171;">Comandos de sistema (Peligroso)</h4>
+                    <h4 style="color:#f87171;" data-i18n="systemCommands">Comandos de sistema (Peligroso)</h4>
                     <div class="checkbox-row">
                         <input type="checkbox" id="cfg-system-cmds">
-                        <label for="cfg-system-cmds">Activar comandos de sistema (apagar PC, reiniciar WiFi, etc.)</label>
+                        <label for="cfg-system-cmds" data-i18n="enableSystemCommands">Activar comandos de sistema (apagar PC, reiniciar WiFi, etc.)</label>
                     </div>
-                    <p style="color:#f87171;font-size:11px;margin-top:4px;">Permite comandos como "apaga la pc", "reiniciar wifi", "reiniciar bluetooth". Desactivado por defecto.</p>
+                    <p style="color:#f87171;font-size:11px;margin-top:4px;" data-i18n="systemCommandsHelp">Permite comandos como "apaga la pc", "reiniciar wifi", "reiniciar bluetooth". Desactivado por defecto.</p>
 
                     <div class="update-section">
-                    <h4>Actualizaciones</h4>
+                    <h4 data-i18n="updates">Actualizaciones</h4>
                     <div id="update-status" class="update-status">Versión actual: v1.0.0</div>
                     <div class="installer-actions one-row update-actions">
-                        <button id="check-update-btn" type="button">Buscar actualizaciones</button>
-                        <button id="apply-update-btn" class="update-apply-btn" type="button" style="display:none;">Actualizar y reiniciar</button>
+                        <button id="check-update-btn" type="button" data-i18n="checkUpdates">Buscar actualizaciones</button>
+                        <button id="apply-update-btn" class="update-apply-btn" type="button" style="display:none;" data-i18n="updateRestart">Actualizar y reiniciar</button>
                     </div>
                     <div id="update-notes" class="update-notes"></div>
+                    </div>
+                </section>
+                <section id="settings-tab-addons" class="settings-section settings-panel" role="tabpanel" data-settings-panel="addons" hidden>
+                    <h4 data-i18n="addonsTitle">Addons</h4>
+                    <div id="addons-list" class="addons-list">
+                        <div class="addons-empty">
+                            <p data-i18n="addonNoAddons">No hay addons instalados</p>
+                            <p style="font-size:11px;color:#aab;" data-i18n="addonNoAddonsHint">Pone carpetas de addons en la carpeta "addons/" de la config de Neeko.</p>
+                        </div>
+                    </div>
+                    <p style="font-size:11px;color:#aab;margin-top:10px;" data-i18n="addonRequiresReload">Cambios se aplican al reiniciar la app.</p>
+                </section>
+                <section id="settings-tab-memory" class="settings-section settings-panel" role="tabpanel" data-settings-panel="memory" hidden>
+                    <h4 data-i18n="memoryTitle">Memoria</h4>
+                    <input type="text" id="memory-search" placeholder="Buscar..." style="width:100%;padding:6px;border-radius:4px;border:1px solid #2a2a3a;background:#1a1a25;color:#e0e0ff;font-size:12px;margin-bottom:10px;" />
+                    <div id="memory-list" class="memory-list">
+                        <div class="memory-empty">
+                            <p data-i18n="memoryNoFacts">No hay nada guardado aun.</p>
+                            <p style="font-size:11px;color:#aab;" data-i18n="memoryNoFactsHint">Decile algo a Neeko y lo guarda automaticamente.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-top:10px;">
+                        <button id="memory-export-btn" class="memory-action-btn" data-i18n="memoryExport">Exportar</button>
+                        <button id="memory-import-btn" class="memory-action-btn" data-i18n="memoryImport">Importar</button>
+                        <button id="memory-clear-btn" class="memory-action-btn memory-action-danger" data-i18n="memoryClearAll">Borrar todo</button>
                     </div>
                 </section>
 

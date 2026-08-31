@@ -1,0 +1,81 @@
+/* Quick Notes Addon Styles */
+
+.qn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.qn-hint {
+    font-size: 12px;
+    color: #aab;
+    margin: 0;
+}
+
+.qn-hint code {
+    background: #2a2a3a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #c0a0ff;
+}
+
+.qn-empty {
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+    padding: 20px;
+}
+
+.qn-note {
+    background: #1a1a25;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+}
+
+.qn-note-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: #e0e0ff;
+    line-height: 1.4;
+}
+
+.qn-note-num {
+    color: #c0a0ff;
+    font-weight: 600;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.qn-note-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.qn-note-date {
+    font-size: 10px;
+    color: #555;
+}
+
+.qn-note-delete {
+    background: none;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.qn-note-delete:hover {
+    opacity: 1;
+    background: #f8717122;
+}

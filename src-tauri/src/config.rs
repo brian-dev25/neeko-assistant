@@ -49,6 +49,18 @@ fn default_model_threads() -> u32 {
     4
 }
 
+fn default_language() -> String {
+    "es".to_string()
+}
+
+pub fn normalize_language(language: &str) -> Option<&'static str> {
+    match language.trim().to_lowercase().as_str() {
+        "es" | "esp" | "espanol" | "spanish" => Some("es"),
+        "en" | "eng" | "ingles" | "english" => Some("en"),
+        _ => None,
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub git_pat: String,
@@ -63,6 +75,8 @@ pub struct AppConfig {
     pub riot_id: String,
     #[serde(default = "default_true")]
     pub llama_auto_start: bool,
+    #[serde(default)]
+    pub llama_was_running: bool,
     #[serde(default = "default_model_load_engine")]
     pub model_load_engine: ModelLoadEngine,
     #[serde(default = "default_llama_gpu_layers")]
@@ -79,6 +93,8 @@ pub struct AppConfig {
     pub python_threads: u32,
     #[serde(default)]
     pub system_commands_enabled: bool,
+    #[serde(default = "default_language")]
+    pub language: String,
     #[serde(default)]
     pub render_3d: bool,
     #[serde(default = "default_neeko_3d_animation")]
@@ -108,6 +124,7 @@ impl Default for AppConfig {
             lol_region: "las".to_string(),
             riot_id: String::new(),
             llama_auto_start: default_true(),
+            llama_was_running: false,
             model_load_engine: default_model_load_engine(),
             llama_gpu_layers: default_llama_gpu_layers(),
             python_gpu_layers: default_python_gpu_layers(),
@@ -116,6 +133,7 @@ impl Default for AppConfig {
             llama_threads: default_model_threads(),
             python_threads: default_model_threads(),
             system_commands_enabled: false,
+            language: default_language(),
             render_3d: false,
             neeko_3d_animation: default_neeko_3d_animation(),
         }

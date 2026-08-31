@@ -1,0 +1,61 @@
+.drpc-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.drpc-panel label {
+    margin: 0;
+    color: #c7c7dd;
+    font-size: 11px;
+}
+
+.drpc-panel input[type="text"] {
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid #2a2a3a;
+    border-radius: 6px;
+    background: #171724;
+    color: #e0e0ff;
+    font-size: 12px;
+}
+
+.drpc-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.drpc-check input {
+    width: auto;
+}
+
+.drpc-hint {
+    margin: -2px 0 2px;
+    color: #aab;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.drpc-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.drpc-actions button {
+    min-height: 32px;
+    border: 1px solid #7c3aed;
+    border-radius: 6px;
+    background: #22173a;
+    color: #f0eaff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.drpc-actions button:hover {
+    background: #7c3aed;
+}
