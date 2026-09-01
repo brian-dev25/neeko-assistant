@@ -2,7 +2,9 @@
 node_modules/
 
 # Local scripts / launchers
-scripts/
+!scripts/
+scripts/*
+!scripts/bump-version.js
 /*.bat
 /*.cmd
 /*.vbs

@@ -1,8 +1,9 @@
 {
   "name": "neeko-assistant",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Asistente Neeko - Tu assistente virtual estilo Clippy",
   "scripts": {
+    "version:bump": "node scripts/bump-version.js",
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
