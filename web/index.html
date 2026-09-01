@@ -1342,7 +1342,7 @@
                         <span style="color:var(--text-dim);font-size:12px;">Apaga la PC inmediatamente</span>
                     </div>
                     <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
-                        <code style="color:var(--text);font-size:13px;">apaga la pc en 30 minutos</code>
+                        <code style="color:var(--text);font-size:13px;">apaga la pc en 30mins · apaga la pc en 5h · apaga la pc en 5s</code>
                         <span style="color:var(--text-dim);font-size:12px;">Programa el apagado (minutos o horas)</span>
                     </div>
                     <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px;">
@@ -1583,17 +1583,52 @@
                     checkUpdates: 'Check for updates',
                     commands: 'Available commands',
                     sections: [
-                        ['&#127760; IP / Connection', 'ip &middot; my ip &middot; local ip', 'Shows the local IP to connect from other devices'],
-                        ['&#128193; Files / Sharing', 'upload file &middot; upload video', 'From the Files tab you can upload files by dragging them or tapping the upload area'],
-                        ['&#127918; Open apps', 'open spotify &middot; open discord &middot; open chrome', 'Opens any installed app. Also: "start vscode", "launch steam"'],
-                        ['&#128269; Search', 'search cats &middot; look up recipes', 'Searches Google'],
-                        ['&#128269; Site search', 'search on youtube: rust tutorial', 'Searches specific sites: youtube, github, reddit, wikipedia, spotify, steam'],
-                        ['&#9881; Git', 'git init &middot; git add . &middot; git commit "message" &middot; git push &middot; git pull', 'Standard git commands'],
-                        ['&#127942; League of Legends', 'last match of Faker#KR1 in kr', 'Shows match history for any player'],
-                        ['&#127942; Your LoL account', 'my last match &middot; my games &middot; my lol', 'Uses your configured Riot ID'],
-                        ['&#127942; Rank / Elo', 'rank of Faker#KR1 in korea &middot; my elo &middot; my rank', 'Shows the rank for any player or for your configured Riot ID'],
-                        ['&#127909; Video', 'compress video: C:\\path\\video.mp4', 'Compresses video files when FFmpeg is installed'],
-                        ['&#129302; LLaMA', 'start llama &middot; stop llama', 'Starts or stops the local model service']
+                        ['&#127760; IP / Connection', [
+                            ['ip &middot; my ip &middot; local ip', 'Shows the local IP to connect from other devices']
+                        ]],
+                        ['&#128193; Files / Sharing', [
+                            ['upload file &middot; upload video', 'From the Files tab you can upload files by dragging them or tapping the upload area']
+                        ]],
+                        ['&#127918; Open apps', [
+                            ['open spotify &middot; open discord &middot; open chrome', 'Opens any installed app'],
+                            ['start vscode &middot; launch steam', 'Alternative ways to open apps']
+                        ]],
+                        ['&#127925; Music', [
+                            ['play enemy imagine dragons &middot; listen to lo-fi', 'Searches music on YouTube']
+                        ]],
+                        ['&#128269; Search', [
+                            ['search cats &middot; look up recipes', 'Searches Google'],
+                            ['search on youtube: rust tutorial', 'Searches specific sites: youtube, github, reddit, wikipedia, spotify, steam']
+                        ]],
+                        ['&#9881; Git', [
+                            ['git init &middot; git add . &middot; git commit "message"', 'Standard git commands'],
+                            ['git push &middot; git pull &middot; git status', 'Sync and inspect the repository'],
+                            ['git log &middot; git branch &middot; git remote add origin URL', 'History, branches, and remotes']
+                        ]],
+                        ['&#127942; League of Legends', [
+                            ['last match of Faker#KR1 in kr', 'Shows match history for any player'],
+                            ['my last match &middot; my games &middot; my lol', 'Uses your configured Riot ID'],
+                            ['rank of Faker#KR1 in korea &middot; my elo &middot; my rank', 'Shows rank for any player or for your configured Riot ID']
+                        ]],
+                        ['&#127909; Video', [
+                            ['compress video: C:\\path\\video.mp4', 'Compresses video files when FFmpeg is installed'],
+                            ['compress C:\\path\\video.mp4 for discord', 'Targets a Discord-friendly output size']
+                        ]],
+                        ['&#9881; Settings', [
+                            ['save git pat ghp_XXXXXXX', 'Saves your GitHub token'],
+                            ['set region las &middot; set git path C:\\Users\\you\\Documents', 'Updates LoL region or default git path']
+                        ]],
+                        ['&#129302; LLaMA', [
+                            ['start llama &middot; stop llama', 'Starts or stops the local model service']
+                        ]],
+                        ['&#128268; System', [
+                            ['shut down the pc', 'Shuts down the PC immediately'],
+                            ['shut down the pc in 30mins &middot; shut down the pc in 5h &middot; shut down the pc in 5s', 'Schedules shutdown'],
+                            ['cancel shutdown', 'Cancels a scheduled shutdown'],
+                            ['restart explorer &middot; restart icons', 'Restarts Windows Explorer and refreshes icon cache'],
+                            ['restart wifi &middot; restart internet', 'Restarts the WiFi adapter'],
+                            ['restart bluetooth', 'Restarts Bluetooth devices']
+                        ]]
                     ],
                     apps: 'Known apps: spotify, discord, steam, chrome, firefox, edge, vscode, obs, youtube, league of legends, lol, riot client, obsidian, brave, 7-zip, winrar, roblox, fightcade, qbittorrent, virtualbox, node, python, git, and more',
                     regions: 'Regions: las, euw, na, br, kr, korea, jp, oce, tr, ru, eune'
@@ -1604,29 +1639,70 @@
                     checkUpdates: 'Buscar actualizaciones',
                     commands: 'Comandos disponibles',
                     sections: [
-                        ['&#127760; IP / Conexion', 'ip &middot; mi ip &middot; la ip', 'Muestra la IP local para conectarte desde otros dispositivos'],
-                        ['&#128193; Archivos / Compartir', 'subir archivo &middot; sube el video &middot; subilo', 'Desde la pestana Archivos podes subir archivos arrastrando o tocando la zona de upload'],
-                        ['&#127918; Abrir apps', 'abri spotify &middot; abre discord &middot; abrir chrome', 'Abre cualquier app instalada. Tambien: "pone vscode", "iniciar steam"'],
-                        ['&#128269; Buscar', 'busca gatitos &middot; buscar recetas', 'Busca en Google'],
-                        ['&#128269; Buscar en sitios', 'busca en youtube: tutorial rust', 'Busca en sitios especificos: youtube, github, reddit, wikipedia, spotify, steam'],
-                        ['&#9881; Git', 'git init &middot; git add . &middot; git commit "mensaje" &middot; git push &middot; git pull', 'Comandos git estandar'],
-                        ['&#127942; League of Legends', 'ultima partida de Faker#KR1 en kr', 'Historial de partidas de un jugador'],
-                        ['&#127942; Tu cuenta de LoL', 'mi ultima partida &middot; mis partidas &middot; como va mi lol', 'Usa tu Riot ID configurado'],
-                        ['&#127942; Rango / Elo', 'elo de Faker#KR1 en korea &middot; mi elo &middot; que rango soy', 'Muestra el rango de cualquier jugador o el tuyo configurado'],
-                        ['&#127909; Video', 'comprimir video: C:\\ruta\\video.mp4', 'Comprime videos cuando FFmpeg esta instalado'],
-                        ['&#129302; LLaMA', 'iniciar llama &middot; detener llama', 'Inicia o detiene el servicio del modelo local']
+                        ['&#127760; IP / Conexion', [
+                            ['ip &middot; mi ip &middot; la ip', 'Muestra la IP local para conectarte desde otros dispositivos']
+                        ]],
+                        ['&#128193; Archivos / Compartir', [
+                            ['subir archivo &middot; sube el video &middot; subilo', 'Desde la pestana Archivos podes subir archivos arrastrando o tocando la zona de upload']
+                        ]],
+                        ['&#127918; Abrir apps', [
+                            ['abri spotify &middot; abre discord &middot; abrir chrome', 'Abre cualquier app instalada'],
+                            ['pone vscode &middot; iniciar steam &middot; ejecutar obs', 'Formas alternativas de abrir apps']
+                        ]],
+                        ['&#127925; Musica', [
+                            ['pone musica enemy imagine dragons &middot; escuchar lo-fi', 'Busca musica en YouTube']
+                        ]],
+                        ['&#128269; Buscar', [
+                            ['busca gatitos &middot; buscar recetas &middot; investigar rust', 'Busca en Google'],
+                            ['busca en youtube: tutorial rust', 'Busca en sitios especificos: youtube, github, reddit, wikipedia, spotify, steam']
+                        ]],
+                        ['&#9881; Git', [
+                            ['git init &middot; git add . &middot; git commit "mensaje"', 'Comandos git estandar'],
+                            ['git push &middot; git pull &middot; git status', 'Sincroniza y revisa el repositorio'],
+                            ['inicializar repo &middot; agregar archivo al repo &middot; sube mi repo', 'Mismos comandos en espanol'],
+                            ['haz commit con mensaje "fix" &middot; commitear "nuevo feature"', 'Commit con mensaje en espanol'],
+                            ['git log &middot; git branch &middot; git remote add origin URL', 'Historial, branches y remotos']
+                        ]],
+                        ['&#127942; League of Legends', [
+                            ['ultima partida de Faker#KR1 en kr', 'Historial de partidas de un jugador'],
+                            ['mi ultima partida &middot; mis partidas &middot; como va mi lol', 'Usa tu Riot ID configurado'],
+                            ['elo de Faker#KR1 en korea &middot; mi elo &middot; que rango soy', 'Muestra el rango de cualquier jugador o el tuyo configurado']
+                        ]],
+                        ['&#127909; Video', [
+                            ['comprimir video: C:\\ruta\\video.mp4', 'Comprime videos cuando FFmpeg esta instalado'],
+                            ['achica el video: C:\\ruta\\video.mp4', 'Mismo comando en espanol'],
+                            ['comprime C:\\ruta\\video.mp4 para discord', 'Genera un archivo mas liviano para Discord']
+                        ]],
+                        ['&#9881; Configuracion', [
+                            ['guardar git pat ghp_XXXXXXX', 'Guarda tu token de GitHub'],
+                            ['configurar region las &middot; configurar git path C:\\Users\\tu\\Documents', 'Cambia region de LoL o ruta git por defecto']
+                        ]],
+                        ['&#129302; LLaMA', [
+                            ['abre llama &middot; iniciar llama', 'Inicia el servicio del modelo local'],
+                            ['cierra llama &middot; detener llama', 'Detiene el servicio del modelo local']
+                        ]],
+                        ['&#128268; Sistema', [
+                            ['apaga la pc', 'Apaga la PC inmediatamente'],
+                            ['apaga la pc en 30mins &middot; apaga la pc en 5h &middot; apaga la pc en 5s', 'Programa el apagado'],
+                            ['cancelar apagado', 'Cancela un apagado programado'],
+                            ['reiniciar explorer &middot; reiniciar iconos', 'Reinicia el Explorador de Windows y refresca la cache de iconos'],
+                            ['reiniciar wifi &middot; reiniciar internet', 'Reinicia el adaptador WiFi'],
+                            ['reiniciar bluetooth', 'Reinicia los dispositivos Bluetooth']
+                        ]]
                     ],
                     apps: 'Apps conocidas: spotify, discord, steam, chrome, firefox, edge, vscode, obs, youtube, league of legends, lol, riot client, obsidian, brave, 7-zip, winrar, roblox, fightcade, qbittorrent, virtualbox, node, python, git, y mas',
                     regions: 'Regiones: las, euw, na, br, kr, korea, corea, jp, oce, tr, ru, eune'
                 };
 
-            const sectionHtml = help.sections.map(([title, command, description]) => `
+            const sectionHtml = help.sections.map(([title, items]) => `
                 <div style="margin-bottom:20px;">
                     <h4 style="font-size:14px;color:var(--neeko-light);margin-bottom:8px;">${title}</h4>
-                    <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
-                        <code style="color:var(--text);font-size:13px;">${command}</code>
-                        <span style="color:var(--text-dim);font-size:12px;">${description}</span>
-                    </div>
+                    ${items.map(([command, description], index) => `
+                        <div class="file-item" style="flex-direction:column;align-items:flex-start;gap:4px;${index ? 'margin-top:6px;' : ''}">
+                            <code style="color:var(--text);font-size:13px;">${command}</code>
+                            <span style="color:var(--text-dim);font-size:12px;">${description}</span>
+                        </div>
+                    `).join('')}
                 </div>
             `).join('');
 

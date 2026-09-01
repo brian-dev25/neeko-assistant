@@ -1678,14 +1678,14 @@ function detectActionFromText(text) {
         if (/cancel\s+(?:shutdown|shut\s*down)/i.test(lower)) {
             return { action: { action: "cancel_shutdown" }, message: "" };
         }
-        if (/(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)/i.test(lower)) {
-            const m = lower.match(/(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)/i);
+        if (/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$/i.test(lower)) {
+            const m = lower.match(/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$/i);
             let secs = parseInt(m[1]);
             if (/hours?|h/i.test(m[2])) secs *= 3600;
             else if (/min/i.test(m[2])) secs *= 60;
             return { action: { action: "shutdown", seconds: secs }, message: "" };
         }
-        if (/(?:shutdown|shut\s*down)\s+(?:the\s+)?pc/i.test(lower)) {
+        if (/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc$/i.test(lower)) {
             return { action: { action: "shutdown", seconds: 0 }, message: "" };
         }
         if (/restart\s+(?:explorer|icons?|taskbar|desktop|windows\s*explorer)/i.test(lower)) {
@@ -1701,14 +1701,14 @@ function detectActionFromText(text) {
         if (/cancel(?:ar)?\s+(?:el\s+)?(?:apagado|apaga)/i.test(lower)) {
             return { action: { action: "cancel_shutdown" }, message: "" };
         }
-        if (/apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)/i.test(lower)) {
-            const m = lower.match(/apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)/i);
+        if (/^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$/i.test(lower)) {
+            const m = lower.match(/^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$/i);
             let secs = parseInt(m[1]);
-            if (/hor?/i.test(m[2])) secs *= 3600;
+            if (/^(?:horas?|h)$/i.test(m[2])) secs *= 3600;
             else if (/min/i.test(m[2])) secs *= 60;
             return { action: { action: "shutdown", seconds: secs }, message: "" };
         }
-        if (/apag(?:a|ar|o)\s+(?:la\s+)?pc/i.test(lower)) {
+        if (/^apag(?:a|ar|o)\s+(?:la\s+)?pc$/i.test(lower)) {
             return { action: { action: "shutdown", seconds: 0 }, message: "" };
         }
         if (/reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)/i.test(lower)) {

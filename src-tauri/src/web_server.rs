@@ -838,9 +838,9 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     }
 
     let shutdown_timer_pattern = if is_english {
-        r"(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)"
+        r"^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$"
     } else {
-        r"apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)"
+        r"^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$"
     };
     if let Ok(re) = regex::Regex::new(shutdown_timer_pattern) {
         if let Some(caps) = re.captures(lower) {
@@ -859,9 +859,9 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     }
 
     let shutdown_now_pattern = if is_english {
-        r"(?:shutdown|shut\s*down)\s+(?:the\s+)?pc"
+        r"^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc$"
     } else {
-        r"apag(?:a|ar|o)\s+(?:la\s+)?pc"
+        r"^apag(?:a|ar|o)\s+(?:la\s+)?pc$"
     };
     if regex::Regex::new(shutdown_now_pattern)
         .ok()?
@@ -1279,6 +1279,9 @@ fn web_action_allowed_for_language(
             } else {
                 lower.starts_with("abri ") || lower.starts_with("abrí ") || lower.starts_with("abrir ")
             }
+        }
+        "shutdown" | "cancel_shutdown" | "restart_explorer" | "restart_wifi" | "restart_bluetooth" => {
+            detect_system_chat_action(lower, is_english).is_some()
         }
         _ => true,
     }
