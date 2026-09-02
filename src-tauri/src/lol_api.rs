@@ -526,6 +526,7 @@ pub fn lol_get_config() -> Result<String, String> {
         "lol_region": config.lol_region,
         "riot_id": config.riot_id,
         "language": crate::config::normalize_language(&config.language).unwrap_or("es"),
+        "start_with_windows": config.start_with_windows,
     })
     .to_string())
 }

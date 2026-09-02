@@ -367,6 +367,7 @@ const I18N = {
         tabSystem: 'Sistema',
         generalTitle: 'General',
         languageLabel: 'Idioma:',
+        startWithWindows: 'Iniciar con Windows',
         toolsTitle: 'Herramientas',
         downloadFfmpeg: 'Descargar FFmpeg + FFprobe',
         uninstallFfmpeg: 'Desinstalar FFmpeg + FFprobe',
@@ -483,6 +484,7 @@ const I18N = {
         tabSystem: 'System',
         generalTitle: 'General',
         languageLabel: 'Language:',
+        startWithWindows: 'Start with Windows',
         toolsTitle: 'Tools',
         downloadFfmpeg: 'Download FFmpeg + FFprobe',
         uninstallFfmpeg: 'Uninstall FFmpeg + FFprobe',
@@ -2426,6 +2428,33 @@ function showPythonEngineProgress(payload) {
     pythonEngineMessage.textContent = payload.message || 'Preparando...';
 }
 
+async function loadStartWithWindowsSetting() {
+    const input = document.getElementById('cfg-start-with-windows');
+    if (!input) return;
+
+    input.disabled = false;
+    input.checked = await invoke('get_start_with_windows');
+}
+
+async function saveStartWithWindowsSetting() {
+    const input = document.getElementById('cfg-start-with-windows');
+    if (!input || input.disabled) return;
+
+    await invoke('set_start_with_windows', { enabled: input.checked });
+}
+
+async function refreshAppVersionStatus() {
+    if (!updateStatus) return;
+
+    try {
+        const version = await invoke('get_app_version');
+        updateStatus.textContent = `Version actual: v${version}`;
+        updateStatus.style.color = '#aab';
+    } catch {
+        updateStatus.textContent = 'Version actual: ...';
+    }
+}
+
 settingsBtn.addEventListener('click', async () => {
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
@@ -2468,6 +2497,16 @@ settingsBtn.addEventListener('click', async () => {
         const sysCmds = await invoke('get_system_commands_enabled');
         document.getElementById('cfg-system-cmds').checked = sysCmds;
     } catch { }
+    try {
+        await loadStartWithWindowsSetting();
+    } catch {
+        const startWithWindowsInput = document.getElementById('cfg-start-with-windows');
+        if (startWithWindowsInput) {
+            startWithWindowsInput.checked = false;
+            startWithWindowsInput.disabled = true;
+        }
+    }
+    await refreshAppVersionStatus();
     settingsModal.classList.remove('hidden');
     setSettingsTab('general');
     setSettingsMenuOpen(false);
@@ -2806,6 +2845,12 @@ saveSettingsBtn.addEventListener('click', async () => {
         const sysCmds = document.getElementById('cfg-system-cmds').checked;
         await invoke('set_system_commands_enabled', { enabled: sysCmds });
     } catch (e) { }
+    try {
+        await saveStartWithWindowsSetting();
+    } catch (e) {
+        showBubble("Error guardando inicio con Windows: " + e);
+        return;
+    }
     showBubble(`${t('saved')} ✅`);
     setSettingsMenuOpen(false);
     settingsModal.classList.add('hidden');

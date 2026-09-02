@@ -2,6 +2,11 @@ name: release-tauri
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.0.2"
+        required: true
+        type: string
   push:
     tags:
       - "v*"
@@ -29,6 +34,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify release tag
+        run: |
+          $version = node -p "require('./package.json').version"
+          $expectedTag = "v$version"
+          $releaseTag = "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          if ($releaseTag -ne $expectedTag) {
+            throw "Release tag $releaseTag does not match package version $expectedTag"
+          }
+
       - name: Create placeholder sidecar binary
         run: |
           New-Item -ItemType Directory -Force -Path "src-tauri/binaries"
@@ -44,8 +58,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Neeko Assistant ${{ github.ref_name }}"
+          tagName: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          releaseName: "Neeko Assistant ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
           releaseBody: "Build de Neeko Assistant con updater Tauri."
           releaseDraft: false
           prerelease: false

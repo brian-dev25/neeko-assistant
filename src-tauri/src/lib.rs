@@ -11,6 +11,8 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager,
 };
+#[cfg(desktop)]
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
@@ -264,6 +266,65 @@ fn set_system_commands_enabled(enabled: bool) -> Result<String, String> {
         "Comandos de sistema activados"
     } else {
         "Comandos de sistema desactivados"
+    }
+    .to_string())
+}
+
+#[cfg(desktop)]
+pub(crate) fn apply_start_with_windows(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    let autostart_manager = app.autolaunch();
+    if enabled {
+        autostart_manager.enable().map_err(|e| e.to_string())?;
+    } else {
+        autostart_manager.disable().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[cfg(not(desktop))]
+pub(crate) fn apply_start_with_windows(_app: &AppHandle, enabled: bool) -> Result<(), String> {
+    if enabled {
+        Err("Inicio con el sistema no soportado en esta plataforma".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn save_start_with_windows(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    apply_start_with_windows(app, enabled)?;
+    let mut config = config::AppConfig::load();
+    config.start_with_windows = enabled;
+    config.save().map_err(|e| e.to_string())
+}
+
+#[cfg(desktop)]
+pub(crate) fn get_start_with_windows_state(app: &AppHandle) -> Result<bool, String> {
+    let enabled = app.autolaunch().is_enabled().map_err(|e| e.to_string())?;
+    let mut config = config::AppConfig::load();
+    if config.start_with_windows != enabled {
+        config.start_with_windows = enabled;
+        config.save().map_err(|e| e.to_string())?;
+    }
+    Ok(enabled)
+}
+
+#[cfg(not(desktop))]
+pub(crate) fn get_start_with_windows_state(_app: &AppHandle) -> Result<bool, String> {
+    Ok(config::AppConfig::load().start_with_windows)
+}
+
+#[tauri::command]
+fn get_start_with_windows(app: AppHandle) -> Result<bool, String> {
+    get_start_with_windows_state(&app)
+}
+
+#[tauri::command]
+fn set_start_with_windows(app: AppHandle, enabled: bool) -> Result<String, String> {
+    save_start_with_windows(&app, enabled)?;
+    Ok(if enabled {
+        "Inicio con Windows activado"
+    } else {
+        "Inicio con Windows desactivado"
     }
     .to_string())
 }
@@ -2839,8 +2900,13 @@ async fn validate_updater_endpoint() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[tauri::command]
 async fn check_updates(app: AppHandle) -> Result<serde_json::Value, String> {
-    let current = env!("CARGO_PKG_VERSION").to_string();
+    let current = get_app_version();
     validate_updater_endpoint().await?;
     let updater = app
         .updater()
@@ -2944,7 +3010,11 @@ fn knowledge_list() -> Result<Vec<knowledge::KnowledgeFact>, String> {
 }
 
 #[tauri::command]
-fn knowledge_add(category: String, key: String, value: String) -> Result<knowledge::KnowledgeFact, String> {
+fn knowledge_add(
+    category: String,
+    key: String,
+    value: String,
+) -> Result<knowledge::KnowledgeFact, String> {
     Ok(knowledge::add_fact(&category, &key, &value, "manual"))
 }
 
@@ -2987,6 +3057,20 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_drpc::init())
         .setup(|app| {
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_autostart::init(
+                    tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                    None,
+                ))
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+
+            if let Err(error) =
+                apply_start_with_windows(app.handle(), config::AppConfig::load().start_with_windows)
+            {
+                eprintln!("[NEEKO] No pude sincronizar inicio con Windows: {}", error);
+            }
+
             let resource_dir = app.path().resource_dir().ok();
             let _ = ADDON_MANAGER.set(addon_manager::AddonManager::with_resource_dir(resource_dir));
 
@@ -3112,12 +3196,15 @@ pub fn run() {
             system_restart_bluetooth,
             get_system_commands_enabled,
             set_system_commands_enabled,
+            get_start_with_windows,
+            set_start_with_windows,
             get_render_3d,
             set_render_3d,
             get_neeko_3d_animation,
             set_neeko_3d_animation,
             cancel_download,
             check_updates,
+            get_app_version,
             download_and_install_update,
             prepare_python_engine,
         ])

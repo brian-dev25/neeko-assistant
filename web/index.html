@@ -1176,6 +1176,10 @@
                         <option value="es">Espa&ntilde;ol</option>
                         <option value="en">English</option>
                     </select>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);">
+                        <input id="web-start-with-windows" type="checkbox">
+                        <span data-i18n="startWithWindows">Iniciar con Windows</span>
+                    </label>
                     <button class="quick-btn" onclick="saveWebConfig()" data-i18n="saveSettings">Guardar</button>
                 </div>
             </div>
@@ -1186,7 +1190,7 @@
             <div class="help-container" style="flex:1;overflow-y:auto;padding:16px;">
                 <div class="update-card">
                     <strong>Actualizaciones</strong>
-                    <span id="web-update-status" class="update-status">Versión actual: v1.0.1</span>
+                    <span id="web-update-status" class="update-status">Versión actual: v1.0.2</span>
                     <button id="web-check-update-btn" class="quick-btn" onclick="checkWebUpdate()">Buscar actualizaciones</button>
                     <span id="web-update-notes" class="update-notes"></span>
                 </div>
@@ -1386,6 +1390,7 @@
                 tabSettings: 'Configuracion',
                 settingsTitle: 'Configuracion',
                 languageLabel: 'Idioma',
+                startWithWindows: 'Iniciar con Windows',
                 saveSettings: 'Guardar',
                 chatPlaceholder: 'Escribi tu mensaje...',
                 hello: 'Hola! Soy Neeko, tu asistente. Que necesitas?',
@@ -1433,7 +1438,7 @@
                 downloadPng: 'Descargar PNG',
                 anotherImage: 'Otra imagen',
                 updates: 'Actualizaciones',
-                currentVersion: 'Version actual: v1.0.1',
+                currentVersion: 'Version actual: v1.0.2',
                 checkUpdates: 'Buscar actualizaciones',
                 commandsAvailable: 'Comandos disponibles',
                 checkingUpdates: 'Buscando...',
@@ -1477,6 +1482,7 @@
                 tabSettings: 'Settings',
                 settingsTitle: 'Settings',
                 languageLabel: 'Language',
+                startWithWindows: 'Start with Windows',
                 saveSettings: 'Save',
                 chatPlaceholder: 'Type your message...',
                 hello: 'Hi! I am Neeko, your assistant. What do you need?',
@@ -1524,7 +1530,7 @@
                 downloadPng: 'Download PNG',
                 anotherImage: 'Another image',
                 updates: 'Updates',
-                currentVersion: 'Current version: v1.0.1',
+                currentVersion: 'Current version: v1.0.2',
                 checkUpdates: 'Check for updates',
                 commandsAvailable: 'Available commands',
                 checkingUpdates: 'Checking...',
@@ -1579,7 +1585,7 @@
             const help = currentLanguage === 'en'
                 ? {
                     updates: 'Updates',
-                    currentVersion: 'Current version: v1.0.1',
+                    currentVersion: 'Current version: v1.0.2',
                     checkUpdates: 'Check for updates',
                     commands: 'Available commands',
                     sections: [
@@ -1635,7 +1641,7 @@
                 }
                 : {
                     updates: 'Actualizaciones',
-                    currentVersion: 'Version actual: v1.0.1',
+                    currentVersion: 'Version actual: v1.0.2',
                     checkUpdates: 'Buscar actualizaciones',
                     commands: 'Comandos disponibles',
                     sections: [
@@ -1832,6 +1838,8 @@ Si no es una accion, responde normal como Neeko.`;
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 const config = await resp.json();
                 applyLanguage(config.language || 'es');
+                const startWithWindowsInput = document.getElementById('web-start-with-windows');
+                if (startWithWindowsInput) startWithWindowsInput.checked = !!config.start_with_windows;
             } catch {
                 applyLanguage('es');
             }
@@ -1840,10 +1848,11 @@ Si no es una accion, responde normal como Neeko.`;
 
         async function saveWebConfig() {
             const language = normalizeLanguage(document.getElementById('web-language').value);
+            const startWithWindows = !!document.getElementById('web-start-with-windows')?.checked;
             const resp = await fetch('/api/config', {
                 method: 'POST',
                 headers: apiHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify({ language })
+                body: JSON.stringify({ language, start_with_windows: startWithWindows })
             });
             const data = await resp.json();
             if (data.ok) {
@@ -2522,6 +2531,7 @@ Si no es una accion, responde normal como Neeko.`;
                 document.querySelectorAll('.tab')[5].classList.add('active');
                 document.getElementById('tab-settings').classList.add('active');
                 stopFilesPoll();
+                loadWebConfig();
             } else {
                 document.querySelectorAll('.tab')[6].classList.add('active');
                 document.getElementById('help-tab').classList.add('active');

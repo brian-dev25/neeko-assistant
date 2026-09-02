@@ -105,11 +105,13 @@ struct CancelDownloadRequest {
 #[derive(Deserialize)]
 struct WebConfigRequest {
     language: Option<String>,
+    start_with_windows: Option<bool>,
 }
 
 #[derive(Serialize)]
 struct WebConfigResponse {
     language: String,
+    start_with_windows: bool,
 }
 
 #[derive(Serialize)]
@@ -484,16 +486,21 @@ async fn llama_status_handler() -> Result<Json<LlamaStatus>, StatusCode> {
     }))
 }
 
-async fn get_config_handler() -> Json<WebConfigResponse> {
+async fn get_config_handler(State(state): State<AppState>) -> Json<WebConfigResponse> {
     let config = crate::config::AppConfig::load();
     Json(WebConfigResponse {
         language: crate::config::normalize_language(&config.language)
             .unwrap_or("es")
             .to_string(),
+        start_with_windows: crate::get_start_with_windows_state(&state.app_handle)
+            .unwrap_or(config.start_with_windows),
     })
 }
 
-async fn save_config_handler(Json(payload): Json<WebConfigRequest>) -> Json<ApiResponse> {
+async fn save_config_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<WebConfigRequest>,
+) -> Json<ApiResponse> {
     let mut config = crate::config::AppConfig::load();
     if let Some(language) = payload.language {
         let Some(language) = crate::config::normalize_language(&language) else {
@@ -503,6 +510,17 @@ async fn save_config_handler(Json(payload): Json<WebConfigRequest>) -> Json<ApiR
             });
         };
         config.language = language.to_string();
+    }
+
+    let start_with_windows = payload.start_with_windows;
+    if let Some(enabled) = start_with_windows {
+        if let Err(error) = crate::apply_start_with_windows(&state.app_handle, enabled) {
+            return Json(ApiResponse {
+                ok: false,
+                message: error,
+            });
+        }
+        config.start_with_windows = enabled;
     }
 
     match config.save() {
@@ -830,10 +848,7 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     } else {
         r"cancel(?:ar)?\s+(?:el\s+)?(?:apagado|apaga)"
     };
-    if regex::Regex::new(cancel_pattern)
-        .ok()?
-        .is_match(lower)
-    {
+    if regex::Regex::new(cancel_pattern).ok()?.is_match(lower) {
         return Some(SystemChatAction::CancelShutdown);
     }
 
@@ -875,10 +890,7 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     } else {
         r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)"
     };
-    if regex::Regex::new(explorer_pattern)
-    .ok()?
-    .is_match(lower)
-    {
+    if regex::Regex::new(explorer_pattern).ok()?.is_match(lower) {
         return Some(SystemChatAction::RestartExplorer);
     }
 
@@ -887,10 +899,7 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     } else {
         r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:wifi|wi-fi|internet|red|conexion|conexi[oó]n)"
     };
-    if regex::Regex::new(wifi_pattern)
-    .ok()?
-    .is_match(lower)
-    {
+    if regex::Regex::new(wifi_pattern).ok()?.is_match(lower) {
         return Some(SystemChatAction::RestartWifi);
     }
 
@@ -899,10 +908,7 @@ fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChat
     } else {
         r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:bluetooth|blue\s*tooth)"
     };
-    if regex::Regex::new(bluetooth_pattern)
-        .ok()?
-        .is_match(lower)
-    {
+    if regex::Regex::new(bluetooth_pattern).ok()?.is_match(lower) {
         return Some(SystemChatAction::RestartBluetooth);
     }
 
@@ -963,9 +969,15 @@ async fn chat_handler(
         let ip = get_local_ip();
         let password = web_password();
         let msg = if is_english {
-            format!("The IP to connect is: http://{}:1414\nPassword: {}", ip, password)
+            format!(
+                "The IP to connect is: http://{}:1414\nPassword: {}",
+                ip, password
+            )
         } else {
-            format!("La IP para conectarte es: http://{}:1414\nContraseña: {}", ip, password)
+            format!(
+                "La IP para conectarte es: http://{}:1414\nContraseña: {}",
+                ip, password
+            )
         };
         return Ok(Json(ApiResponse {
             ok: true,
@@ -993,7 +1005,8 @@ async fn chat_handler(
     }
     if lower.contains("llama")
         && ((is_english && (lower.contains("open") || lower.contains("start")))
-            || (!is_english && (lower.contains("abre") || lower.contains("abri") || lower.contains("iniciar"))))
+            || (!is_english
+                && (lower.contains("abre") || lower.contains("abri") || lower.contains("iniciar"))))
     {
         let result = crate::start_llama_server().await;
         return Ok(Json(ApiResponse {
@@ -1277,12 +1290,13 @@ fn web_action_allowed_for_language(
             if is_english {
                 lower.starts_with("open ") || lower.starts_with("go to ")
             } else {
-                lower.starts_with("abri ") || lower.starts_with("abrí ") || lower.starts_with("abrir ")
+                lower.starts_with("abri ")
+                    || lower.starts_with("abrí ")
+                    || lower.starts_with("abrir ")
             }
         }
-        "shutdown" | "cancel_shutdown" | "restart_explorer" | "restart_wifi" | "restart_bluetooth" => {
-            detect_system_chat_action(lower, is_english).is_some()
-        }
+        "shutdown" | "cancel_shutdown" | "restart_explorer" | "restart_wifi"
+        | "restart_bluetooth" => detect_system_chat_action(lower, is_english).is_some(),
         _ => true,
     }
 }
@@ -1312,7 +1326,15 @@ fn normalize_web_lol_region(region: Option<&str>) -> String {
 
 fn detect_web_lol_rank(lower: &str, is_english: bool) -> Option<(String, String)> {
     if is_english {
-        if matches!(lower, "my elo" | "my rank" | "my tier" | "what rank am i" | "what elo am i" | "what tier am i") {
+        if matches!(
+            lower,
+            "my elo"
+                | "my rank"
+                | "my tier"
+                | "what rank am i"
+                | "what elo am i"
+                | "what tier am i"
+        ) {
             return web_lol_defaults();
         }
         let re = regex::Regex::new(
@@ -1320,12 +1342,24 @@ fn detect_web_lol_rank(lower: &str, is_english: bool) -> Option<(String, String)
         )
         .ok()?;
         let caps = re.captures(lower)?;
-        let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+        let riot_id = format!(
+            "{}#{}",
+            caps.get(1)?.as_str().trim(),
+            caps.get(2)?.as_str().trim()
+        );
         let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
         return Some((riot_id, region));
     }
 
-    if matches!(lower, "mi elo" | "mi rango" | "que rango soy" | "que elo soy" | "en que rango estoy" | "en que elo estoy") {
+    if matches!(
+        lower,
+        "mi elo"
+            | "mi rango"
+            | "que rango soy"
+            | "que elo soy"
+            | "en que rango estoy"
+            | "en que elo estoy"
+    ) {
         return web_lol_defaults();
     }
     let re = regex::Regex::new(
@@ -1333,7 +1367,11 @@ fn detect_web_lol_rank(lower: &str, is_english: bool) -> Option<(String, String)
     )
     .ok()?;
     let caps = re.captures(lower)?;
-    let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+    let riot_id = format!(
+        "{}#{}",
+        caps.get(1)?.as_str().trim(),
+        caps.get(2)?.as_str().trim()
+    );
     let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
     Some((riot_id, region))
 }
@@ -1344,7 +1382,10 @@ fn detect_web_lol_matches(lower: &str, is_english: bool) -> Option<(String, Stri
             let (riot_id, region) = web_lol_defaults()?;
             return Some((riot_id, region, 1));
         }
-        if matches!(lower, "my games" | "my matches" | "my match history" | "my lol") {
+        if matches!(
+            lower,
+            "my games" | "my matches" | "my match history" | "my lol"
+        ) {
             let (riot_id, region) = web_lol_defaults()?;
             return Some((riot_id, region, 5));
         }
@@ -1353,16 +1394,26 @@ fn detect_web_lol_matches(lower: &str, is_english: bool) -> Option<(String, Stri
         )
         .ok()?;
         let caps = re.captures(lower)?;
-        let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+        let riot_id = format!(
+            "{}#{}",
+            caps.get(1)?.as_str().trim(),
+            caps.get(2)?.as_str().trim()
+        );
         let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
         return Some((riot_id, region, 1));
     }
 
-    if matches!(lower, "mi ultima partida" | "mi última partida" | "ultima partida" | "última partida") {
+    if matches!(
+        lower,
+        "mi ultima partida" | "mi última partida" | "ultima partida" | "última partida"
+    ) {
         let (riot_id, region) = web_lol_defaults()?;
         return Some((riot_id, region, 1));
     }
-    if matches!(lower, "mis partidas" | "mi historial" | "como va mi lol" | "cómo va mi lol") {
+    if matches!(
+        lower,
+        "mis partidas" | "mi historial" | "como va mi lol" | "cómo va mi lol"
+    ) {
         let (riot_id, region) = web_lol_defaults()?;
         return Some((riot_id, region, 5));
     }
@@ -1371,7 +1422,11 @@ fn detect_web_lol_matches(lower: &str, is_english: bool) -> Option<(String, Stri
     )
     .ok()?;
     let caps = re.captures(lower)?;
-    let riot_id = format!("{}#{}", caps.get(1)?.as_str().trim(), caps.get(2)?.as_str().trim());
+    let riot_id = format!(
+        "{}#{}",
+        caps.get(1)?.as_str().trim(),
+        caps.get(2)?.as_str().trim()
+    );
     let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
     Some((riot_id, region, 1))
 }

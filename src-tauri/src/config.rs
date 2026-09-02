@@ -93,6 +93,8 @@ pub struct AppConfig {
     pub python_threads: u32,
     #[serde(default)]
     pub system_commands_enabled: bool,
+    #[serde(default)]
+    pub start_with_windows: bool,
     #[serde(default = "default_language")]
     pub language: String,
     #[serde(default)]
@@ -133,6 +135,7 @@ impl Default for AppConfig {
             llama_threads: default_model_threads(),
             python_threads: default_model_threads(),
             system_commands_enabled: false,
+            start_with_windows: false,
             language: default_language(),
             render_3d: false,
             neeko_3d_animation: default_neeko_3d_animation(),
