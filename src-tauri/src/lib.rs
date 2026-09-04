@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Manager,
+    AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder,
 };
 #[cfg(desktop)]
 use tauri_plugin_autostart::ManagerExt;
@@ -1004,6 +1004,60 @@ fn minimize_window(window: tauri::Window) {
 #[tauri::command]
 fn close_window(window: tauri::Window) {
     let _ = window.hide();
+}
+
+#[tauri::command]
+fn open_compressor_window(
+    app: AppHandle,
+    input: Option<String>,
+    target_size_mb: Option<u64>,
+    video_bitrate_kbps: Option<u64>,
+) -> Result<String, String> {
+    let mut params = Vec::new();
+    if let Some(input) = input.as_deref() {
+        params.push(format!("input={}", urlencoding::encode(input)));
+    }
+    if let Some(target) = target_size_mb {
+        params.push(format!("targetSizeMb={}", target));
+    }
+    if let Some(bitrate) = video_bitrate_kbps {
+        params.push(format!("videoBitrateKbps={}", bitrate));
+    }
+    let encoded_input = if params.is_empty() {
+        String::new()
+    } else {
+        format!("?{}", params.join("&"))
+    };
+    let url = format!("/compress.html{}", encoded_input);
+
+    if let Some(window) = app.get_webview_window("compressor") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        let options_json = serde_json::to_string(&serde_json::json!({
+            "input": input,
+            "targetSizeMb": target_size_mb,
+            "videoBitrateKbps": video_bitrate_kbps,
+        }))
+        .map_err(|e| e.to_string())?;
+        window
+            .eval(&format!(
+                "window.setCompressorOptionsFromNeeko({})",
+                options_json
+            ))
+            .ok();
+        return Ok("Abrí el compresor".to_string());
+    }
+
+    WebviewWindowBuilder::new(&app, "compressor", WebviewUrl::App(url.into()))
+        .title("Compresor de video")
+        .inner_size(760.0, 560.0)
+        .min_inner_size(520.0, 430.0)
+        .resizable(true)
+        .decorations(false)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    Ok("Abrí el compresor".to_string())
 }
 
 #[tauri::command]
@@ -2059,6 +2113,25 @@ fn pick_model_file(app: AppHandle) -> Result<Option<String>, String> {
         .dialog()
         .file()
         .add_filter("Modelos GGUF", &["gguf"])
+        .blocking_pick_file()
+    else {
+        return Ok(None);
+    };
+
+    path.into_path()
+        .map(|path| Some(path.to_string_lossy().to_string()))
+        .map_err(|e| format!("No pude leer la ruta seleccionada: {}", e))
+}
+
+#[tauri::command]
+fn pick_video_file(app: AppHandle) -> Result<Option<String>, String> {
+    let Some(path) = app
+        .dialog()
+        .file()
+        .add_filter(
+            "Videos",
+            &["mp4", "mov", "mkv", "webm", "avi", "wmv", "m4v"],
+        )
         .blocking_pick_file()
     else {
         return Ok(None);
@@ -3140,6 +3213,7 @@ pub fn run() {
             knowledge_import,
             minimize_window,
             close_window,
+            open_compressor_window,
             open_app,
             open_url,
             search_web,
@@ -3155,6 +3229,7 @@ pub fn run() {
             install_model,
             install_model_from_file,
             pick_model_file,
+            pick_video_file,
             uninstall_ffmpeg,
             uninstall_git,
             uninstall_model,

@@ -97,7 +97,7 @@ pub struct AppConfig {
     pub start_with_windows: bool,
     #[serde(default = "default_language")]
     pub language: String,
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub render_3d: bool,
     #[serde(default = "default_neeko_3d_animation")]
     pub neeko_3d_animation: String,
@@ -137,7 +137,7 @@ impl Default for AppConfig {
             system_commands_enabled: false,
             start_with_windows: false,
             language: default_language(),
-            render_3d: false,
+            render_3d: true,
             neeko_3d_animation: default_neeko_3d_animation(),
         }
     }

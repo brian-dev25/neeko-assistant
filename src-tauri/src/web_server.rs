@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::{DefaultBodyLimit, Multipart, Path, Request, State},
+    extract::{DefaultBodyLimit, Multipart, Path, Query, Request, State},
     http::{HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{
@@ -11,7 +11,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -25,6 +25,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 const PORT: u16 = 1414;
 const PASSWORD_CHARS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const WEB_USER_AGENT: &str = "Mozilla/5.0 NeekoAssistant/1.0";
 static WEB_PASSWORD: OnceLock<String> = OnceLock::new();
 
 pub(crate) fn web_password() -> &'static str {
@@ -59,6 +60,51 @@ struct AppState {
     file_events: broadcast::Sender<FileEvent>,
     free_games_cache: Arc<AsyncMutex<FreeGamesCache>>,
     free_games_seen: Arc<AsyncMutex<HashSet<String>>>,
+    localsend_sessions: Arc<AsyncMutex<HashMap<String, LocalSendSession>>>,
+}
+
+#[derive(Clone)]
+struct LocalSendFile {
+    filename: String,
+    token: String,
+}
+
+#[derive(Clone, Default)]
+struct LocalSendSession {
+    files: HashMap<String, LocalSendFile>,
+}
+
+#[derive(Deserialize)]
+struct LocalSendPrepareRequest {
+    files: HashMap<String, LocalSendFileMetadata>,
+}
+
+#[derive(Deserialize)]
+struct LocalSendFileMetadata {
+    #[serde(rename = "fileName")]
+    filename: String,
+}
+
+#[derive(Serialize)]
+struct LocalSendPrepareResponse {
+    #[serde(rename = "sessionId")]
+    session_id: String,
+    files: HashMap<String, String>,
+}
+
+#[derive(Deserialize)]
+struct LocalSendUploadQuery {
+    #[serde(rename = "sessionId")]
+    session_id: String,
+    #[serde(rename = "fileId")]
+    file_id: String,
+    token: String,
+}
+
+#[derive(Deserialize)]
+struct LocalSendCancelQuery {
+    #[serde(rename = "sessionId")]
+    session_id: String,
 }
 
 #[derive(Deserialize)]
@@ -217,14 +263,18 @@ async fn auth_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     let path = request.uri().path().to_string();
-    if path == "/api/login"
+    if request.method() == axum::http::Method::OPTIONS
+        || path == "/api/login"
         || path == "/"
         || path.starts_with("/static")
         || path == "/favicon.ico"
         || path.starts_with("/shared/")
+        || path.starts_with("/api/localsend/")
+        || path == "/api/upload"
         || path == "/api/files"
         || path == "/api/files/events"
         || path == "/api/install/events"
+        || path == "/api/free-games"
         || path == "/api/llama/status"
     {
         return Ok(next.run(request).await);
@@ -259,6 +309,138 @@ async fn login_handler(
     }
 }
 
+fn safe_filename(filename: &str) -> String {
+    std::path::Path::new(filename)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.is_empty() && *name != "." && *name != "..")
+        .unwrap_or("unknown")
+        .to_string()
+}
+
+fn localsend_id(prefix: &str) -> String {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    format!("{}-{}-{}", prefix, std::process::id(), nanos)
+}
+
+async fn localsend_prepare_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<LocalSendPrepareRequest>,
+) -> Result<Json<LocalSendPrepareResponse>, StatusCode> {
+    if payload.files.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let session_id = localsend_id("session");
+    let mut session = LocalSendSession::default();
+    let mut tokens = HashMap::new();
+
+    for (file_id, metadata) in payload.files {
+        let token = localsend_id("token");
+        session.files.insert(
+            file_id.clone(),
+            LocalSendFile {
+                filename: safe_filename(&metadata.filename),
+                token: token.clone(),
+            },
+        );
+        tokens.insert(file_id, token);
+    }
+
+    state
+        .localsend_sessions
+        .lock()
+        .await
+        .insert(session_id.clone(), session);
+
+    Ok(Json(LocalSendPrepareResponse {
+        session_id,
+        files: tokens,
+    }))
+}
+
+async fn localsend_upload_handler(
+    State(state): State<AppState>,
+    Query(query): Query<LocalSendUploadQuery>,
+    body: Body,
+) -> Result<StatusCode, StatusCode> {
+    let file = {
+        let sessions = state.localsend_sessions.lock().await;
+        sessions
+            .get(&query.session_id)
+            .and_then(|session| session.files.get(&query.file_id))
+            .filter(|file| file.token == query.token)
+            .cloned()
+            .ok_or(StatusCode::FORBIDDEN)?
+    };
+
+    let dir = files_dir();
+    tokio::fs::create_dir_all(&dir)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let filepath = dir.join(&file.filename);
+    let mut output = tokio::fs::File::create(&filepath)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let mut stream = body.into_data_stream();
+    let mut total: u64 = 0;
+    use futures_util::StreamExt;
+    use tokio::io::AsyncWriteExt;
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        output
+            .write_all(&chunk)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        total += chunk.len() as u64;
+    }
+    output
+        .flush()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let mut sessions = state.localsend_sessions.lock().await;
+    if let Some(session) = sessions.get_mut(&query.session_id) {
+        session.files.remove(&query.file_id);
+        if session.files.is_empty() {
+            sessions.remove(&query.session_id);
+        }
+    }
+    drop(sessions);
+
+    let _ = state.file_events.send(FileEvent {
+        action: "uploaded".to_string(),
+        name: file.filename.clone(),
+    });
+    crate::notify_system(
+        &state.app_handle,
+        "Archivo recibido",
+        &format!(
+            "{} ({:.1} MB)",
+            file.filename,
+            total as f64 / (1024.0 * 1024.0)
+        ),
+    );
+
+    Ok(StatusCode::OK)
+}
+
+async fn localsend_cancel_handler(
+    State(state): State<AppState>,
+    Query(query): Query<LocalSendCancelQuery>,
+) -> StatusCode {
+    state
+        .localsend_sessions
+        .lock()
+        .await
+        .remove(&query.session_id);
+    StatusCode::OK
+}
+
 // ─── FILE SHARING (temp dir, like LocalSend) ───
 
 async fn upload_handler(
@@ -279,6 +461,7 @@ async fn upload_handler(
         .unwrap_or(std::borrow::Cow::Borrowed(&filename))
         .into_owned();
 
+    let filename = safe_filename(&filename);
     let filepath = dir.join(&filename);
 
     let mut file = tokio::fs::File::create(&filepath)
@@ -644,11 +827,31 @@ fn epic_current_promo(element: &serde_json::Value) -> Option<&serde_json::Value>
 
 async fn fetch_epic_free_games(client: &reqwest::Client) -> Vec<FreeGameOffer> {
     let url = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=AR&allowCountries=AR";
-    let Ok(resp) = client.get(url).send().await else {
-        return Vec::new();
+    let resp = match client
+        .get(url)
+        .header("User-Agent", WEB_USER_AGENT)
+        .send()
+        .await
+    {
+        Ok(resp) => resp,
+        Err(error) => {
+            eprintln!("[NEEKO] No pude consultar Epic gratis: {}", error);
+            return Vec::new();
+        }
     };
-    let Ok(data) = resp.json::<serde_json::Value>().await else {
+    if !resp.status().is_success() {
+        eprintln!(
+            "[NEEKO] Epic gratis respondio HTTP {}",
+            resp.status().as_u16()
+        );
         return Vec::new();
+    }
+    let data = match resp.json::<serde_json::Value>().await {
+        Ok(data) => data,
+        Err(error) => {
+            eprintln!("[NEEKO] No pude parsear Epic gratis: {}", error);
+            return Vec::new();
+        }
     };
 
     data["data"]["Catalog"]["searchStore"]["elements"]
@@ -712,16 +915,31 @@ fn html_text(html: &str, class_name: &str) -> Option<String> {
 
 async fn fetch_steam_free_games(client: &reqwest::Client) -> Vec<FreeGameOffer> {
     let url = "https://store.steampowered.com/search/?maxprice=free&category1=998&specials=1&ndl=1";
-    let Ok(resp) = client
+    let resp = match client
         .get(url)
-        .header("User-Agent", "Mozilla/5.0 NeekoAssistant/1.0")
+        .header("User-Agent", WEB_USER_AGENT)
         .send()
         .await
-    else {
-        return Vec::new();
+    {
+        Ok(resp) => resp,
+        Err(error) => {
+            eprintln!("[NEEKO] No pude consultar Steam gratis: {}", error);
+            return Vec::new();
+        }
     };
-    let Ok(html) = resp.text().await else {
+    if !resp.status().is_success() {
+        eprintln!(
+            "[NEEKO] Steam gratis respondio HTTP {}",
+            resp.status().as_u16()
+        );
         return Vec::new();
+    }
+    let html = match resp.text().await {
+        Ok(html) => html,
+        Err(error) => {
+            eprintln!("[NEEKO] No pude leer Steam gratis: {}", error);
+            return Vec::new();
+        }
     };
 
     let row_re =
@@ -1797,6 +2015,7 @@ pub async fn start_web_server(app_handle: AppHandle) {
         file_events: broadcast::channel(100).0,
         free_games_cache: Arc::new(AsyncMutex::new(FreeGamesCache::default())),
         free_games_seen: Arc::new(AsyncMutex::new(load_seen_free_games())),
+        localsend_sessions: Arc::new(AsyncMutex::new(HashMap::new())),
     };
 
     let games_state = state.clone();
@@ -1821,6 +2040,12 @@ pub async fn start_web_server(app_handle: AppHandle) {
         .route("/search", post(search_handler))
         .route("/url", post(open_url_handler))
         .route("/upload", post(upload_handler))
+        .route(
+            "/localsend/v2/prepare-upload",
+            post(localsend_prepare_handler),
+        )
+        .route("/localsend/v2/upload", post(localsend_upload_handler))
+        .route("/localsend/v2/cancel", post(localsend_cancel_handler))
         .route("/files", get(list_files_handler))
         .route("/files/events", get(file_events_handler))
         .route("/free-games", get(free_games_handler))

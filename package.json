@@ -1,6 +1,6 @@
 {
   "name": "neeko-assistant",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Asistente Neeko - Tu assistente virtual estilo Clippy",
   "scripts": {
     "version:bump": "node scripts/bump-version.js",

@@ -1,12 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicklasonmedia/tauri/dev/crates/tauri-cli/schema.json",
   "productName": "Neeko Assistant",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "identifier": "com.neeko.assistant",
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "Neeko Assistant",
         "width": 380,
         "height": 600,
@@ -16,6 +17,19 @@
         "decorations": false,
         "skipTaskbar": false,
         "url": "index.html"
+      },
+      {
+        "label": "compressor",
+        "title": "Compresor de video",
+        "width": 760,
+        "height": 560,
+        "minWidth": 520,
+        "minHeight": 430,
+        "resizable": true,
+        "decorations": false,
+        "skipTaskbar": false,
+        "visible": false,
+        "url": "compress.html"
       }
     ],
     "security": {

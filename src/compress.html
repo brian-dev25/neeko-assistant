@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compresor de video</title>
+    <link rel="stylesheet" href="compress.css">
+</head>
+<body>
+    <div id="app">
+        <header id="top-bar" data-tauri-drag-region>
+            <div>
+                <strong>Compresor de video</strong>
+                <span>Neeko Assistant</span>
+            </div>
+            <div id="window-controls">
+                <button id="minimize-btn" type="button" title="Minimizar">-</button>
+                <button id="close-btn" type="button" title="Cerrar">x</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="file-zone">
+                <div>
+                    <label for="video-path">Archivo</label>
+                    <input id="video-path" type="text" placeholder="Elegí un video o pegá una ruta">
+                </div>
+                <button id="pick-file-btn" type="button">Elegir archivo</button>
+            </section>
+
+            <section class="presets" aria-label="Presets">
+                <button class="preset active" type="button" data-target="8">Discord 8 MB</button>
+                <button class="preset" type="button" data-target="10">10 MB</button>
+                <button class="preset" type="button" data-target="25">25 MB</button>
+                <button class="preset" type="button" data-target="50">50 MB</button>
+                <button class="preset" type="button" data-target="">Libre</button>
+            </section>
+
+            <section class="settings-grid">
+                <label class="field" for="target-size">
+                    <span>Tamaño máximo</span>
+                    <div class="unit-input">
+                        <input id="target-size" type="number" min="1" max="65536" step="1" value="8">
+                        <span>MB</span>
+                    </div>
+                </label>
+
+                <label class="field" for="video-bitrate">
+                    <span>Bitrate de video</span>
+                    <div class="unit-input">
+                        <input id="video-bitrate" type="number" min="1" max="100000" step="50" placeholder="Auto">
+                        <span>kbps</span>
+                    </div>
+                </label>
+            </section>
+
+            <section class="hint">
+                <strong>Cómo decide calidad</strong>
+                <p>Si ponés tamaño máximo, Neeko usa 2-pass e intenta quedar cerca del límite sin pasarse. Si queda demasiado chico, reintenta con más bitrate.</p>
+            </section>
+
+            <section id="status" class="status idle">
+                <span id="status-title">Listo</span>
+                <p id="status-detail">Elegí un archivo y ajustá el tamaño máximo o el bitrate.</p>
+            </section>
+        </main>
+
+        <footer>
+            <button id="clear-btn" type="button">Limpiar</button>
+            <button id="compress-btn" type="button">Comprimir</button>
+        </footer>
+    </div>
+
+    <script type="module" src="compress.js"></script>
+</body>
+</html>

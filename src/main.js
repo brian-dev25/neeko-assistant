@@ -1474,6 +1474,37 @@ function buildSearchUrl(site, query) {
     return targets[s] || `https://www.google.com/search?q=site%3A${encodeURIComponent(site.trim())}+${q}`;
 }
 
+function parseCompressionRequest(raw, forceDiscord = false) {
+    let file = (raw || '').trim();
+    let targetSizeMb = forceDiscord ? 8 : null;
+    let videoBitrateKbps = null;
+
+    const bitrateMatch = file.match(/\b(?:bitrate|bit\s*rate|video\s*bitrate)\s*(?:de|a|:|=)?\s*(\d{1,6})\s*(?:k|kbps)?\b/i)
+        || file.match(/\s(\d{2,6})\s*kbps\b/i);
+    if (bitrateMatch) {
+        videoBitrateKbps = Number.parseInt(bitrateMatch[1], 10);
+        file = file.replace(bitrateMatch[0], ' ').trim();
+    }
+
+    const sizeMatch = file.match(/\b(?:a|hasta|en|de|menos\s+de|max|maximum|under|to|maximo|m[aá]ximo)\s*(\d+(?:[.,]\d+)?)\s*(mb|gb)\b/i)
+        || file.match(/\s(\d+(?:[.,]\d+)?)\s*(mb|gb)\s*$/i);
+    if (sizeMatch) {
+        const amount = Number.parseFloat(sizeMatch[1].replace(',', '.'));
+        targetSizeMb = Math.max(1, Math.round(amount * (sizeMatch[2].toLowerCase() === 'gb' ? 1024 : 1)));
+        file = file.replace(sizeMatch[0], ' ').trim();
+    }
+
+    file = file.replace(/\b(?:para|for)\s+discord\b/i, ' ').trim();
+    file = file.replace(/^["']|["']$/g, '').trim();
+
+    return {
+        action: "open_compressor_window",
+        file,
+        targetSizeMb,
+        videoBitrateKbps,
+    };
+}
+
 function detectActionFromText(text) {
     const lower = text.toLowerCase().trim();
     const isEnglish = currentLanguage === 'en';
@@ -1635,43 +1666,55 @@ function detectActionFromText(text) {
     const compressPatterns = isEnglish
         ? [
             {
+                pattern: /^compress(?:\s+video)?$/i,
+                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
+            },
+            {
                 pattern: /compress\s+(?:the\s+)?(?:this\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
             {
                 pattern: /compress\s+(.+)\s+for\s+discord/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1], true)
             },
             {
                 pattern: /compress\s+(.+\.\w+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
         ]
         : [
             {
+                pattern: /^comprim(?:í|i|ir|e|o)(?:\s+(?:video|el\s+video))?$/i,
+                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
+            },
+            {
+                pattern: /^achic(?:á|a|ar)(?:\s+(?:video|el\s+video))?$/i,
+                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
+            },
+            {
                 pattern: /comprim(?:í|i|ir|e|o)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
             {
                 pattern: /comprim(?:í|i|ir|e|o)\s+(.+)\s+para\s+discord/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1], true)
             },
             {
                 pattern: /comprim(?:í|i|ir|e|o)\s+(.+\.\w+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
             {
                 pattern: /achic(?:á|a|ar)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
             {
                 pattern: /achic(?:á|a|ar)\s+(.+\.\w+)/i,
-                handler: (m) => ({ action: "compress_for_discord", file: m[1].trim() })
+                handler: (m) => parseCompressionRequest(m[1])
             },
         ];
 
     for (const { pattern, handler } of compressPatterns) {
-        const match = lower.match(pattern);
+        const match = text.trim().match(pattern);
         if (match) return { action: handler(match), message: "" };
     }
 
@@ -2013,7 +2056,17 @@ async function executeAction(action) {
             case "lol_save_config":
                 return await invoke('lol_save_config', { gitPat: action.git_pat, region: action.region, gitPath: action.git_path, neekoSprite: null });
             case "compress_for_discord":
-                return await invoke('compress_for_discord', { input: action.file });
+                return await invoke('compress_for_discord', {
+                    input: action.file,
+                    targetSizeMb: action.targetSizeMb ?? null,
+                    videoBitrateKbps: action.videoBitrateKbps ?? null,
+                });
+            case "open_compressor_window":
+                return await invoke('open_compressor_window', {
+                    input: action.file || null,
+                    targetSizeMb: action.targetSizeMb ?? null,
+                    videoBitrateKbps: action.videoBitrateKbps ?? null,
+                });
             case "shutdown":
                 return await invoke('system_shutdown', { seconds: action.seconds });
             case "cancel_shutdown":
@@ -2176,10 +2229,11 @@ async function init() {
         setLanguage(config.language || 'es');
         applyNeekoSprite(config.neeko_sprite);
         neeko3dSelectedIdle = config.neeko_3d_animation || 'Neeko_idle3.anm';
-        applyRender3D(config.render_3d);
+        applyRender3D(config.render_3d !== false);
     } catch {
         applyNeekoSprite(SPRITES.default);
-        applyRender3D(false);
+        neeko3dSelectedIdle = 'Neeko_idle3.anm';
+        applyRender3D(true);
     }
 
     await refreshKnowledgeContext();
@@ -2463,11 +2517,12 @@ settingsBtn.addEventListener('click', async () => {
         document.getElementById('cfg-git-pat').value = '';
         document.getElementById('cfg-git-path').value = config.git_default_path || '';
         document.getElementById('cfg-neeko-sprite').value = normalizeNeekoSprite(config.neeko_sprite);
-        document.getElementById('cfg-render-3d').checked = !!config.render_3d;
+        const render3dEnabled = config.render_3d !== false;
+        document.getElementById('cfg-render-3d').checked = render3dEnabled;
         document.getElementById('cfg-neeko-3d-animation').value = config.neeko_3d_animation || 'Neeko_idle3.anm';
         document.getElementById('cfg-mouse-tracking').checked = neeko3dMouseTracking;
         document.getElementById('cfg-language').value = normalizeLanguage(config.language || currentLanguage);
-        document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !config.render_3d);
+        document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !render3dEnabled);
         document.getElementById('cfg-lol-region').value = config.lol_region || 'las';
         document.getElementById('cfg-riot-id').value = config.riot_id || '';
     } catch { }

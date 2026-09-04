@@ -1,0 +1,273 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-width: 520px;
+    min-height: 430px;
+    overflow: hidden;
+    background: #101018;
+    color: #f5f3ff;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #101018;
+}
+
+#top-bar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 8px 16px;
+    background: #171725;
+    border-bottom: 1px solid #2a2540;
+    -webkit-app-region: drag;
+}
+
+#top-bar div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#top-bar strong {
+    font-size: 14px;
+    line-height: 18px;
+}
+
+#top-bar span {
+    color: #a7a0bd;
+    font-size: 11px;
+}
+
+#window-controls {
+    display: flex;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+}
+
+#window-controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #3a3158;
+    border-radius: 4px;
+    background: #211d30;
+    color: #f5f3ff;
+    cursor: pointer;
+}
+
+#window-controls button:hover {
+    background: #32294d;
+}
+
+main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.file-zone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+label,
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label span,
+.field > span {
+    color: #cfc8e8;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #36304b;
+    border-radius: 6px;
+    background: #151520;
+    color: #f5f3ff;
+    padding: 0 12px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.16);
+}
+
+#pick-file-btn,
+#compress-btn,
+#clear-btn,
+.preset {
+    min-height: 38px;
+    border: 1px solid #3a3158;
+    border-radius: 6px;
+    background: #1d1a2a;
+    color: #f5f3ff;
+    padding: 0 14px;
+    cursor: pointer;
+}
+
+#pick-file-btn:hover,
+#clear-btn:hover,
+.preset:hover {
+    background: #28213d;
+}
+
+.presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preset.active {
+    border-color: #a78bfa;
+    background: #312653;
+    color: #ffffff;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.unit-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 58px;
+}
+
+.unit-input input {
+    border-radius: 6px 0 0 6px;
+}
+
+.unit-input span {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #36304b;
+    border-left: 0;
+    border-radius: 0 6px 6px 0;
+    background: #211d30;
+    color: #cfc8e8;
+    font-size: 12px;
+}
+
+.hint {
+    padding: 14px;
+    border: 1px solid #2e2940;
+    border-radius: 6px;
+    background: #151520;
+}
+
+.hint strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.hint p {
+    color: #aaa3bd;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.status {
+    min-height: 86px;
+    padding: 14px;
+    border: 1px solid #2e2940;
+    border-radius: 6px;
+    background: #151520;
+}
+
+.status #status-title {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status p {
+    white-space: pre-wrap;
+    color: #bdb6ce;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.status.working {
+    border-color: #a78bfa;
+}
+
+.status.success {
+    border-color: #22c55e;
+}
+
+.status.error {
+    border-color: #ef4444;
+}
+
+footer {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px;
+    border-top: 1px solid #2a2540;
+    background: #171725;
+}
+
+#compress-btn {
+    border-color: #8b5cf6;
+    background: #7c3aed;
+    font-weight: 700;
+    min-width: 128px;
+}
+
+#compress-btn:hover {
+    background: #8b5cf6;
+}
+
+#compress-btn:disabled,
+#pick-file-btn:disabled,
+#clear-btn:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+@media (max-width: 620px) {
+    body {
+        min-width: 320px;
+    }
+
+    .file-zone,
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
