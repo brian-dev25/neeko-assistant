@@ -40,6 +40,11 @@ jobs:
         with:
           key: ${{ matrix.platform }}
 
+      - name: Download llama-server
+        run: |
+          mkdir -p src-tauri/binaries
+          curl -L -o src-tauri/binaries/llama-server.exe https://github.com/ggerganov/llama.cpp/releases/download/b4801/llama-server-win64.exe
+
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
         env:

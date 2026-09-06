@@ -67,9 +67,7 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/llama-server"
-    ],
+    
     "resources": {
       "../addons/quick-notes/": "addons/quick-notes/",
       "../addons/discord-rich-presence/": "addons/discord-rich-presence/",
