@@ -1,0 +1,56 @@
+/* The native main window must also be transparent. */
+html.airi-pet, html.airi-pet body, .airi-pet #app {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.airi-pet #app { position: relative; isolation: isolate; }
+.airi-pet #app::before, .airi-pet #app::after, .airi-pet #top-bar { display: none !important; }
+.airi-pet #neeko-section, .airi-pet #neeko-section.render-3d {
+    position: absolute; inset: 0; padding: 0; gap: 0;
+    justify-content: flex-end; background: transparent;
+}
+.airi-pet #neeko-sprite, .airi-pet #neeko-sprite.using-3d {
+    position: absolute; bottom: 0; width: 100%; height: var(--airi-pet-size, 82%);
+    max-height: none; min-height: 0; margin: 0; flex: none;
+    aspect-ratio: auto; cursor: grab; touch-action: none;
+    animation: none !important; transform: none !important; transition: none !important;
+}
+.airi-pet #neeko-sprite:active { cursor: grabbing; }
+.airi-pet #neeko-sprite:focus-visible { outline: 2px dashed #c4b5fd; outline-offset: -4px; }
+.airi-pet #neeko-img { object-position: bottom; }
+.airi-pet #speech-bubble {
+    display: none !important; position: absolute; top: 12px; left: 12px;
+    width: calc(100% - 24px); max-width: none; max-height: 32%;
+    overflow: auto; z-index: 3; background: rgba(28, 25, 40, .96);
+    border: 1px solid #a78bfa; border-radius: 18px; user-select: text;
+}
+.airi-pet.airi-confirming #speech-bubble:not(.hidden) { display: block !important; }
+.airi-pet #input-bar { display: none !important; }
+#airi-pet-menu {
+    position: fixed; z-index: 110; width: 200px; max-width: calc(100vw - 16px); box-sizing: border-box; padding: 6px;
+    color: #f5f3ff; color-scheme: dark;
+    border: 1px solid #7c6b9f; border-radius: 12px; background: #211d30;
+    box-shadow: 0 4px 16px #0004;
+}
+#airi-pet-menu[hidden] { display: none; }
+#airi-pet-menu button { display: block; width: 100%; padding: 10px; text-align: left; border: 0; border-radius: 7px; background: transparent; color: #f5f3ff; cursor: pointer; }
+#airi-pet-menu button:hover, #airi-pet-menu button:focus-visible { background: #493665; }
+.airi-size-control { padding: 10px; color: #f5f3ff; }
+.airi-size-control label { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.airi-size-control input[type="range"] { display: block; width: 100%; margin: 12px 0; padding: 0; accent-color: #b497e0; cursor: pointer; }
+.airi-size-control output { font-variant-numeric: tabular-nums; }
+.airi-preferences { color: #d9d4e7; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; color-scheme: dark; }
+.airi-preferences p { margin: 0 0 10px; }
+.airi-preferences .airi-size-control { padding: 12px; margin-bottom: 18px; border: 1px solid #514464; border-radius: 10px; background: #242035; }
+.airi-preferences .airi-size-control label { display: flex; margin-top: 0; color: #ede9f7; }
+.airi-size-control button { width: 100%; padding: 9px 12px; border: 1px solid #79618f; border-radius: 8px; background: #493665; color: #f5f3ff; font: inherit; font-size: 12px; cursor: pointer; }
+.airi-size-control button:hover { background: #604781; }
+.airi-size-control button:focus-visible, .airi-size-control input:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 2px; }
+.airi-size-control input[type="range"] { min-width: 0; box-sizing: border-box; }
+#airi-pet-menu { max-height: calc(100vh - 16px); overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) {
+    .airi-pet #neeko-sprite, .airi-pet #speech-bubble { animation: none; }
+}

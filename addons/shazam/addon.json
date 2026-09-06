@@ -1,0 +1,11 @@
+{
+  "id": "shazam",
+  "name": "Shazam",
+  "version": "1.0.0",
+  "description": "Reconoce música del escritorio al pulsar Escuchar. Prepará Python y sus dependencias desde la pestaña Shazam. Requiere Internet. Integración no oficial con ShazamIO.",
+  "author": "Neeko",
+  "minAppVersion": "1.0.3",
+  "enabled": false,
+  "permissions": ["ui:tabs"],
+  "commands": []
+}

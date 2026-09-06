@@ -1,0 +1,4 @@
+shazamio==0.8.1
+SoundCard==0.4.5
+numpy>=1.26,<2.3
+audioop-lts; python_version >= "3.13"

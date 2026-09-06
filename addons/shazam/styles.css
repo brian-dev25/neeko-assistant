@@ -1,0 +1,10 @@
+.shazam-panel { color: #ddd8ed; font-size: 13px; line-height: 1.6; }
+.shazam-panel p { margin-bottom: 14px; overflow-wrap: anywhere; }
+.shazam-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+.shazam-actions button { border: 1px solid #9f7aea; border-radius: 12px; padding: 12px 22px; background: #7c3aed; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+.shazam-actions button:hover { background: #9050ee; }
+.shazam-actions button:focus-visible { outline: 2px solid #ddd6fe; outline-offset: 3px; }
+.shazam-actions button:disabled { opacity: .55; cursor: wait; }
+.shazam-actions [data-cancel] { background: #39334b; }
+.shazam-actions [hidden] { display: none; }
+.shazam-panel [data-status] { background: #211d30; border-radius: 10px; padding: 14px; }

@@ -1,0 +1,11 @@
+{
+  "id": "airi-theme",
+  "name": "AIRI · Compañera de escritorio",
+  "version": "2.3.0",
+  "description": "Neeko sobre el escritorio, sin fondo ni barra. Chat en ventana independiente, arrastrar para mover y clic derecho para controles.",
+  "author": "Neeko",
+  "minAppVersion": "1.0.3",
+  "enabled": false,
+  "permissions": ["ui:tabs"],
+  "commands": []
+}
