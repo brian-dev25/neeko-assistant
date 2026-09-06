@@ -19,9 +19,14 @@ use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::{broadcast, watch};
 
 mod addon_manager;
+mod assistant;
+mod research;
+mod pet_region;
+mod music_recognition;
 mod config;
 mod git_commands;
 mod knowledge;
+mod local_commands;
 mod lol_api;
 mod video_compress;
 mod web_server;
@@ -895,6 +900,8 @@ class Handler(BaseHTTPRequestHandler):
         output = llm.create_chat_completion(
             messages=request.get("messages", []),
             max_tokens=request.get("max_tokens", 512),
+            response_format=request.get("response_format"),
+            temperature=request.get("temperature", 0.2),
         )
         self.send_json(200, output)
 
@@ -1058,6 +1065,32 @@ fn open_compressor_window(
         .map_err(|e| e.to_string())?;
 
     Ok("Abrí el compresor".to_string())
+}
+
+#[tauri::command]
+fn open_chat_window(app: AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("chat")
+        .ok_or_else(|| "La ventana de chat no está disponible. Reiniciá Neeko.".to_string())?;
+    window.unminimize().map_err(|e| e.to_string())?;
+    window.show().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn open_settings_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("settings") {
+        window.eval("document.getElementById('settings-btn').click()") .map_err(|e| e.to_string())?;
+        window.unminimize().map_err(|e| e.to_string())?;
+        window.show().map_err(|e| e.to_string())?;
+        return window.set_focus().map_err(|e| e.to_string());
+    }
+    WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("index.html".into()))
+        .title("Configuración de Neeko")
+        .inner_size(520.0, 650.0).min_inner_size(320.0, 430.0)
+        .decorations(false).resizable(true).always_on_top(false)
+        .build().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -3088,12 +3121,12 @@ fn knowledge_add(
     key: String,
     value: String,
 ) -> Result<knowledge::KnowledgeFact, String> {
-    Ok(knowledge::add_fact(&category, &key, &value, "manual"))
+    knowledge::add_fact(&category, &key, &value, "manual")
 }
 
 #[tauri::command]
 fn knowledge_delete(id: String) -> Result<bool, String> {
-    Ok(knowledge::delete_fact(&id))
+    knowledge::delete_fact(&id)
 }
 
 #[tauri::command]
@@ -3103,7 +3136,7 @@ fn knowledge_search(query: String) -> Result<Vec<knowledge::KnowledgeFact>, Stri
 
 #[tauri::command]
 fn knowledge_clear() -> Result<bool, String> {
-    Ok(knowledge::clear_all())
+    knowledge::clear_all()
 }
 
 #[tauri::command]
@@ -3202,6 +3235,9 @@ pub fn run() {
             addon_disable,
             addon_get_js,
             addon_get_css,
+            music_recognition::shazam_listen,
+            music_recognition::shazam_prepare,
+            music_recognition::shazam_cancel,
             addon_get_all_js,
             addon_get_all_css,
             knowledge_list,
@@ -3213,6 +3249,9 @@ pub fn run() {
             knowledge_import,
             minimize_window,
             close_window,
+            open_chat_window,
+            open_settings_window,
+            pet_region::pet_set_region,
             open_compressor_window,
             open_app,
             open_url,
@@ -3222,6 +3261,12 @@ pub fn run() {
             list_models,
             get_model_path_cmd,
             chat_start,
+            assistant::assistant_chat,
+            assistant::assistant_decide,
+            assistant::assistant_cancel,
+            assistant::assistant_addon_loaded,
+            assistant::assistant_addon_claim,
+            assistant::assistant_addon_result,
             chat_cancel,
             chat_finish,
             install_ffmpeg,

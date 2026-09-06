@@ -8,8 +8,8 @@
         state: 'Hablando con Neeko',
         largeImage: 'icon',
         largeText: 'Neeko Assistant',
-        smallImage: 'icon',
-        smallText: 'Neeko',
+        smallImage: '',
+        smallText: '',
         buttonLabel: '',
         buttonUrl: '',
         buttonLabel2: '',
@@ -25,8 +25,8 @@
             state: 'Estado',
             largeImage: 'Imagen grande',
             largeText: 'Texto imagen grande',
-            smallImage: 'Imagen chica',
-            smallText: 'Texto imagen chica',
+            smallImage: 'Imagen chica (opcional)',
+            smallText: 'Texto imagen chica (opcional)',
             buttonLabel: 'Boton 1',
             buttonUrl: 'URL boton 1',
             buttonLabel2: 'Boton 2',
@@ -41,8 +41,8 @@
                 state: 'Hablando con Neeko',
                 largeImage: 'icon',
                 largeText: 'Neeko Assistant',
-                smallImage: 'icon',
-                smallText: 'Neeko',
+                smallImage: 'Ej.: icon (opcional)',
+                smallText: 'Ej.: Neeko (opcional)',
                 buttonLabel: 'Repositorio',
                 buttonUrl: 'https://...',
                 buttonLabel2: 'Abrir Neeko',
@@ -71,8 +71,8 @@
             state: 'State',
             largeImage: 'Large image',
             largeText: 'Large image text',
-            smallImage: 'Small image',
-            smallText: 'Small image text',
+            smallImage: 'Small image (optional)',
+            smallText: 'Small image text (optional)',
             buttonLabel: 'Button 1',
             buttonUrl: 'Button 1 URL',
             buttonLabel2: 'Button 2',
@@ -87,8 +87,8 @@
                 state: 'Talking with Neeko',
                 largeImage: 'icon',
                 largeText: 'Neeko Assistant',
-                smallImage: 'icon',
-                smallText: 'Neeko',
+                smallImage: 'E.g. icon (optional)',
+                smallText: 'E.g. Neeko (optional)',
                 buttonLabel: 'Repository',
                 buttonUrl: 'https://...',
                 buttonLabel2: 'Open Neeko',
@@ -126,7 +126,17 @@
 
     function loadConfig() {
         try {
-            return { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+            const config = { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+            const migrationKey = `${STORAGE_KEY}-optional-small-image`;
+            if (!localStorage.getItem(migrationKey)) {
+                if (config.smallImage === 'icon' && config.smallText === 'Neeko') {
+                    config.smallImage = '';
+                    config.smallText = '';
+                    saveConfig(config);
+                }
+                localStorage.setItem(migrationKey, '1');
+            }
+            return config;
         } catch {
             return { ...DEFAULT_CONFIG };
         }
@@ -202,8 +212,10 @@
         const assets = {};
         if (config.largeImage) assets.large_image = config.largeImage;
         if (config.largeText) assets.large_text = config.largeText;
-        if (config.smallImage) assets.small_image = config.smallImage;
-        if (config.smallText) assets.small_text = config.smallText;
+        if (config.smallImage) {
+            assets.small_image = config.smallImage;
+            if (config.smallText) assets.small_text = config.smallText;
+        }
         if (Object.keys(assets).length) activity.assets = assets;
 
         const buttons = getButtonsFromConfig(config);
@@ -276,12 +288,12 @@
 
                 <label>${t('largeText')}</label>
                 <input id="drpc-large-text" type="text" value="${escapeHtml(config.largeText)}" placeholder="${escapeHtml(ph('largeText'))}">
-
                 <label>${t('smallImage')}</label>
                 <input id="drpc-small-image" type="text" value="${escapeHtml(config.smallImage)}" placeholder="${escapeHtml(ph('smallImage'))}">
-
                 <label>${t('smallText')}</label>
                 <input id="drpc-small-text" type="text" value="${escapeHtml(config.smallText)}" placeholder="${escapeHtml(ph('smallText'))}">
+
+
 
                 <p class="drpc-hint">${t('assetHint')}</p>
 
@@ -378,6 +390,7 @@
     }
 
     Neeko.commands.register('drpc-start', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'drpc-start').handler([], ''),
         patterns: {
             es: ['discord\\s+rich\\s+(?:on|activar|iniciar)', 'activar\\s+discord\\s+rich', 'iniciar\\s+discord\\s+rich'],
             en: ['discord\\s+rich\\s+(?:on|start|enable)', 'start\\s+discord\\s+rich', 'enable\\s+discord\\s+rich'],
@@ -393,6 +406,7 @@
     });
 
     Neeko.commands.register('drpc-stop', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'drpc-stop').handler([], ''),
         patterns: {
             es: ['discord\\s+rich\\s+(?:off|apagar|desactivar|detener)', 'apagar\\s+discord\\s+rich', 'desactivar\\s+discord\\s+rich'],
             en: ['discord\\s+rich\\s+(?:off|stop|disable)', 'stop\\s+discord\\s+rich', 'disable\\s+discord\\s+rich'],
@@ -404,6 +418,7 @@
     });
 
     Neeko.commands.register('drpc-status', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'drpc-status').handler([], ''),
         patterns: {
             es: ['estado\\s+discord\\s+rich', 'discord\\s+rich\\s+estado'],
             en: ['discord\\s+rich\\s+status', 'status\\s+discord\\s+rich'],
@@ -412,6 +427,7 @@
     });
 
     Neeko.commands.register('drpc-set-state', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'drpc-set-state').handler(['', String(params.text)], ''),
         patterns: {
             es: ['discord\\s+rich\\s+texto\\s+(.+)', 'discord\\s+rich\\s+estado\\s+(.+)'],
             en: ['discord\\s+rich\\s+text\\s+(.+)', 'discord\\s+rich\\s+state\\s+(.+)'],
@@ -438,13 +454,13 @@
     });
 
     const config = loadConfig();
-    if (config.autoStart) {
+    if (config.autoStart && !Neeko.ui.isSettingsWindow) {
         startPresence(config).catch((error) => console.error('[DRPC] auto-start error:', error));
     }
 
     Neeko.addon.onUnload(() => {
         clearTimeout(saveTimer);
         languageObserver.disconnect();
-        stopPresence();
+        if (!Neeko.ui.isSettingsWindow) stopPresence();
     });
 })();

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat con Neeko</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <header id="top-bar"><span id="title">Neeko</span><div id="window-controls">
+        <button id="minimize-btn" type="button" title="Minimizar" aria-label="Minimizar">-</button>
+        <button id="close-btn" type="button" title="Cerrar" aria-label="Cerrar">x</button>
+    </div></header>
+    <main id="messages" role="log" aria-label="Conversación" aria-live="polite">
+        <p id="welcome">¡Hola! ¿En qué te ayudo?</p>
+    </main>
+    <section id="action-confirmation" hidden role="group" aria-label="Confirmar acción">
+        <strong>¿Querés ejecutar esta acción?</strong>
+        <pre id="action-details"></pre>
+        <div class="action-choices"><button id="action-yes" type="button">Sí</button><button id="action-no" type="button">No</button></div>
+    </section>
+    <p id="status" role="status"></p>
+    <form id="input-bar">
+        <label class="sr-only" for="chat-input">Mensaje para Neeko</label>
+        <input id="chat-input" type="text" placeholder="Hablale a Neeko…" autocomplete="off" autofocus>
+        <button id="send-btn" type="submit" title="Enviar" aria-label="Enviar">➤</button>
+    </form>
+    <script type="module" src="chat.js"></script>
+</body>
+</html>

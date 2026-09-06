@@ -1387,11 +1387,18 @@
 
     <div class="toast-stack" id="toast-stack"></div>
 
+    <div id="chat-confirmation" hidden style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);width:90%;max-width:420px;text-align:center;max-height:55vh;overflow:auto;background:#25253b;color:white;padding:16px;border:1px solid #a78bfa;border-radius:12px;z-index:1000;box-sizing:border-box" role="group" aria-label="Confirm action">
+        <pre id="chat-action-details" style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit"></pre>
+        <button id="chat-yes" type="button" style="padding:10px 25px;min-width:80px;margin:8px 4px 0;background:#38265b;color:#f5f3ff;border:1px solid #a78bfa;border-radius:10px;cursor:pointer">S&#237;</button>
+        <button id="chat-no" type="button" style="padding:10px 25px;min-width:80px;margin:8px 4px 0;background:#38265b;color:#f5f3ff;border:1px solid #a78bfa;border-radius:10px;cursor:pointer">No</button>
+    </div>
+    <button id="chat-cancel" hidden type="button" onclick="cancelChat()" style="position:fixed;right:20px;bottom:150px;z-index:999;padding:8px">Cancelar / Cancel</button>
     <script>
         localStorage.removeItem('neeko_token');
         sessionStorage.removeItem('neeko_token');
         let token = '';
         let chatHistory = [];
+        let sharedChatClient;
         let currentTab = 'chat';
         let freeGamesInterval = null;
         let installEventSource = null;
@@ -1743,47 +1750,10 @@
             `;
         }
 
-        function getWebSystemPrompt() {
-            const now = new Date();
-            const locale = t('locale');
-            const date = now.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const time = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-
-            if (currentLanguage === 'en') {
-                return `You are Neeko, a vastaya from the Oovi-Kat tribe in League of Legends.
-You are playful, curious, cheerful, and a little childlike.
-Always speak in English, with short, sweet, fun replies.
-Use the lizard emoji often and phrases like "Neeko is Neeko!".
-
-CURRENT DATE AND TIME: ${date}, ${time}.
-
-ACTIONS (answer with JSON at the start of the response, separated by |||):
-- open_app: {"action": "open_app", "app": "name"}|||reply
-- play_music: {"action": "play_music", "query": "song or artist"}|||reply
-- open_url: {"action": "open_url", "url": "https://..."}|||reply
-- search: {"action": "search", "query": "search query"}|||reply
-
-If it is not an action, reply normally as Neeko.`;
-            }
-
-            return `Sos Neeko, una vastaya de la tribu Oovi-Kat de League of Legends.
-Sos juguetona, curiosa, alegre y un poco infantil.
-Hablas siempre en espanol, de forma corta, carinosa y divertida.
-Usas mucho el emoji de lagartija y frases como "Neeko es Neeko!".
-
-FECHA Y HORA ACTUAL: ${date}, son las ${time}.
-
-ACCIONES (responde con JSON al inicio de la respuesta, separado por |||):
-- open_app: {"action": "open_app", "app": "nombre"}|||respuesta
-- play_music: {"action": "play_music", "query": "cancion o artista"}|||respuesta
-- open_url: {"action": "open_url", "url": "https://..."}|||respuesta
-- search: {"action": "search", "query": "busqueda"}|||respuesta
-
-Si no es una accion, responde normal como Neeko.`;
-        }
+        function getWebSystemPrompt() { return ''; }
 
         function resetWebChatPrompt() {
-            chatHistory = [{ role: 'system', content: getWebSystemPrompt() }];
+            chatHistory = sharedChatClient?.history || [];
         }
 
         function applyLanguage(language) {
@@ -2922,47 +2892,69 @@ Si no es una accion, responde normal como Neeko.`;
             await sendMessage();
         }
 
+        const chatModule = import('/static/chat-client.mjs');
+        async function chatApi(path, payload) {
+            const response = await fetch(`/api/chat${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error(await response.text());
+            return response.json();
+        }
+
+        async function getChatClient() {
+            if (sharedChatClient) return sharedChatClient;
+            const { ChatClient, confirmationControls, confirmationText, attachInfo } = await chatModule;
+            sharedChatClient = new ChatClient({
+                chat: (session, messages) => chatApi('', { session, messages }),
+                decide: async (session, proposal_id, approved, save_account = false) => (await chatApi('/decide', { session, proposal_id, approved, save_account })).message,
+                cancel: (session) => chatApi('/cancel', { session }),
+            }, {
+                busy: busy => {
+                    document.getElementById('send-btn').disabled = busy;
+                    document.getElementById('chat-cancel').hidden = !busy;
+                    document.getElementById('chat-cancel').textContent = currentLanguage === 'en' ? 'Cancel' : 'Cancelar';
+                    if (busy) showTyping(); else hideTyping();
+                },
+                message: (message, info) => attachInfo(addMessage('neeko', message), info, currentLanguage),
+                error: message => addMessage('neeko', message),
+                confirm: (proposal, signal) => {
+                    hideTyping();
+                    addMessage('neeko', confirmationText(currentLanguage));
+                    document.getElementById('chat-yes').textContent = currentLanguage === 'en' ? 'Yes' : '\u0053\u00ed';
+                    const result = confirmationControls(
+                        document.getElementById('chat-confirmation'), document.getElementById('chat-action-details'),
+                        document.getElementById('chat-yes'), document.getElementById('chat-no'), proposal, signal, currentLanguage
+                    );
+                    scrollToBottom();
+                    return result;
+                },
+            });
+            return sharedChatClient;
+        }
+
+        let chatStarting = false;
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
-            if (!text) return;
-
-            input.value = '';
-            input.style.height = 'auto';
-            addMessage('user', text);
-            chatHistory.push({ role: 'user', content: text });
-
-            document.getElementById('send-btn').disabled = true;
-            showTyping();
-
+            if (!text || chatStarting || sharedChatClient?.busy) return;
+            chatStarting = true;
             try {
-                const resp = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ messages: chatHistory })
-                });
+                const client = await getChatClient();
+                input.value = '';
+                input.style.height = 'auto';
+                addMessage('user', text);
+                await client.send(text);
+                chatHistory = client.history;
+            } catch (error) { addMessage('neeko', String(error)); }
+            finally { chatStarting = false; input.focus(); }
+        }
 
-                hideTyping();
-
-                if (resp.ok) {
-                    const data = await resp.json();
-                    addMessage('neeko', data.message);
-                    chatHistory.push({ role: 'assistant', content: data.message });
-                } else if (resp.status === 401) {
-                    token = '';
-                    localStorage.removeItem('neeko_token');
-                    sessionStorage.removeItem('neeko_token');
-                    location.reload();
-                } else {
-                    addMessage('neeko', t('errorConnect'));
-                }
-            } catch (e) {
-                hideTyping();
-                addMessage('neeko', t('errorNotRunning'));
-            }
-
-            document.getElementById('send-btn').disabled = false;
-            input.focus();
+        async function cancelChat() {
+            if (!sharedChatClient) return;
+            try { await sharedChatClient.cancel(); addMessage('neeko', currentLanguage === 'en' ? 'Cancelled.' : 'Cancelado.'); }
+            catch (error) { addMessage('neeko', String(error)); }
         }
 
         // ─── FILES ───

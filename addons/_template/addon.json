@@ -7,14 +7,30 @@
   "minAppVersion": "1.2.0",
   "enabled": false,
   "icon": "icon.png",
-  "permissions": ["chat:commands", "ui:tabs", "ui:bubble"],
+  "permissions": [
+    "chat:commands",
+    "ui:tabs",
+    "ui:bubble"
+  ],
   "commands": [
     {
       "id": "my-command",
       "description": "Descripcion del comando / Command description",
       "patterns": {
-        "es": ["mi\\s+comando\\s+(.+)"],
-        "en": ["my\\s+command\\s+(.+)"]
+        "es": [
+          "mi\\s+comando\\s+(.+)"
+        ],
+        "en": [
+          "my\\s+command\\s+(.+)"
+        ]
+      },
+      "ai": {
+        "label": "Descripcion del comando / Command description",
+        "fields": {
+          "text": {
+            "type": "string"
+          }
+        }
       }
     }
   ]

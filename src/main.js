@@ -1,3 +1,5 @@
+import { ChatClient, confirmationControls, confirmationText, attachInfo } from './chat-client.mjs';
+import { PetRegion } from './pet-region.mjs';
 let THREE = null;
 let GLTFLoaderClass = null;
 
@@ -12,6 +14,22 @@ try {
 const { invoke } = window.__TAURI__.core;
 const { getCurrentWindow } = window.__TAURI__.window;
 const appWindow = getCurrentWindow();
+const settingsWindow = appWindow.label === 'settings';
+if (settingsWindow) {
+    document.documentElement.classList.add('settings-window');
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+document.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+    if (event.target.closest('button, input, select, textarea, a')) return;
+    const header = settingsWindow && document.querySelector('#settings-modal:not(.hidden) .modal-header');
+    // Only the strip above the header is draggable, not the empty space beside its title.
+    const inTopStrip = header && event.target.closest('#settings-modal')
+        && event.clientY >= 0 && event.clientY < header.getBoundingClientRect().top;
+    if (!inTopStrip && !event.target.closest('.modal-header h3, #top-bar')) return;
+    void appWindow.startDragging().catch(console.error);
+});
+const petRegion = new PetRegion(settingsWindow ? async () => {} : invoke);
 
 const neekoSection = document.getElementById('neeko-section');
 const neekoSprite = document.getElementById('neeko-sprite');
@@ -25,7 +43,6 @@ const minimizeBtn = document.getElementById('minimize-btn');
 const closeBtn = document.getElementById('close-btn');
 
 let isProcessing = false;
-let currentAbortController = null;
 let localAiModelAvailable = false;
 let currentModelLoadEngine = 'llama';
 let currentModelRuntimeConfig = null;
@@ -64,6 +81,15 @@ if (THREE) {
 }
 
 // ─── Addon System ───
+setInterval(() => {
+    if (!petRegion.enabled || !neekoImg.complete || !neekoImg.naturalWidth || !neekoImg.getClientRects().length) return;
+    if (getComputedStyle(neekoImg).visibility === 'hidden') return;
+    const rect = neekoImg.getBoundingClientRect();
+    const scale = Math.min(rect.width / neekoImg.naturalWidth, rect.height / neekoImg.naturalHeight);
+    const width = neekoImg.naturalWidth * scale, height = neekoImg.naturalHeight * scale;
+    petRegion.capture(neekoImg, { x: rect.x + (rect.width - width) / 2, y: rect.bottom - height, width, height });
+}, 60);
+
 const NeekoAddons = {
     _commands: new Map(),
     _actions: new Map(),
@@ -97,7 +123,10 @@ const NeekoAddons = {
         window.Neeko = {
             commands: {
                 register: (id, config) => {
-                    NeekoAddons._commands.set(id, config);
+                    const owner = NeekoAddons._loadingAddonId;
+                    const previous = NeekoAddons._commands.get(id);
+                    if (previous && previous._owner !== owner) throw new Error(`Duplicate addon command: ${id}`);
+                    NeekoAddons._commands.set(id, { ...config, _owner: owner });
                     NeekoAddons._activeRecord()?.commands.add(id);
                 },
                 unregister: (id) => {
@@ -118,6 +147,7 @@ const NeekoAddons = {
                 showBubble: (text) => showBubble(text),
                 setTalking: (v) => setTalking(v),
                 setThinking: (v) => setThinking(v),
+                setDesktopHitRegion: (v) => petRegion.enable(v),
                 registerSettingsTab: (id, title, content) => NeekoAddons._registerTab(id, title, content),
                 unregisterSettingsTab: (id) => NeekoAddons._removeTab(id),
             },
@@ -211,6 +241,7 @@ const NeekoAddons = {
             console.error(`[NEEKO ADDON] Error cargando ${addonId}:`, e);
             throw e;
         } finally {
+            await invoke('assistant_addon_loaded', { addonId, commands: NeekoAddons._loaded.has(addonId) ? [...record.commands].filter(id => typeof NeekoAddons._commands.get(id)?.aiHandler === 'function') : [] });
             NeekoAddons._loadingAddonId = null;
             window.Neeko.addon.id = null;
             window.Neeko.addon.name = null;
@@ -237,6 +268,7 @@ const NeekoAddons = {
         record.style?.remove();
         record.script?.remove();
         NeekoAddons._loaded.delete(addonId);
+        invoke('assistant_addon_loaded', { addonId, commands: [] }).catch(console.error);
     },
 
     _registerTab(id, title, content) {
@@ -650,6 +682,7 @@ async function renderAddonsList() {
                         if (addon) await NeekoAddons.loadAddon(addon);
                     }
                     renderAddonsList();
+                    if (settingsWindow) await window.__TAURI__.event.emitTo('main', 'neeko:addons-changed');
                 } catch (e) {
                     showBubble('Error: ' + e);
                 }
@@ -927,6 +960,7 @@ function applyNeekoSprite(sprite) {
 }
 
 function applyRender3D(enabled) {
+    if (settingsWindow) return;
     neeko3dRendered = !!enabled && !!THREE;
     neekoSection.classList.toggle('render-3d', neeko3dRendered);
     neekoSprite.classList.toggle('using-3d', neeko3dRendered);
@@ -1081,12 +1115,40 @@ function syncNeeko3dAnimation() {
 function startNeeko3dIdle() {
     if (neeko3dAnimationId) return;
 
-    const onmousemove = (e) => {
-        neeko3dMouseX = (e.clientX / window.innerWidth) * 2 - 1;
-        neeko3dMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    // Native desktop coordinates keep working over other apps and transparent
+    // parts of the pet window. Convert physical pixels before aiming the head.
+    let stopped = false;
+    let cursorTimer;
+    let cursorErrorReported = false;
+    const trackCursor = async () => {
+        try {
+            if (neeko3dMouseTracking && neeko3dRendered) {
+                const [cursor, origin, scale] = await Promise.all([
+                    window.__TAURI__.window.cursorPosition(),
+                    appWindow.innerPosition(), appWindow.scaleFactor()
+                ]);
+                if (stopped) return;
+                const bounds = neekoSprite.getBoundingClientRect();
+                const x = (cursor.x - origin.x) / scale;
+                const y = (cursor.y - origin.y) / scale;
+                neeko3dMouseX = Math.max(-1, Math.min(1,
+                    (x - bounds.left - bounds.width / 2) / Math.max(1, bounds.width / 2)));
+                neeko3dMouseY = Math.max(-1, Math.min(1,
+                    (y - bounds.top - bounds.height / 2) / Math.max(1, bounds.height / 2)));
+                cursorErrorReported = false;
+            }
+        } catch (error) {
+            if (!cursorErrorReported) console.warn('No se pudo consultar el cursor del escritorio:', error);
+            cursorErrorReported = true;
+        } finally {
+            if (!stopped) cursorTimer = setTimeout(trackCursor, 50);
+        }
     };
-    window.addEventListener('mousemove', onmousemove);
-    neeko3dIdleCleanup = () => window.removeEventListener('mousemove', onmousemove);
+    void trackCursor();
+    neeko3dIdleCleanup = () => {
+        stopped = true;
+        clearTimeout(cursorTimer);
+    };
 
     const animate = (time) => {
         if (!neeko3dRendered) {
@@ -1103,9 +1165,10 @@ function startNeeko3dIdle() {
             neeko3dMixer.update(delta);
         }
         if (neeko3dModel) {
-            const talkSway = talking ? Math.sin(seconds * 7) * 0.025 : 0;
-            neeko3dModel.rotation.y = -0.12 + Math.sin(seconds * 0.8) * 0.035;
-            neeko3dModel.position.y = neeko3dModelBaseY + Math.sin(seconds * 1.2) * 0.025 + talkSway;
+            const desktopPet = document.documentElement.classList.contains('airi-pet');
+            const talkSway = !desktopPet && talking ? Math.sin(seconds * 7) * 0.025 : 0;
+            neeko3dModel.rotation.y = -0.12 + (desktopPet ? 0 : Math.sin(seconds * 0.8) * 0.035);
+            neeko3dModel.position.y = neeko3dModelBaseY + (desktopPet ? 0 : Math.sin(seconds * 1.2) * 0.025) + talkSway;
 
             if (neeko3dMouseTracking && (neeko3dHeadBone || neeko3dNeckBone)) {
                 neeko3dHeadTargetRotY = neeko3dMouseX * 0.35;
@@ -1130,6 +1193,8 @@ function startNeeko3dIdle() {
         }
         if (neeko3dRenderer && neeko3dScene && neeko3dCamera) {
             neeko3dRenderer.render(neeko3dScene, neeko3dCamera);
+            // Read alpha in the same frame, before WebGL clears its drawing buffer.
+            petRegion.capture(neeko3dRenderer.domElement, neeko3d.getBoundingClientRect(), time);
         }
 
         neeko3dAnimationId = requestAnimationFrame(animate);
@@ -1150,247 +1215,12 @@ function stopNeeko3dIdle() {
 }
 
 function getSystemPrompt() {
-    const now = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const locale = t('locale');
-    const fecha = now.toLocaleDateString(locale, options);
-    const hora = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-
-    if (currentLanguage === 'en') {
-        return `You are Neeko, a vastaya from the Oovi-Kat tribe in League of Legends.
-You are playful, curious, cheerful, and a little childlike.
-Always speak in English, with short, sweet, fun replies.
-Use the lizard emoji often and phrases like "Neeko is Neeko!".
-
-CURRENT DATE AND TIME: ${fecha}, ${hora}.
-
-MEMORY RULES:
-- The "Saved user memory" section below contains true facts about the user.
-- When the user asks about themselves, their likes, hardware, preferences, work, or personal details, answer using saved memory first.
-- If several saved facts are relevant, mention all of them.
-- Do not invent user details that are not in saved memory.
-- If saved memory does not contain the answer, say you do not have that saved yet.
-
-${knowledgeContext}
-
-ACTIONS (answer with JSON at the start of the response, separated by |||):
-- open_app: {"action": "open_app", "app": "name"}|||reply
-- play_music: {"action": "play_music", "query": "song or artist"}|||reply
-- open_url: {"action": "open_url", "url": "https://..."}|||reply
-- search: {"action": "search", "query": "search query"}|||reply
-If it is not an action, reply normally as Neeko.`;
-    }
-
-    return `Sos Neeko, una vastaya de la tribu Oovi-Kat de League of Legends.
-Sos juguetona, curiosa, alegre y un poco infantil.
-Hablás siempre en español, de forma corta, cariñosa y divertida.
-Usás mucho el emoji 🦎 y frases como "¡Neeko es Neeko!".
-
-FECHA Y HORA ACTUAL: ${fecha}, son las ${hora}.
-
-ACCIONES (respondé con JSON al inicio de la respuesta, separado por |||):
-- open_app: {"action": "open_app", "app": "nombre"}|||respuesta
-- play_music: {"action": "play_music", "query": "canción o artista"}|||respuesta
-- open_url: {"action": "open_url", "url": "https://..."}|||respuesta
-- search: {"action": "search", "query": "busqueda"}|||respuesta
-REGLAS DE MEMORIA:
-- La seccion "Memoria guardada del usuario" de abajo contiene datos reales del usuario.
-- Cuando el usuario pregunte sobre si mismo, sus gustos, hardware, preferencias, trabajo o datos personales, responde usando primero esa memoria.
-- Si hay varias memorias relevantes, menciona todas las que correspondan.
-- No inventes datos del usuario que no esten en la memoria.
-- Si la memoria no contiene la respuesta, deci que todavia no tenes eso guardado.
-
-${knowledgeContext}
-Si no es una acción, respondé normal como Neeko.`;
+    return currentLanguage === 'en' ? 'You are Neeko. Reply briefly in English.' : 'Sos Neeko. Responde brevemente en espanol.';
 }
 
-let currentChatId = null;
-let knowledgeContext = '';
-let conversationHistory = [
-    { role: "system", content: getSystemPrompt() }
-];
-
-async function refreshKnowledgeContext() {
-    try {
-        const facts = JSON.parse(JSON.stringify(await invoke('knowledge_list')));
-        if (!facts.length) {
-            knowledgeContext = '';
-            return;
-        }
-        const isEnglish = currentLanguage === 'en';
-        let ctx = isEnglish
-            ? '\n\n## Saved user memory\nThese are true saved facts about the user. Use them to answer any question about the user:\n'
-            : '\n\n## Memoria guardada del usuario\nEstos son datos reales guardados sobre el usuario. Usalos para responder cualquier pregunta sobre el usuario:\n';
-        let currentCat = '';
-        for (const f of facts) {
-            if (f.category !== currentCat) {
-                currentCat = f.category;
-                ctx += `\n### ${currentCat.charAt(0).toUpperCase() + currentCat.slice(1)}\n`;
-            }
-            ctx += `- ${f.key}: ${f.value}\n`;
-        }
-        ctx += isEnglish
-            ? '\nIf the user asks about these topics, answer from this memory instead of guessing.\n'
-            : '\nSi el usuario pregunta sobre estos temas, responde desde esta memoria en vez de adivinar.\n';
-        ctx += isEnglish
-            ? '\nWhen the user tells you something important about themselves, include this hidden JSON block in your response so the app can save it:\n'
-            : '\nCuando el usuario te cuente algo importante sobre si mismo, incluye este bloque JSON oculto para que la app pueda guardarlo:\n';
-        ctx += '{"_save_knowledge": {"category": "...", "key": "...", "value": "..."}}\n';
-        ctx += isEnglish
-            ? 'The user will not see this JSON block. Valid categories: hardware, personal, trabajo, software, preferencia, general\n'
-            : 'El usuario no vera este bloque JSON. Categorias validas: hardware, personal, trabajo, software, preferencia, general\n';
-        knowledgeContext = ctx;
-    } catch (e) {
-        console.error('[Knowledge] Error loading context:', e);
-        knowledgeContext = '';
-    }
-}
-
-async function buildRuntimeMemoryReminder(userMessage) {
-    try {
-        const facts = JSON.parse(JSON.stringify(await invoke('knowledge_list')));
-        if (!facts.length) return null;
-
-        const lines = facts.map((fact) => {
-            const category = fact.category || 'general';
-            const key = fact.key || 'info';
-            return `- ${category} / ${key}: ${fact.value}`;
-        });
-
-        if (currentLanguage === 'en') {
-            return `Internal memory reminder for the next answer.
-User message: "${userMessage}"
-Saved user facts:
-${lines.join('\n')}
-
-If the user asks anything about themselves, their likes, preferences, hardware, work, or personal details, answer only from these saved facts. If several facts match, include all of them. Do not add guesses, jokes, or invented user details.`;
-        }
-
-        return `Recordatorio interno de memoria para la proxima respuesta.
-Mensaje del usuario: "${userMessage}"
-Datos guardados del usuario:
-${lines.join('\n')}
-
-Si el usuario pregunta algo sobre si mismo, sus gustos, preferencias, hardware, trabajo o datos personales, responde solo con estos datos guardados. Si varios datos coinciden, incluilos todos. No agregues suposiciones, chistes ni datos inventados del usuario.`;
-    } catch (error) {
-        console.error('[Knowledge] Error building runtime reminder:', error);
-        return null;
-    }
-}
-
-async function parseAndSaveKnowledge(reply) {
-    try {
-        const match = reply.match(/\{"_save_knowledge":\s*(\{[^}]+\})\}/);
-        if (match) {
-            const data = JSON.parse(match[1]);
-            if (data.category && data.key && data.value) {
-                await invoke('knowledge_add', { category: data.category, key: data.key, value: data.value });
-                await refreshKnowledgeContext();
-                syncSystemPrompt();
-                return reply.replace(match[0], '').trim();
-            }
-        }
-    } catch (e) {
-        console.error('[Knowledge] Error parsing save:', e);
-    }
-    return reply;
-}
-
-function cleanKnowledgeValue(value) {
-    return value
-        .trim()
-        .replace(/^[\s:,-]+/, '')
-        .replace(/[.!?]+$/, '')
-        .trim();
-}
-
-function pushKnowledgeFact(facts, category, key, value) {
-    const cleaned = cleanKnowledgeValue(value);
-    if (!cleaned || cleaned.length < 2) return;
-    const duplicate = facts.some((fact) => (
-        fact.category === category
-        && fact.key.toLowerCase() === key.toLowerCase()
-        && fact.value.toLowerCase() === cleaned.toLowerCase()
-    ));
-    if (!duplicate) facts.push({ category, key, value: cleaned });
-}
-
-function extractKnowledgeFromUserMessage(message) {
-    const text = message.trim();
-    const lower = text.toLowerCase();
-    const facts = [];
-
-    if (!text || /^(que|qué|cual|cu[aá]l|como|c[oó]mo|when|what|which|how)\b/i.test(lower)) {
-        return facts;
-    }
-
-    const preferencePatterns = [
-        { pattern: /\bme\s+gustan?\s+(.+)/i, key: 'me gusta' },
-        { pattern: /\bme\s+gustaban?\s+(.+)/i, key: 'me gusta' },
-        { pattern: /\bme\s+encantan?\s+(.+)/i, key: 'me encanta' },
-        { pattern: /\bamo\s+(.+)/i, key: 'me gusta' },
-        { pattern: /\bi\s+like\s+(.+)/i, key: 'likes' },
-        { pattern: /\bi\s+love\s+(.+)/i, key: 'likes' },
-    ];
-    for (const { pattern, key } of preferencePatterns) {
-        const match = text.match(pattern);
-        if (match) {
-            pushKnowledgeFact(facts, 'preferencia', key, match[1]);
-            break;
-        }
-    }
-
-    const cpuMatch = text.match(/\b(?:ryzen\s+\d(?:\s+\d{3,5}[a-z0-9]*)?|intel\s+core\s+i[3579][-\s]?\d+[a-z0-9]*|core\s+i[3579][-\s]?\d+[a-z0-9]*|i[3579][-\s]?\d{3,5}[a-z0-9]*)\b/i);
-    if (cpuMatch) {
-        pushKnowledgeFact(facts, 'hardware', 'cpu', cpuMatch[0]);
-    }
-
-    const gpuMatch = text.match(/\b(?:radeon\s+)?(?:rx\s+\d{3,5}\s*xt|rx\s+\d{3,5}|rtx\s+\d{3,5}(?:\s*ti)?|gtx\s+\d{3,5}(?:\s*ti)?)\b/i);
-    if (gpuMatch) {
-        pushKnowledgeFact(facts, 'hardware', 'gpu', gpuMatch[0]);
-    }
-
-    const ramMatch = text.match(/\b(?:tengo|uso|i\s+have|my\s+pc\s+has)\s+(\d{1,3})\s*(?:gb|gigas?)\s+(?:de\s+)?ram\b/i);
-    if (ramMatch) {
-        pushKnowledgeFact(facts, 'hardware', 'ram', `${ramMatch[1]} GB`);
-    }
-
-    const personalPatterns = [
-        { pattern: /\bsoy\s+(.+)/i, key: 'soy' },
-        { pattern: /\bvivo\s+en\s+(.+)/i, key: 'vive en' },
-        { pattern: /\btrabajo\s+en\s+(.+)/i, key: 'trabaja en' },
-        { pattern: /\bmy\s+name\s+is\s+(.+)/i, key: 'name' },
-        { pattern: /\bi\s+live\s+in\s+(.+)/i, key: 'lives in' },
-        { pattern: /\bi\s+work\s+at\s+(.+)/i, key: 'works at' },
-    ];
-    for (const { pattern, key } of personalPatterns) {
-        const match = text.match(pattern);
-        if (match) {
-            pushKnowledgeFact(facts, 'personal', key, match[1]);
-            break;
-        }
-    }
-
-    return facts;
-}
-
-async function saveKnowledgeFromUserMessage(message) {
-    const facts = extractKnowledgeFromUserMessage(message);
-    if (!facts.length) return 0;
-
-    for (const fact of facts) {
-        await invoke('knowledge_add', fact);
-    }
-    await refreshKnowledgeContext();
-    syncSystemPrompt();
-
-    const memoryPanel = document.querySelector('[data-settings-panel="memory"].active');
-    if (memoryPanel) {
-        renderMemoryList(document.getElementById('memory-search')?.value || '');
-    }
-
-    return facts.length;
-}
+// Legacy addon conversation access; app chat context is assembled once in Rust.
+let conversationHistory = [];
+async function refreshKnowledgeContext() {}
 
 const idlePhrases = [
     "¿Necesitas ayuda con algo? 🌸",
@@ -1404,11 +1234,13 @@ const idlePhrases = [
 let idleTimeout;
 
 function resetIdleTimer() {
+    if (settingsWindow) return;
     clearTimeout(idleTimeout);
     idleTimeout = setTimeout(showIdlePhrase, 20000);
 }
 
 function showIdlePhrase() {
+    if (isProcessing) return;
     const phrases = t('idle') || idlePhrases;
     const phrase = phrases[Math.floor(Math.random() * phrases.length)];
     showBubble(`${phrase} 🦎`);
@@ -1416,8 +1248,31 @@ function showIdlePhrase() {
 }
 
 function showBubble(text) {
+    if (settingsWindow) {
+        let notice = document.getElementById('settings-notice');
+        if (!notice) {
+            notice = document.createElement('p');
+            notice.id = 'settings-notice';
+            notice.setAttribute('role', 'status');
+            settingsModalContent.querySelector('.modal-header').after(notice);
+        }
+        notice.textContent = text;
+        return;
+    }
+    speechBubble.querySelectorAll('.assistant-info-trigger').forEach(button => button.remove());
     bubbleText.textContent = text;
     speechBubble.classList.remove('hidden');
+}
+
+function confirmChatAction(proposal, signal) {
+    setThinking(false);
+    showBubble(confirmationText(currentLanguage));
+    const yes = document.getElementById('action-yes');
+    yes.textContent = currentLanguage === 'en' ? 'Yes' : '\u0053\u00ed';
+    return confirmationControls(
+        document.getElementById('action-confirmation'), document.getElementById('action-details'),
+        yes, document.getElementById('action-no'), proposal, signal, currentLanguage, url => invoke('open_url', { url })
+    );
 }
 
 function cleanAiReply(text) {
@@ -1437,793 +1292,82 @@ function setThinking(thinking) {
     syncNeeko3dAnimation();
 }
 
-function parseNeekoResponse(text) {
-    text = cleanAiReply(text);
-    const jsonMatch = text.match(/\{[\s\S]*?"action"[\s\S]*?\}/);
-    if (jsonMatch) {
-        try {
-            const action = JSON.parse(jsonMatch[0]);
-            const afterJson = text.substring(text.indexOf(jsonMatch[0]) + jsonMatch[0].length);
-            const message = afterJson.replace(/^\|+/, '').trim();
-            return { action, message };
-        } catch { }
-    }
-    return { action: null, message: text };
-}
-
-function buildSearchUrl(site, query) {
-    const s = site.toLowerCase().trim();
-    const q = encodeURIComponent(query.trim());
-    const targets = {
-        google: `https://www.google.com/search?q=${q}`,
-        g: `https://www.google.com/search?q=${q}`,
-        youtube: `https://www.youtube.com/results?search_query=${q}`,
-        yt: `https://www.youtube.com/results?search_query=${q}`,
-        github: `https://github.com/search?q=${q}`,
-        gh: `https://github.com/search?q=${q}`,
-        reddit: `https://www.reddit.com/search/?q=${q}`,
-        mercado: `https://listado.mercadolibre.com.ar/${q}`,
-        mercadolibre: `https://listado.mercadolibre.com.ar/${q}`,
-        ml: `https://listado.mercadolibre.com.ar/${q}`,
-        wikipedia: `https://es.wikipedia.org/w/index.php?search=${q}`,
-        wiki: `https://es.wikipedia.org/w/index.php?search=${q}`,
-        spotify: `https://open.spotify.com/search/${q}`,
-        steam: `https://store.steampowered.com/search/?term=${q}`,
-    };
-
-    return targets[s] || `https://www.google.com/search?q=site%3A${encodeURIComponent(site.trim())}+${q}`;
-}
-
-function parseCompressionRequest(raw, forceDiscord = false) {
-    let file = (raw || '').trim();
-    let targetSizeMb = forceDiscord ? 8 : null;
-    let videoBitrateKbps = null;
-
-    const bitrateMatch = file.match(/\b(?:bitrate|bit\s*rate|video\s*bitrate)\s*(?:de|a|:|=)?\s*(\d{1,6})\s*(?:k|kbps)?\b/i)
-        || file.match(/\s(\d{2,6})\s*kbps\b/i);
-    if (bitrateMatch) {
-        videoBitrateKbps = Number.parseInt(bitrateMatch[1], 10);
-        file = file.replace(bitrateMatch[0], ' ').trim();
-    }
-
-    const sizeMatch = file.match(/\b(?:a|hasta|en|de|menos\s+de|max|maximum|under|to|maximo|m[aá]ximo)\s*(\d+(?:[.,]\d+)?)\s*(mb|gb)\b/i)
-        || file.match(/\s(\d+(?:[.,]\d+)?)\s*(mb|gb)\s*$/i);
-    if (sizeMatch) {
-        const amount = Number.parseFloat(sizeMatch[1].replace(',', '.'));
-        targetSizeMb = Math.max(1, Math.round(amount * (sizeMatch[2].toLowerCase() === 'gb' ? 1024 : 1)));
-        file = file.replace(sizeMatch[0], ' ').trim();
-    }
-
-    file = file.replace(/\b(?:para|for)\s+discord\b/i, ' ').trim();
-    file = file.replace(/^["']|["']$/g, '').trim();
-
-    return {
-        action: "open_compressor_window",
-        file,
-        targetSizeMb,
-        videoBitrateKbps,
-    };
-}
-
-function detectActionFromText(text) {
-    const lower = text.toLowerCase().trim();
-    const isEnglish = currentLanguage === 'en';
-
-    // ─── Addon Commands (check first) ───
-    const addonMatch = NeekoAddons.detectCommand(text);
-    if (addonMatch) return addonMatch;
-
-    // ─── IP Detection ───
-    const isIpCommand = isEnglish
-        ? (lower === 'ip' || lower === 'my ip' || lower === 'local ip' || (lower.includes('ip') && (lower.includes('what') || lower.includes('connect') || lower.includes('address'))))
-        : (lower === 'ip' || lower === 'mi ip' || lower === 'la ip' || (lower.includes('ip') && (lower.includes('cuál') || lower.includes('cual') || lower.includes('que') || lower.includes('cómo') || lower.includes('como') || lower.includes('conect') || lower.includes('dirección') || lower.includes('direccion'))));
-    if (isIpCommand) {
-        return { action: { action: "get_ip" }, message: "" };
-    }
-
-    // ─── Git Detection (check before app detection) ───
-    const gitPatterns = [
-        { pattern: /git\s+init(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_init", path: m[1] || null }) },
-        { lang: 'es', pattern: /inicializ(?:ar|a)\s+(?:un\s+)?repo(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_init", path: m[1] || null }) },
-
-        { pattern: /git\s+add\s+(.+?)(?:\s+en\s+(.+))?$/i, handler: (m) => ({ action: "git_add", files: m[1].trim(), path: m[2] || null }) },
-        { lang: 'es', pattern: /(?:agregar|añadir|agreg(?:a|o))\s+(.+?)(?:\s+al\s+repo|\s+en\s+(.+))?$/i, handler: (m) => ({ action: "git_add", files: m[1].trim(), path: m[2] || null }) },
-
-        { pattern: /git\s+commit\s+(?:-m\s+)?["']?(.+?)["']?$/i, handler: (m) => ({ action: "git_commit", path: null, message: m[1].trim() }) },
-        { lang: 'es', pattern: /haz\s+commit\s+(?:con\s+)?(?:mensaje\s+)?["']?(.+?)["']?$/i, handler: (m) => ({ action: "git_commit", path: null, message: m[1].trim() }) },
-        { lang: 'es', pattern: /commitea(?:r)?\s+(?:con\s+)?(?:mensaje\s+)?["']?(.+?)["']?$/i, handler: (m) => ({ action: "git_commit", path: null, message: m[1].trim() }) },
-
-        { lang: 'es', pattern: /sub(?:e|ir)\s+(?:mi\s+)?repo(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_full_push", path: m[1] || null }) },
-        { pattern: /git\s+push(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_push", path: m[1] || null }) },
-        { lang: 'es', pattern: /pushe(?:a|r?)\s+(?:el\s+)?repo/i, handler: () => ({ action: "git_full_push", path: null }) },
-
-        { pattern: /git\s+pull(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_pull", path: m[1] || null }) },
-        { lang: 'es', pattern: /baj(?:a|ar)\s+(?:los?\s+)?cambios?\s+(?:en\s+(.+))?/i, handler: (m) => ({ action: "git_pull", path: m[1] || null }) },
-
-        { pattern: /git\s+status(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_status", path: m[1] || null }) },
-        { lang: 'es', pattern: /estado\s+(?:del\s+)?repo(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_status", path: m[1] || null }) },
-
-        { pattern: /git\s+log(?:(?:\s+ultim(?:os?|as?)\s+)?(\d+))?(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_log", count: m[1] ? parseInt(m[1]) : 10, path: m[2] || null }) },
-        { lang: 'es', pattern: /(?:últim(?:os?|as?)\s+)?commits?(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_log", count: 10, path: m[1] || null }) },
-
-        { pattern: /git\s+branch(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_branch", path: m[1] || null }) },
-        { lang: 'es', pattern: /(?:que\s+)?branches?\s+tien(?:e|es?)\s+(?:en\s+(.+))?/i, handler: (m) => ({ action: "git_branch", path: m[1] || null }) },
-
-        { pattern: /git\s+remote\s+add\s+(\S+)\s+(\S+)(?:\s+en\s+(.+))?/i, handler: (m) => ({ action: "git_remote_add", name: m[1], url: m[2], path: m[3] || null }) },
-    ];
-
-    for (const { lang, pattern, handler } of gitPatterns) {
-        if (lang && lang !== currentLanguage) continue;
-        const match = lower.match(pattern);
-        if (match) return { action: handler(match), message: "" };
-    }
-
-    // ─── LOL Detection ───
-    const lolPatterns = [
-        {
-            lang: 'en',
-            pattern: /last\s+match\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea/, 'kr') || null, count: 1 })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:match\s+history|matches|games)\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea/, 'kr') || null, count: 5 })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:my\s+)?last\s+match$/i,
-            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:my\s+)?(?:match\s+history|matches|games|lol)$/i,
-            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 5 })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:rank|elo|tier)\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea/, 'kr') || null })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:what\s+)?(?:rank|elo|tier)\s+(?:does\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)\s+(?:have|is)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea/, 'kr') || null })
-        },
-        {
-            lang: 'en',
-            pattern: /(?:my\s+)?(?:elo|rank|tier)(?:\s+in\s+lol)?$/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-        {
-            lang: 'en',
-            pattern: /what\s+(?:rank|elo|tier)\s+am\s+i/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-        // With name#tag and optional region
-        {
-            pattern: /(?:ultima|última)\s+partida\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 })
-        },
-        {
-            pattern: /(?:historial|partidas?)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 5 })
-        },
-        {
-            pattern: /(?:como\s+)?(?:va|está|esta)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_match_history", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: m[3]?.toLowerCase() || null, count: 1 })
-        },
-        // Without name (use config default) — "mi ultima partida", "ultima partida", "mis partidas"
-        {
-            pattern: /(?:mi\s+)?(?:ultima|última)\s+partida$/i,
-            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 })
-        },
-        {
-            pattern: /(?:mi\s+)?(?:historial|partidas?)$/i,
-            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 5 })
-        },
-        {
-            pattern: /(?:como\s+)?(?:va|está|esta)\s+(?:mi\s+)?(?:lol|partidas?)$/i,
-            handler: () => ({ action: "lol_match_history", riot_id: null, region: null, count: 1 })
-        },
-
-        // Rank / Elo — with name#tag
-        {
-            pattern: /(?:elo|rang[oa]?|clasificaci[oó]n)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/, 'kr') || null })
-        },
-        {
-            pattern: /(?:que\s+)?(?:rang[oa]?|elo)\s+(?:tiene|está|esta|es)\s+([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$/i,
-            handler: (m) => ({ action: "lol_rank", riot_id: `${m[1].trim()}#${m[2].trim()}`, region: (m[3]?.toLowerCase() || '').replace(/korea|corea/, 'kr') || null })
-        },
-        // Rank / Elo — without name (self)
-        {
-            pattern: /(?:mi\s+)?(?:elo|rang[oa]?|clasificaci[oó]n)(?:\s+(?:de\s+)?lol)?$/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-        {
-            pattern: /(?:que\s+)?(?:rang[oa]?|elo)\s+(?:tengo|soy|estoy)/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-        {
-            pattern: /(?:en\s+que\s+)?(?:rang[oa]?|elo)\s+(?:estoy|soy|está)/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-        {
-            pattern: /(?:cual\s+es\s+)?(?:mi\s+)?(?:rang[oa]?|elo)\s+(?:de\s+)?lol$/i,
-            handler: () => ({ action: "lol_rank", riot_id: null, region: null })
-        },
-    ];
-
-    for (const { lang, pattern, handler } of lolPatterns) {
-        if (isEnglish && lang !== 'en') continue;
-        if (!isEnglish && lang === 'en') continue;
-        const match = lower.match(pattern);
-        if (match) return { action: handler(match), message: "" };
-    }
-
-    // ─── Video Compression Detection ───
-    const compressPatterns = isEnglish
-        ? [
-            {
-                pattern: /^compress(?:\s+video)?$/i,
-                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
-            },
-            {
-                pattern: /compress\s+(?:the\s+)?(?:this\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-            {
-                pattern: /compress\s+(.+)\s+for\s+discord/i,
-                handler: (m) => parseCompressionRequest(m[1], true)
-            },
-            {
-                pattern: /compress\s+(.+\.\w+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-        ]
-        : [
-            {
-                pattern: /^comprim(?:í|i|ir|e|o)(?:\s+(?:video|el\s+video))?$/i,
-                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
-            },
-            {
-                pattern: /^achic(?:á|a|ar)(?:\s+(?:video|el\s+video))?$/i,
-                handler: () => ({ action: "open_compressor_window", file: null, targetSizeMb: null, videoBitrateKbps: null })
-            },
-            {
-                pattern: /comprim(?:í|i|ir|e|o)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-            {
-                pattern: /comprim(?:í|i|ir|e|o)\s+(.+)\s+para\s+discord/i,
-                handler: (m) => parseCompressionRequest(m[1], true)
-            },
-            {
-                pattern: /comprim(?:í|i|ir|e|o)\s+(.+\.\w+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-            {
-                pattern: /achic(?:á|a|ar)\s+(?:el\s+)?(?:este\s+)?video\s*:\s*(.+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-            {
-                pattern: /achic(?:á|a|ar)\s+(.+\.\w+)/i,
-                handler: (m) => parseCompressionRequest(m[1])
-            },
-        ];
-
-    for (const { pattern, handler } of compressPatterns) {
-        const match = text.trim().match(pattern);
-        if (match) return { action: handler(match), message: "" };
-    }
-
-    // ─── System Detection ───
-    if (isEnglish) {
-        if (/cancel\s+(?:shutdown|shut\s*down)/i.test(lower)) {
-            return { action: { action: "cancel_shutdown" }, message: "" };
-        }
-        if (/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$/i.test(lower)) {
-            const m = lower.match(/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$/i);
-            let secs = parseInt(m[1]);
-            if (/hours?|h/i.test(m[2])) secs *= 3600;
-            else if (/min/i.test(m[2])) secs *= 60;
-            return { action: { action: "shutdown", seconds: secs }, message: "" };
-        }
-        if (/^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc$/i.test(lower)) {
-            return { action: { action: "shutdown", seconds: 0 }, message: "" };
-        }
-        if (/restart\s+(?:explorer|icons?|taskbar|desktop|windows\s*explorer)/i.test(lower)) {
-            return { action: { action: "restart_explorer" }, message: "" };
-        }
-        if (/restart\s+(?:wifi|wi-fi|internet|network|connection)/i.test(lower)) {
-            return { action: { action: "restart_wifi" }, message: "" };
-        }
-        if (/restart\s+(?:bluetooth|blue\s*tooth)/i.test(lower)) {
-            return { action: { action: "restart_bluetooth" }, message: "" };
-        }
-    } else {
-        if (/cancel(?:ar)?\s+(?:el\s+)?(?:apagado|apaga)/i.test(lower)) {
-            return { action: { action: "cancel_shutdown" }, message: "" };
-        }
-        if (/^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$/i.test(lower)) {
-            const m = lower.match(/^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$/i);
-            let secs = parseInt(m[1]);
-            if (/^(?:horas?|h)$/i.test(m[2])) secs *= 3600;
-            else if (/min/i.test(m[2])) secs *= 60;
-            return { action: { action: "shutdown", seconds: secs }, message: "" };
-        }
-        if (/^apag(?:a|ar|o)\s+(?:la\s+)?pc$/i.test(lower)) {
-            return { action: { action: "shutdown", seconds: 0 }, message: "" };
-        }
-        if (/reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)/i.test(lower)) {
-            return { action: { action: "restart_explorer" }, message: "" };
-        }
-        if (/reinici(?:a|ar|o)\s+(?:el\s+)?(?:wifi|wi-fi|internet|red|conexion|conexi[oó]n)/i.test(lower)) {
-            return { action: { action: "restart_wifi" }, message: "" };
-        }
-        if (/reinici(?:a|ar|o)\s+(?:el\s+)?(?:bluetooth|blue\s*tooth)/i.test(lower)) {
-            return { action: { action: "restart_bluetooth" }, message: "" };
-        }
-    }
-
-    // ─── Config Detection ───
-    const configPatterns = isEnglish
-        ? [
-            { pattern: /save\s+git\s+pat\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: m[1].trim(), region: null, git_path: null }) },
-            { pattern: /set\s+region\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: null, region: m[1].trim(), git_path: null }) },
-            { pattern: /set\s+git\s+path\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: null, region: null, git_path: m[1].trim() }) },
-        ]
-        : [
-            { pattern: /configurar\s+lol\s+api\s*key\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: null, region: null, git_path: null }) },
-            { pattern: /guardar\s+git\s+pat\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: m[1].trim(), region: null, git_path: null }) },
-            { pattern: /configurar?\s+region\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: null, region: m[1].trim(), git_path: null }) },
-            { pattern: /configurar?\s+git\s+path\s+(.+)/i, handler: (m) => ({ action: "lol_save_config", git_pat: null, region: null, git_path: m[1].trim() }) },
-        ];
-
-    for (const { pattern, handler } of configPatterns) {
-        const match = lower.match(pattern);
-        if (match) return { action: handler(match), message: "" };
-    }
-
-    // ─── App Detection ───
-    const knownApps = [
-        'spotify', 'discord', 'steam', 'chrome', 'firefox', 'edge',
-        'notepad', 'calculadora', 'calculator', 'explorer', 'vscode',
-        'code', 'powershell', 'terminal', 'whatsapp', 'telegram',
-        'obs', 'youtube', 'spotify premium',
-        'league of legends', 'lol', 'riot client',
-        '7-zip', '7zip', 'winrar', 'obsidian', 'brave',
-        'bluestacks', 'roblox', 'fightcade', 'qbittorrent',
-        'davinci', 'filmora', 'photoshop', 'photoshop cs6',
-        'virtualbox', 'node', 'python', 'git'
-    ];
-    for (const app of knownApps) {
-        const appMatches = isEnglish
-            ? (lower === app || lower === `open ${app}` || lower === `start ${app}` || lower === `launch ${app}`)
-            : (lower === app || lower === `abri ${app}` || lower === `abre ${app}` || lower === `abrir ${app}`);
-        if (appMatches) {
-            if (app === 'youtube') {
-                return { action: { action: "open_url", url: "https://www.youtube.com" }, message: "" };
-            }
-            return { action: { action: "open_app", app: app }, message: "" };
-        }
-    }
-
-    const openPatterns = isEnglish
-        ? [
-            /open[\s]+(.+)/,
-            /start[\s]+(.+)/,
-            /launch[\s]+(.+)/,
-        ]
-        : [
-            /abr[ií]?[\s]+(.+)/,
-            /abrime[\s]+(.+)/,
-            /abrir[\s]+(.+)/,
-            /abri[\s]+(.+)/,
-            /pone[r]?[\s]+(.+)/,
-            /iniciar[\s]+(.+)/,
-            /ejecutar[\s]+(.+)/,
-            /abri(?:r)?\s+(?:el\s+|la\s+)?(.+)/,
-        ];
-    for (const pattern of openPatterns) {
-        const match = lower.match(pattern);
-        if (match) {
-            const appName = match[1].trim();
-            return { action: { action: "open_app", app: appName }, message: "" };
-        }
-    }
-
-    const searchInPatterns = isEnglish
-        ? [
-            /search\s+(?:on|in)\s+([^:]+)\s*:\s*(.+)/,
-        ]
-        : [
-            /busca[r]?\s+en\s+([^:]+)\s*:\s*(.+)/,
-            /buscar\s+en\s+([^:]+)\s*:\s*(.+)/,
-        ];
-    for (const pattern of searchInPatterns) {
-        const match = lower.match(pattern);
-        if (match) {
-            const site = match[1].trim();
-            const query = match[2].trim();
-            return {
-                action: {
-                    action: "open_url",
-                    url: buildSearchUrl(site, query),
-                },
-                message: `Buscando en ${site}: ${query}`,
-            };
-        }
-    }
-
-    const searchPatterns = isEnglish
-        ? [
-            /search[\s]+(.+)/,
-            /look\s+up[\s]+(.+)/,
-        ]
-        : [
-            /busca[r]?[\s]+(.+)/,
-            /buscar[\s]+(.+)/,
-            /investigar[\s]+(.+)/,
-        ];
-    for (const pattern of searchPatterns) {
-        const match = lower.match(pattern);
-        if (match) {
-            return { action: { action: "search", query: match[1].trim() }, message: "" };
-        }
-    }
-
-    const musicPatterns = isEnglish
-        ? [
-            /play[\s]+(.+)/,
-            /listen\s+to[\s]+(.+)/,
-        ]
-        : [
-            /pon[eé]?[\s]+m[uú]sica[\s]+(.+)/,
-            /reproducir[\s]+(.+)/,
-            /escuchar[\s]+(.+)/,
-        ];
-    for (const pattern of musicPatterns) {
-        const match = lower.match(pattern);
-        if (match) {
-            return { action: { action: "play_music", query: match[1].trim() }, message: "" };
-        }
-    }
-
-    // ─── Knowledge / Memory Detection ───
-    const knowledgePatterns = [
-        { lang: 'es', pattern: /(?:que|cuales?|cuantos?)\s+(?:sabes|sabe|tenes|tiene)\s+(?:de\s+)?mi/i, handler: () => ({ action: "knowledge_list" }) },
-        { lang: 'en', pattern: /(?:what|how\s+much)\s+(?:do\s+you|does\s+neeko)\s+know\s+(?:about\s+)?me/i, handler: () => ({ action: "knowledge_list" }) },
-        { lang: 'es', pattern: /(?:guarda|recuerda|anota|acordate)\s+(?:que\s+)?(.+)/i, handler: (m) => ({ action: "knowledge_save_manual", text: m[1].trim() }) },
-        { lang: 'en', pattern: /(?:save|remember|note|store)\s+(?:that\s+)?(.+)/i, handler: (m) => ({ action: "knowledge_save_manual", text: m[1].trim() }) },
-        { lang: 'es', pattern: /(?:borra|elimina|olvida|limpia)\s+(?:la\s+)?memoria\s+(?:de\s+)?(.*)/i, handler: (m) => ({ action: "knowledge_delete_by_text", text: m[1].trim() }) },
-        { lang: 'en', pattern: /(?:forget|delete|remove|clear)\s+(?:my\s+)?(?:memory|knowledge)\s*(?:of\s+)?(.*)/i, handler: (m) => ({ action: "knowledge_delete_by_text", text: m[1].trim() }) },
-        { lang: 'es', pattern: /limpia(?:r)?\s+toda\s+(?:la\s+)?memoria/i, handler: () => ({ action: "knowledge_clear" }) },
-        { lang: 'en', pattern: /clear\s+(?:all\s+)?(?:my\s+)?(?:memory|knowledge)/i, handler: () => ({ action: "knowledge_clear" }) },
-    ];
-    for (const { lang, pattern, handler } of knowledgePatterns) {
-        if (lang && lang !== currentLanguage) continue;
-        const match = lower.match(pattern);
-        if (match) return { action: handler(match), message: "" };
-    }
-
-    return null;
-}
-
-async function executeAction(action) {
-    if (!action) return null;
-    try {
-        // ─── Addon Actions ───
-        if (action.action?.startsWith('addon:')) {
-            const result = await NeekoAddons.executeAddonAction(action);
-            if (result !== null) return result;
-            return null;
-        }
-
-        // ─── Knowledge Actions ───
-        if (action.action === 'knowledge_list') {
-            const facts = JSON.parse(JSON.stringify(await invoke('knowledge_list')));
-            if (!facts.length) return currentLanguage === 'en'
-                ? 'I don\'t have anything saved about you yet. Tell me something and I\'ll remember it!'
-                : 'No tengo nada guardado sobre vos aun. Decime algo y lo recuerdo! 🦎';
-            let msg = currentLanguage === 'en' ? 'Here\'s what I know about you:\n' : 'Esto es lo que se de vos:\n';
-            let cat = '';
-            for (const f of facts) {
-                if (f.category !== cat) {
-                    cat = f.category;
-                    msg += `\n${cat.charAt(0).toUpperCase() + cat.slice(1)}:\n`;
-                }
-                msg += `  ${f.key}: ${f.value}\n`;
-            }
-            return msg;
-        }
-        if (action.action === 'knowledge_save_manual') {
-            const text = action.text;
-            // Intentar parsear "X es Y" o "X = Y"
-            const parts = text.match(/^(.+?)\s+(?:es|=|soy|tengo|uso|me gusta|trabajo en| vivo en)\s+(.+)$/i);
-            let key, value;
-            if (parts) {
-                key = parts[1].trim();
-                value = parts[2].trim();
-            } else {
-                key = 'info';
-                value = text;
-            }
-            await invoke('knowledge_add', { category: 'general', key, value });
-            await refreshKnowledgeContext();
-            syncSystemPrompt();
-            return currentLanguage === 'en'
-                ? `Got it! I'll remember: ${key}: ${value} 🦎`
-                + '\nYou can say "what do you know about me?" to see everything I have saved.'
-                : `Listo! Guardado: ${key}: ${value} 🦎`
-                + '\nDecime "que sabes de mi?" para ver todo lo que tengo guardado.';
-        }
-        if (action.action === 'knowledge_delete_by_text') {
-            const query = action.text;
-            const facts = JSON.parse(JSON.stringify(await invoke('knowledge_search', { query })));
-            if (!facts.length) return currentLanguage === 'en'
-                ? `I couldn't find anything matching "${query}" in my memory.`
-                : `No encontré nada que coincida con "${query}" en mi memoria.`;
-            for (const f of facts) {
-                await invoke('knowledge_delete', { id: f.id });
-            }
-            await refreshKnowledgeContext();
-            syncSystemPrompt();
-            return currentLanguage === 'en'
-                ? `Forgotten ${facts.length} thing(s) about "${query}" 🦎`
-                : `Olvidé ${facts.length} cosa(s) sobre "${query}" 🦎`;
-        }
-        if (action.action === 'knowledge_clear') {
-            await invoke('knowledge_clear');
-            await refreshKnowledgeContext();
-            syncSystemPrompt();
-            return currentLanguage === 'en'
-                ? 'Memory cleared! I don\'t remember anything about you now. 🦎'
-                : 'Memoria limpiada! No me acuerdo de nada sobre vos ahora. 🦎';
-        }
-
-        switch (action.action) {
-            case "get_ip":
-                const localIP = await invoke('get_local_ip');
-                const webPassword = await invoke('get_web_password');
-                return `${t('connectingIp')} http://${localIP}:1414\n${t('webPassword')} ${webPassword}\n\n${t('phoneOpenAddress')} 🦎`;
-            case "open_app":
-                return await invoke('open_any_app', { appName: action.app });
-            case "open_url":
-                return await invoke('open_url', { url: action.url });
-            case "search":
-                return await invoke('search_web', { query: action.query });
-            case "play_music":
-                await invoke('open_url', { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(action.query)}` });
-                return `${t('openingYoutube')} ${action.query} 🎵`;
-            case "open_folder":
-                return await invoke('open_folder', { folder: action.folder });
-            case "git_init":
-                return await invoke('git_init', { path: action.path });
-            case "git_add":
-                return await invoke('git_add', { path: action.path, files: action.files });
-            case "git_commit":
-                return await invoke('git_commit', { path: action.path, message: action.message });
-            case "git_full_push": {
-                const p = action.path;
-                const steps = [];
-                try {
-                    steps.push(await invoke('git_add', { path: p, files: "." }));
-                } catch (e) { steps.push(`git add: ${e}`); }
-                try {
-                    steps.push(await invoke('git_commit', { path: p, message: "update from neeko" }));
-                } catch (e) { steps.push(`git commit: ${e}`); }
-                try {
-                    steps.push(await invoke('git_push', { path: p }));
-                } catch (e) { steps.push(`git push: ${e}`); }
-                return steps.join("\n");
-            }
-            case "git_push":
-                return await invoke('git_push', { path: action.path });
-            case "git_pull":
-                return await invoke('git_pull', { path: action.path });
-            case "git_status":
-                return await invoke('git_status', { path: action.path });
-            case "git_log":
-                return await invoke('git_log', { path: action.path, count: action.count });
-            case "git_branch":
-                return await invoke('git_branch', { path: action.path });
-            case "git_remote_add":
-                return await invoke('git_remote_add', { path: action.path, name: action.name, url: action.url });
-            case "lol_match_history": {
-                let region = action.region;
-                let riotId = action.riot_id;
-                try {
-                    const config = JSON.parse(await invoke('lol_get_config'));
-                    if (!region) region = config.lol_region || 'las';
-                    if (!riotId) riotId = config.riot_id;
-                } catch { }
-                if (!riotId) return t('missingRiot');
-                return await invoke('lol_get_match_history', { riotId, region, count: action.count || 5 });
-            }
-            case "lol_rank": {
-                let region = action.region;
-                let riotId = action.riot_id;
-                try {
-                    const config = JSON.parse(await invoke('lol_get_config'));
-                    if (!region) region = config.lol_region || 'las';
-                    if (!riotId) riotId = config.riot_id;
-                } catch { }
-                if (!riotId) return t('missingRiot');
-                return await invoke('lol_get_rank', { riotId, region });
-            }
-            case "lol_save_config":
-                return await invoke('lol_save_config', { gitPat: action.git_pat, region: action.region, gitPath: action.git_path, neekoSprite: null });
-            case "compress_for_discord":
-                return await invoke('compress_for_discord', {
-                    input: action.file,
-                    targetSizeMb: action.targetSizeMb ?? null,
-                    videoBitrateKbps: action.videoBitrateKbps ?? null,
-                });
-            case "open_compressor_window":
-                return await invoke('open_compressor_window', {
-                    input: action.file || null,
-                    targetSizeMb: action.targetSizeMb ?? null,
-                    videoBitrateKbps: action.videoBitrateKbps ?? null,
-                });
-            case "shutdown":
-                return await invoke('system_shutdown', { seconds: action.seconds });
-            case "cancel_shutdown":
-                return await invoke('system_cancel_shutdown');
-            case "restart_explorer":
-                return await invoke('system_restart_explorer');
-            case "restart_wifi":
-                return await invoke('system_restart_wifi');
-            case "restart_bluetooth":
-                return await invoke('system_restart_bluetooth');
-            default:
-                return null;
-        }
-    } catch (error) {
-        console.error('Error ejecutando acción:', error);
-        return `${t('actionError')} ${error}`;
-    }
-}
-
-async function callLocalAi(message) {
-    conversationHistory.push({ role: "user", content: message });
-
-    const messagesForModel = [...conversationHistory];
-    const memoryReminder = await buildRuntimeMemoryReminder(message);
-    if (memoryReminder) {
-        messagesForModel.push({ role: "system", content: memoryReminder });
-    }
-
-    currentChatId = await invoke('chat_start', { messages: messagesForModel });
-
-    let reply = cleanAiReply(await invoke('chat_finish', { requestId: currentChatId }));
-    currentChatId = null;
-
-    reply = await parseAndSaveKnowledge(reply);
-
-    conversationHistory.push({ role: "assistant", content: reply });
-
-    if (conversationHistory.length > 20) {
-        conversationHistory = [conversationHistory[0], ...conversationHistory.slice(-18)];
-    }
-
-    return reply;
-}
+const assistantClient = new ChatClient({
+    chat: (session, messages) => invoke('assistant_chat', { session: `desktop:${session}`, messages }),
+    decide: (session, proposalId, approved, saveAccount = false) => invoke('assistant_decide', { session: `desktop:${session}`, proposalId, approved, saveAccount }),
+    cancel: (session) => invoke('assistant_cancel', { session: `desktop:${session}` }),
+}, {
+    busy: (busy) => {
+        isProcessing = busy;
+        sendBtn.textContent = busy ? '\u2715' : '\u27a4';
+        sendBtn.classList.toggle('cancel-mode', busy);
+        setThinking(busy);
+        if (busy) { clearTimeout(idleTimeout); showBubble(t('thinking')); }
+        else { setThinking(false); resetIdleTimer(); }
+    },
+    confirm: confirmChatAction,
+    executing: (approved) => { if (approved) showBubble(t('working')); },
+    message: (text, info) => { showBubble(text); attachInfo(speechBubble, info, currentLanguage, url => invoke('open_url', { url })); setTalking(true); setTimeout(() => setTalking(false), 1200); },
+    error: (text) => showBubble(text),
+});
 
 async function sendMessage() {
     const message = chatInput.value.trim();
-    if (!message || isProcessing) return;
-
-    sendBtn.textContent = '✕';
-    sendBtn.classList.add('cancel-mode');
-    isProcessing = true;
-    clearTimeout(idleTimeout);
-    currentAbortController = new AbortController();
+    if (!message || assistantClient.busy) return;
     chatInput.value = '';
-
-    try {
-        await saveKnowledgeFromUserMessage(message);
-    } catch (error) {
-        console.error('[Knowledge] Error saving user message:', error);
-    }
-
-    setThinking(true);
-
-    const detected = detectActionFromText(message);
-    if (detected) {
-        setTalking(true);
-        showBubble(t('working'));
-        const result = await executeAction(detected.action);
-        if (result) showBubble(result);
-        setTimeout(() => setTalking(false), 1200);
-        isProcessing = false;
-        currentAbortController = null;
-        sendBtn.textContent = '➤';
-        sendBtn.classList.remove('cancel-mode');
-        setThinking(false);
-        resetIdleTimer();
-        return;
-    }
-
-    showBubble(t('thinking'));
-
-    try {
-        const llamaOn = await invoke('llama_status');
-        if (!llamaOn) {
-            showBubble(t('llamaOff'));
-            isProcessing = false;
-            currentAbortController = null;
-            sendBtn.textContent = '➤';
-            sendBtn.classList.remove('cancel-mode');
-            setThinking(false);
-            resetIdleTimer();
-            return;
-        }
-        const reply = await callLocalAi(message);
-        if (currentAbortController?.signal.aborted) return;
-
-        let { action, message: neekoMsg } = parseNeekoResponse(reply);
-
-        if (action) {
-            const actionAllowedByLanguage = detectActionFromText(message);
-            if (!actionAllowedByLanguage) {
-                action = null;
-                neekoMsg = t('commandLanguageMismatch');
-            }
-        }
-
-        if (action) {
-            setTalking(true);
-            showBubble(neekoMsg || t('working'));
-            const result = await executeAction(action);
-            if (currentAbortController?.signal.aborted) return;
-            if (result) {
-                showBubble(result);
-            } else if (neekoMsg) {
-                showBubble(neekoMsg);
-            }
-        } else {
-            setTalking(true);
-            showBubble(neekoMsg || reply);
-        }
-
-        setTimeout(() => setTalking(false), 1200);
-    } catch (error) {
-        if (!isProcessing) return;
-        console.error('Error:', error);
-        setThinking(false);
-        showBubble(t('processError'));
-    }
-
-    isProcessing = false;
-    currentAbortController = null;
-    sendBtn.textContent = '➤';
-    sendBtn.classList.remove('cancel-mode');
-    setThinking(false);
-    resetIdleTimer();
+    await assistantClient.send(message);
+    conversationHistory = assistantClient.history;
 }
 
-function cancelRequest() {
-    if (currentChatId) {
-        invoke('chat_cancel', { requestId: currentChatId }).catch(() => { });
-        currentChatId = null;
-    }
-    if (currentAbortController) {
-        currentAbortController.abort();
-        currentAbortController = null;
-    }
-    isProcessing = false;
-    sendBtn.textContent = '➤';
-    sendBtn.classList.remove('cancel-mode');
-    setThinking(false);
+async function cancelRequest() {
+    try { await assistantClient.cancel(); showBubble(currentLanguage === 'en' ? 'Cancelled.' : 'Cancelado.'); }
+    catch (error) { showBubble(String(error)); }
     setTalking(false);
-    showBubble(" cancelado ✋");
-    resetIdleTimer();
 }
 
 async function init() {
+    await appWindow.setAlwaysOnTop(false);
     NeekoAddons.init();
+    window.Neeko.ui.isSettingsWindow = settingsWindow;
+    if (settingsWindow) {
+        settingsBtn.click();
+        try { await invoke('check_local_ai'); setLocalAiModelAvailable(true); }
+        catch { setLocalAiModelAvailable(false); }
+        await NeekoAddons.loadAddons();
+        return;
+    }
+    await window.__TAURI__.event.listen('neeko:addons-changed', async () => {
+        const addons = await invoke('addon_list');
+        for (const addon of addons) {
+            if (!addon.enabled) NeekoAddons.unloadAddon(addon.manifest.id);
+            else await NeekoAddons.loadAddon(addon);
+        }
+    });
+    await window.__TAURI__.event.listen('neeko:settings-saved', async ({ payload }) => {
+        const config = JSON.parse(await invoke('lol_get_config'));
+        setLanguage(config.language || 'es');
+        applyNeekoSprite(config.neeko_sprite);
+        neeko3dSelectedIdle = config.neeko_3d_animation || 'Neeko_idle3.anm';
+        applyRender3D(config.render_3d !== false);
+        neeko3dMouseTracking = payload.mouseTracking;
+        await refreshKnowledgeContext();
+        resetSystemPrompt();
+    });
+    await window.__TAURI__.event.listen('neeko:approved-addon', async ({ payload: requestId }) => {
+        try {
+            const action = await invoke('assistant_addon_claim', { requestId });
+            const [, addonId, commandId] = action.action.split(':');
+            const command = NeekoAddons._commands.get(commandId);
+            if (!NeekoAddons._loaded.get(addonId)?.commands.has(commandId) || !command?.aiHandler || command._owner !== addonId) {
+                throw new Error('Addon unavailable');
+            }
+            const { action: name, ...params } = action;
+            const result = await command.aiHandler(params);
+            await invoke('assistant_addon_result', { requestId, result: typeof result === 'string' ? result : String(result?.message || ''), error: null });
+        } catch (error) {
+            await invoke('assistant_addon_result', { requestId, result: null, error: String(error) });
+        }
+    });
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
         setLanguage(config.language || 'es');
@@ -2378,8 +1522,8 @@ function applyModelRuntimeConfig(config) {
     currentModelRuntimeConfig = {
         llamaGpuLayers: config?.llamaGpuLayers ?? 15,
         pythonGpuLayers: config?.pythonGpuLayers ?? 0,
-        llamaContextSize: config?.llamaContextSize ?? 1024,
-        pythonContextSize: config?.pythonContextSize ?? 4096,
+        llamaContextSize: config?.llamaContextSize ?? 8192,
+        pythonContextSize: config?.pythonContextSize ?? 8192,
         llamaThreads: config?.llamaThreads ?? 4,
         pythonThreads: config?.pythonThreads ?? 4,
     };
@@ -2396,8 +1540,8 @@ function collectModelRuntimeConfig() {
     return {
         llamaGpuLayers: readNumberInput('cfg-llama-gpu-layers', 15, 0, 200),
         pythonGpuLayers: readNumberInput('cfg-python-gpu-layers', 0, 0, 200),
-        llamaContextSize: readNumberInput('cfg-llama-context-size', 1024, 512, 32768),
-        pythonContextSize: readNumberInput('cfg-python-context-size', 4096, 512, 32768),
+        llamaContextSize: readNumberInput('cfg-llama-context-size', 8192, 512, 32768),
+        pythonContextSize: readNumberInput('cfg-python-context-size', 8192, 512, 32768),
         llamaThreads: readNumberInput('cfg-llama-threads', 4, 1, 64),
         pythonThreads: readNumberInput('cfg-python-threads', 4, 1, 64),
     };
@@ -2510,6 +1654,10 @@ async function refreshAppVersionStatus() {
 }
 
 settingsBtn.addEventListener('click', async () => {
+    if (!settingsWindow) {
+        await invoke('open_settings_window');
+        return;
+    }
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
         settingsOriginalLanguage = normalizeLanguage(config.language || currentLanguage);
@@ -2663,6 +1811,7 @@ closeSettingsBtn.addEventListener('click', () => {
     setLanguage(settingsOriginalLanguage);
     setSettingsMenuOpen(false);
     settingsModal.classList.add('hidden');
+    if (settingsWindow) void invoke('close_window');
 });
 
 checkToolsBtn.addEventListener('click', () => {
@@ -2799,6 +1948,7 @@ uninstallModelBtn.addEventListener('click', () => {
 
 settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
+        if (settingsWindow) return;
         setLanguage(settingsOriginalLanguage);
         setSettingsMenuOpen(false);
         settingsModal.classList.add('hidden');
@@ -2907,6 +2057,10 @@ saveSettingsBtn.addEventListener('click', async () => {
         return;
     }
     showBubble(`${t('saved')} ✅`);
+    if (settingsWindow) {
+        await window.__TAURI__.event.emitTo('main', 'neeko:settings-saved', { mouseTracking: neeko3dMouseTracking });
+        await invoke('close_window');
+    }
     setSettingsMenuOpen(false);
     settingsModal.classList.add('hidden');
     resetIdleTimer();
@@ -2981,4 +2135,7 @@ applyUpdateBtn.addEventListener('click', async () => {
     }
 });
 
-init();
+init().catch(error => {
+    console.error('No se pudo iniciar Neeko:', error);
+    if (settingsWindow) showBubble('No se pudo cargar Configuración: ' + String(error));
+});

@@ -1,0 +1,327 @@
+{
+  "get_ip": {
+    "label": "Consultar IP / Get IP",
+    "fields": {}
+  },
+  "open_app": {
+    "label": "Abrir aplicación / Open app",
+    "fields": {
+      "app": {
+        "type": "string"
+      }
+    }
+  },
+  "open_url": {
+    "label": "Abrir enlace / Open link",
+    "fields": {
+      "url": {
+        "type": "url"
+      }
+    }
+  },
+  "search": {
+    "label": "Buscar en el sitio indicado / Search specified site",
+    "fields": {
+      "site": {
+        "type": "string",
+        "optional": true
+      },
+      "query": {
+        "type": "string"
+      }
+    }
+  },
+  "play_music": {
+    "label": "Buscar música en YouTube / Find music",
+    "fields": {
+      "query": {
+        "type": "string"
+      }
+    }
+  },
+  "open_folder": {
+    "label": "Abrir carpeta / Open folder",
+    "fields": {
+      "folder": {
+        "type": "string",
+        "values": [
+          "desktop",
+          "escritorio",
+          "downloads",
+          "descargas",
+          "documents",
+          "documentos",
+          "home",
+          "inicio"
+        ]
+      }
+    }
+  },
+  "open_compressor_window": {
+    "label": "Abrir compresor de video / Open video compressor",
+    "fields": {
+      "file": {
+        "type": "string",
+        "optional": true
+      },
+      "targetSizeMb": {
+        "type": "number",
+        "min": 1,
+        "max": 65536,
+        "optional": true,
+        "integer": true
+      },
+      "videoBitrateKbps": {
+        "type": "number",
+        "min": 1,
+        "max": 100000,
+        "optional": true,
+        "integer": true
+      }
+    }
+  },
+  "compress_for_discord": {
+    "label": "Comprimir video / Compress video",
+    "fields": {
+      "file": {
+        "type": "string"
+      },
+      "targetSizeMb": {
+        "type": "number",
+        "min": 1,
+        "max": 65536,
+        "optional": true,
+        "integer": true
+      },
+      "videoBitrateKbps": {
+        "type": "number",
+        "min": 1,
+        "max": 100000,
+        "optional": true,
+        "integer": true
+      }
+    }
+  },
+  "git_init": {
+    "label": "Inicializar repositorio Git / Initialize Git",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_add": {
+    "label": "Preparar archivos Git / Stage files",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      },
+      "files": {
+        "type": "string"
+      }
+    }
+  },
+  "git_commit": {
+    "label": "Crear commit / Commit",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      },
+      "message": {
+        "type": "string"
+      }
+    }
+  },
+  "git_full_push": {
+    "label": "Preparar todo, crear commit y publicar / Stage all, commit and push",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_push": {
+    "label": "Publicar cambios Git / Push",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_pull": {
+    "label": "Traer cambios Git / Pull",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_status": {
+    "label": "Consultar estado Git / Git status",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_log": {
+    "label": "Consultar historial Git / Git log",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      },
+      "count": {
+        "type": "number",
+        "min": 1,
+        "max": 100,
+        "optional": true,
+        "integer": true
+      }
+    }
+  },
+  "git_branch": {
+    "label": "Consultar ramas Git / Git branches",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "git_remote_add": {
+    "label": "Agregar remoto Git / Add remote",
+    "fields": {
+      "path": {
+        "type": "string",
+        "optional": true
+      },
+      "name": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      }
+    }
+  },
+  "lol_match_history": {
+    "label": "Consultar partidas LoL / LoL matches",
+    "fields": {
+      "riot_id": {
+        "type": "string",
+        "optional": true
+      },
+      "region": {
+        "type": "string",
+        "optional": true
+      },
+      "count": {
+        "type": "number",
+        "min": 1,
+        "max": 100,
+        "optional": true,
+        "integer": true
+      }
+    }
+  },
+  "lol_rank": {
+    "label": "Consultar rango LoL / LoL rank",
+    "fields": {
+      "riot_id": {
+        "type": "string",
+        "optional": true
+      },
+      "region": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "lol_save_config": {
+    "label": "Guardar configuración / Save configuration",
+    "fields": {
+      "git_pat": {
+        "type": "string",
+        "optional": true
+      },
+      "region": {
+        "type": "string",
+        "optional": true
+      },
+      "git_path": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "knowledge_list": {
+    "label": "Consultar memoria / Read memory",
+    "fields": {}
+  },
+  "knowledge_save_manual": {
+    "label": "Guardar recuerdo / Save memory",
+    "fields": {
+      "category": {
+        "type": "string",
+        "optional": true
+      },
+      "key": {
+        "type": "string"
+      },
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "knowledge_delete_by_text": {
+    "label": "Borrar recuerdos coincidentes / Delete matching memories",
+    "fields": {
+      "text": {
+        "type": "string"
+      }
+    }
+  },
+  "knowledge_clear": {
+    "label": "Borrar toda la memoria / Clear all memory",
+    "fields": {}
+  },
+  "shutdown": {
+    "label": "Apagar PC / Shut down PC",
+    "system": true,
+    "fields": {
+      "seconds": {
+        "type": "number",
+        "min": 0,
+        "max": 31536000,
+        "integer": true
+      }
+    }
+  },
+  "cancel_shutdown": {
+    "label": "Cancelar apagado / Cancel shutdown",
+    "system": true,
+    "fields": {}
+  },
+  "restart_explorer": {
+    "label": "Reiniciar explorador / Restart Explorer",
+    "system": true,
+    "fields": {}
+  },
+  "restart_wifi": {
+    "label": "Reiniciar Wi-Fi / Restart Wi-Fi",
+    "system": true,
+    "fields": {}
+  },
+  "restart_bluetooth": {
+    "label": "Reiniciar Bluetooth / Restart Bluetooth",
+    "system": true,
+    "fields": {}
+  }
+}

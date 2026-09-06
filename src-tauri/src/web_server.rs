@@ -109,13 +109,21 @@ struct LocalSendCancelQuery {
 
 #[derive(Deserialize)]
 struct ChatRequest {
-    messages: Vec<ChatMessage>,
+    session: String,
+    messages: Vec<crate::assistant::Message>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
-struct ChatMessage {
-    role: String,
-    content: String,
+#[derive(Deserialize)]
+struct ChatDecision {
+    session: String,
+    proposal_id: String,
+    approved: bool,
+    save_account: Option<bool>,
+}
+
+#[derive(Deserialize)]
+struct ChatCancel {
+    session: String,
 }
 
 #[derive(Deserialize)]
@@ -1052,693 +1060,37 @@ async fn refresh_free_games(state: AppState, notify: bool) -> Vec<FreeGameOffer>
     offers
 }
 
-enum SystemChatAction {
-    Shutdown(Option<u64>),
-    CancelShutdown,
-    RestartExplorer,
-    RestartWifi,
-    RestartBluetooth,
-}
-
-fn detect_system_chat_action(lower: &str, is_english: bool) -> Option<SystemChatAction> {
-    let cancel_pattern = if is_english {
-        r"cancel\s+(?:shutdown|shut\s*down)"
-    } else {
-        r"cancel(?:ar)?\s+(?:el\s+)?(?:apagado|apaga)"
-    };
-    if regex::Regex::new(cancel_pattern).ok()?.is_match(lower) {
-        return Some(SystemChatAction::CancelShutdown);
-    }
-
-    let shutdown_timer_pattern = if is_english {
-        r"^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc\s+in\s+(\d+)\s*(min(?:ute)?s?|hours?|h|s(?:econd)?s?)$"
-    } else {
-        r"^apag(?:a|ar|o)\s+(?:la\s+)?pc\s+en\s+(\d+)\s*(min(?:uto)?s?|horas?|h|s(?:egundo)?s?)$"
-    };
-    if let Ok(re) = regex::Regex::new(shutdown_timer_pattern) {
-        if let Some(caps) = re.captures(lower) {
-            let mut seconds = caps
-                .get(1)
-                .and_then(|m| m.as_str().parse::<u64>().ok())
-                .unwrap_or(0);
-            let unit = caps.get(2).map(|m| m.as_str()).unwrap_or("");
-            if unit.starts_with('h') || unit.starts_with("hora") {
-                seconds *= 3600;
-            } else if unit.starts_with("min") {
-                seconds *= 60;
-            }
-            return Some(SystemChatAction::Shutdown(Some(seconds)));
-        }
-    }
-
-    let shutdown_now_pattern = if is_english {
-        r"^(?:shutdown|shut\s*down)\s+(?:the\s+)?pc$"
-    } else {
-        r"^apag(?:a|ar|o)\s+(?:la\s+)?pc$"
-    };
-    if regex::Regex::new(shutdown_now_pattern)
-        .ok()?
-        .is_match(lower)
-    {
-        return Some(SystemChatAction::Shutdown(Some(0)));
-    }
-
-    let explorer_pattern = if is_english {
-        r"restart\s+(?:explorer|icons?|taskbar|desktop|windows\s*explorer)"
-    } else {
-        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:explorer|iconos?|barra|escritorio|windows\s*explorer)"
-    };
-    if regex::Regex::new(explorer_pattern).ok()?.is_match(lower) {
-        return Some(SystemChatAction::RestartExplorer);
-    }
-
-    let wifi_pattern = if is_english {
-        r"restart\s+(?:wifi|wi-fi|internet|network|connection)"
-    } else {
-        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:wifi|wi-fi|internet|red|conexion|conexi[oó]n)"
-    };
-    if regex::Regex::new(wifi_pattern).ok()?.is_match(lower) {
-        return Some(SystemChatAction::RestartWifi);
-    }
-
-    let bluetooth_pattern = if is_english {
-        r"restart\s+(?:bluetooth|blue\s*tooth)"
-    } else {
-        r"reinici(?:a|ar|o)\s+(?:el\s+)?(?:bluetooth|blue\s*tooth)"
-    };
-    if regex::Regex::new(bluetooth_pattern).ok()?.is_match(lower) {
-        return Some(SystemChatAction::RestartBluetooth);
-    }
-
-    None
-}
-
-fn execute_system_chat_action(action: SystemChatAction) -> String {
-    match action {
-        SystemChatAction::Shutdown(seconds) => crate::system_shutdown_impl(seconds),
-        SystemChatAction::CancelShutdown => crate::system_cancel_shutdown_impl(),
-        SystemChatAction::RestartExplorer => crate::system_restart_explorer_impl(),
-        SystemChatAction::RestartWifi => crate::system_restart_wifi_impl(),
-        SystemChatAction::RestartBluetooth => crate::system_restart_bluetooth_impl(),
-    }
-    .unwrap_or_else(|e| e)
-}
-
 async fn chat_handler(
-    State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
-) -> Result<Json<ApiResponse>, StatusCode> {
-    let user_msg = payload
-        .messages
-        .last()
-        .map(|m| m.content.as_str())
-        .unwrap_or("")
-        .to_string();
-    let lower = user_msg.to_lowercase();
-    let is_english = crate::language_is_english();
-
-    // Check if llama is running before trying to use AI
-    let llama_running = crate::is_llama_server_running();
-
-    let is_ip_command = if is_english {
-        lower == "ip"
-            || lower == "my ip"
-            || lower == "local ip"
-            || (lower.contains("ip")
-                && (lower.contains("what")
-                    || lower.contains("connect")
-                    || lower.contains("address")))
-    } else {
-        lower == "ip"
-            || lower == "mi ip"
-            || lower == "la ip"
-            || (lower.contains("ip")
-                && (lower.contains("cuál")
-                    || lower.contains("cual")
-                    || lower.contains("que")
-                    || lower.contains("cómo")
-                    || lower.contains("como")
-                    || lower.contains("conect")
-                    || lower.contains("dirección")
-                    || lower.contains("direccion")))
-    };
-
-    if is_ip_command {
-        let ip = get_local_ip();
-        let password = web_password();
-        let msg = if is_english {
-            format!(
-                "The IP to connect is: http://{}:1414\nPassword: {}",
-                ip, password
-            )
-        } else {
-            format!(
-                "La IP para conectarte es: http://{}:1414\nContraseña: {}",
-                ip, password
-            )
-        };
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: msg,
-        }));
-    }
-
-    if let Some(action) = detect_system_chat_action(&lower, is_english) {
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: execute_system_chat_action(action),
-        }));
-    }
-
-    // Llama control from chat
-    if lower.contains("llama")
-        && ((is_english && (lower.contains("close") || lower.contains("stop")))
-            || (!is_english && (lower.contains("cierra") || lower.contains("deten"))))
-    {
-        let result = crate::stop_llama_server().await;
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: result.unwrap_or_else(|e| e),
-        }));
-    }
-    if lower.contains("llama")
-        && ((is_english && (lower.contains("open") || lower.contains("start")))
-            || (!is_english
-                && (lower.contains("abre") || lower.contains("abri") || lower.contains("iniciar"))))
-    {
-        let result = crate::start_llama_server().await;
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: result.unwrap_or_else(|e| e),
-        }));
-    }
-
-    if let Some((riot_id, region)) = detect_web_lol_rank(&lower, is_english) {
-        let result = crate::lol_api::lol_get_rank(riot_id, region).await;
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: result.unwrap_or_else(|e| e),
-        }));
-    }
-
-    if let Some((riot_id, region, count)) = detect_web_lol_matches(&lower, is_english) {
-        let result = crate::lol_api::lol_get_match_history(riot_id, region, Some(count)).await;
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: result.unwrap_or_else(|e| e),
-        }));
-    }
-
-    let known_apps = [
-        "spotify",
-        "discord",
-        "steam",
-        "chrome",
-        "firefox",
-        "edge",
-        "notepad",
-        "calculadora",
-        "calculator",
-        "explorer",
-        "vscode",
-        "code",
-        "powershell",
-        "terminal",
-        "whatsapp",
-        "telegram",
-        "obs",
-        "youtube",
-        "league of legends",
-        "lol",
-        "riot client",
-        "7-zip",
-        "7zip",
-        "winrar",
-        "obsidian",
-        "brave",
-        "bluestacks",
-        "roblox",
-        "fightcade",
-        "qbittorrent",
-        "davinci",
-        "filmora",
-        "photoshop",
-        "photoshop cs6",
-        "virtualbox",
-        "node",
-        "python",
-        "git",
-    ];
-
-    let open_patterns: &[&str] = if is_english {
-        &[r"open\s+(.+)", r"start\s+(.+)", r"launch\s+(.+)"]
-    } else {
-        &[
-            r"abr[ií]?\s+(.+)",
-            r"abre\s+(.+)",
-            r"abrir\s+(.+)",
-            r"abrime\s+(.+)",
-            r"pone[r]?\s+(.+)",
-            r"iniciar\s+(.+)",
-            r"ejecutar\s+(.+)",
-        ]
-    };
-
-    for app in &known_apps {
-        let app_matches = if is_english {
-            lower == *app
-                || lower == format!("open {}", app)
-                || lower == format!("start {}", app)
-                || lower == format!("launch {}", app)
-        } else {
-            lower == *app
-                || lower == format!("abri {}", app)
-                || lower == format!("abre {}", app)
-                || lower == format!("abrir {}", app)
-        };
-        if app_matches {
-            let result = crate::open_any_app_with_notify(None, app.to_string()).await;
-            return Ok(Json(ApiResponse {
-                ok: true,
-                message: result.unwrap_or_else(|e| e),
-            }));
-        }
-    }
-
-    for pattern in open_patterns {
-        if let Ok(re) = regex::Regex::new(pattern) {
-            if let Some(caps) = re.captures(&lower) {
-                if let Some(app_name) = caps.get(1) {
-                    let app = app_name.as_str().trim();
-                    let result =
-                        crate::open_any_app_with_notify(Some(&state.app_handle), app.to_string())
-                            .await;
-                    return Ok(Json(ApiResponse {
-                        ok: true,
-                        message: result.unwrap_or_else(|e| e),
-                    }));
-                }
-            }
-        }
-    }
-
-    let search_in_patterns: &[&str] = if is_english {
-        &[r"search\s+(?:on|in)\s+([^:]+)\s*:\s*(.+)"]
-    } else {
-        &[
-            r"busca[r]?\s+en\s+([^:]+)\s*:\s*(.+)",
-            r"buscar\s+en\s+([^:]+)\s*:\s*(.+)",
-        ]
-    };
-    for pattern in search_in_patterns {
-        if let Ok(re) = regex::Regex::new(pattern) {
-            if let Some(caps) = re.captures(&lower) {
-                if let (Some(site), Some(query)) = (caps.get(1), caps.get(2)) {
-                    let site = site.as_str().trim();
-                    let query = query.as_str().trim();
-                    let url = search_url_for_site(site, query);
-                    let _ = open::that(&url);
-                    return Ok(Json(ApiResponse {
-                        ok: true,
-                        message: if is_english {
-                            format!("Searched on {}: {}", site, query)
-                        } else {
-                            format!("Busque en {}: {}", site, query)
-                        },
-                    }));
-                }
-            }
-        }
-    }
-
-    let search_patterns: &[&str] = if is_english {
-        &[r"search\s+(.+)", r"look\s+up\s+(.+)"]
-    } else {
-        &[r"busca[r]?\s+(.+)", r"investigar\s+(.+)"]
-    };
-    for pattern in search_patterns {
-        if let Ok(re) = regex::Regex::new(pattern) {
-            if let Some(caps) = re.captures(&lower) {
-                if let Some(query) = caps.get(1) {
-                    let q = query.as_str().trim();
-                    let url = format!("https://www.google.com/search?q={}", q.replace(' ', "+"));
-                    let _ = open::that(&url);
-                    return Ok(Json(ApiResponse {
-                        ok: true,
-                        message: if is_english {
-                            format!("Searched: {}", q)
-                        } else {
-                            format!("Busque: {}", q)
-                        },
-                    }));
-                }
-            }
-        }
-    }
-
-    if !llama_running {
-        return Ok(Json(ApiResponse {
-            ok: true,
-            message: if is_english {
-                "LLaMA is off. Say 'start llama' to turn it on."
-            } else {
-                "LLaMA esta apagado. Deci 'abre llama' para activarlo."
-            }
-            .to_string(),
-        }));
-    }
-
-    let body = serde_json::json!({
-        "model": "neeko",
-        "messages": payload.messages,
-        "stream": false
-    });
-
-    let resp = state
-        .client
-        .post("http://127.0.0.1:8080/v1/chat/completions")
-        .json(&body)
-        .send()
+) -> Result<Json<crate::assistant::Reply>, (StatusCode, String)> {
+    crate::assistant::assistant_chat(format!("web:{}", payload.session), payload.messages)
         .await
-        .map_err(|_| StatusCode::BAD_GATEWAY)?;
+        .map(Json)
+        .map_err(|error| (StatusCode::BAD_REQUEST, error))
+}
 
-    if !resp.status().is_success() {
-        return Err(StatusCode::BAD_GATEWAY);
-    }
+async fn chat_decide_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<ChatDecision>,
+) -> Result<Json<ApiResponse>, (StatusCode, String)> {
+    crate::assistant::assistant_decide(
+        state.app_handle,
+        format!("web:{}", payload.session),
+        payload.proposal_id,
+        payload.approved,
+        payload.save_account,
+    )
+    .await
+    .map(|message| Json(ApiResponse { ok: true, message }))
+    .map_err(|error| (StatusCode::BAD_REQUEST, error))
+}
 
-    let data: serde_json::Value = resp.json().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-
-    let reply = data["choices"][0]["message"]["content"]
-        .as_str()
-        .unwrap_or("No entendi")
-        .to_string();
-    let reply = crate::clean_ai_reply(&reply);
-
-    if let Some(action) = extract_action(&reply) {
-        if !web_action_allowed_for_language(&lower, is_english, &action) {
-            return Ok(Json(ApiResponse {
-                ok: true,
-                message: if is_english {
-                    "That command is not available in this language.".to_string()
-                } else {
-                    "Ese comando no esta disponible en este idioma.".to_string()
-                },
-            }));
-        }
-        let result = execute_web_action(&action).await;
-        if let Some(msg) = result {
-            return Ok(Json(ApiResponse {
-                ok: true,
-                message: msg,
-            }));
-        }
-    }
-
-    Ok(Json(ApiResponse {
+async fn chat_cancel_handler(Json(payload): Json<ChatCancel>) -> Json<ApiResponse> {
+    crate::assistant::assistant_cancel(format!("web:{}", payload.session));
+    Json(ApiResponse {
         ok: true,
-        message: reply,
-    }))
-}
-
-fn web_action_allowed_for_language(
-    lower: &str,
-    is_english: bool,
-    action: &serde_json::Value,
-) -> bool {
-    let action_name = action["action"].as_str().unwrap_or("");
-    match action_name {
-        "open_app" => {
-            if is_english {
-                lower.starts_with("open ")
-                    || lower.starts_with("start ")
-                    || lower.starts_with("launch ")
-            } else {
-                lower.starts_with("abri ")
-                    || lower.starts_with("abrí ")
-                    || lower.starts_with("abre ")
-                    || lower.starts_with("abrir ")
-                    || lower.starts_with("abrime ")
-                    || lower.starts_with("pone ")
-                    || lower.starts_with("poner ")
-                    || lower.starts_with("iniciar ")
-                    || lower.starts_with("ejecutar ")
-            }
-        }
-        "search" => {
-            if is_english {
-                lower.starts_with("search ") || lower.starts_with("look up ")
-            } else {
-                lower.starts_with("busca ")
-                    || lower.starts_with("buscar ")
-                    || lower.starts_with("investigar ")
-            }
-        }
-        "play_music" => {
-            if is_english {
-                lower.starts_with("play ") || lower.starts_with("listen to ")
-            } else {
-                lower.starts_with("pone musica ")
-                    || lower.starts_with("poné musica ")
-                    || lower.starts_with("poné música ")
-                    || lower.starts_with("reproducir ")
-                    || lower.starts_with("escuchar ")
-            }
-        }
-        "open_url" => {
-            if is_english {
-                lower.starts_with("open ") || lower.starts_with("go to ")
-            } else {
-                lower.starts_with("abri ")
-                    || lower.starts_with("abrí ")
-                    || lower.starts_with("abrir ")
-            }
-        }
-        "shutdown" | "cancel_shutdown" | "restart_explorer" | "restart_wifi"
-        | "restart_bluetooth" => detect_system_chat_action(lower, is_english).is_some(),
-        _ => true,
-    }
-}
-
-fn web_lol_defaults() -> Option<(String, String)> {
-    let config = crate::config::AppConfig::load();
-    let riot_id = config.riot_id.trim().to_string();
-    if riot_id.is_empty() {
-        return None;
-    }
-    let region = if config.lol_region.trim().is_empty() {
-        "las".to_string()
-    } else {
-        config.lol_region.trim().to_string()
-    };
-    Some((riot_id, region))
-}
-
-fn normalize_web_lol_region(region: Option<&str>) -> String {
-    region
-        .unwrap_or("")
-        .trim()
-        .to_lowercase()
-        .replace("korea", "kr")
-        .replace("corea", "kr")
-}
-
-fn detect_web_lol_rank(lower: &str, is_english: bool) -> Option<(String, String)> {
-    if is_english {
-        if matches!(
-            lower,
-            "my elo"
-                | "my rank"
-                | "my tier"
-                | "what rank am i"
-                | "what elo am i"
-                | "what tier am i"
-        ) {
-            return web_lol_defaults();
-        }
-        let re = regex::Regex::new(
-            r"^(?:rank|elo|tier)\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$",
-        )
-        .ok()?;
-        let caps = re.captures(lower)?;
-        let riot_id = format!(
-            "{}#{}",
-            caps.get(1)?.as_str().trim(),
-            caps.get(2)?.as_str().trim()
-        );
-        let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
-        return Some((riot_id, region));
-    }
-
-    if matches!(
-        lower,
-        "mi elo"
-            | "mi rango"
-            | "que rango soy"
-            | "que elo soy"
-            | "en que rango estoy"
-            | "en que elo estoy"
-    ) {
-        return web_lol_defaults();
-    }
-    let re = regex::Regex::new(
-        r"^(?:elo|rang[oa]?|clasificaci[oó]n)\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|korea|corea|jp|oce|tr|ru))?$",
-    )
-    .ok()?;
-    let caps = re.captures(lower)?;
-    let riot_id = format!(
-        "{}#{}",
-        caps.get(1)?.as_str().trim(),
-        caps.get(2)?.as_str().trim()
-    );
-    let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
-    Some((riot_id, region))
-}
-
-fn detect_web_lol_matches(lower: &str, is_english: bool) -> Option<(String, String, i32)> {
-    if is_english {
-        if matches!(lower, "my last match" | "last match") {
-            let (riot_id, region) = web_lol_defaults()?;
-            return Some((riot_id, region, 1));
-        }
-        if matches!(
-            lower,
-            "my games" | "my matches" | "my match history" | "my lol"
-        ) {
-            let (riot_id, region) = web_lol_defaults()?;
-            return Some((riot_id, region, 5));
-        }
-        let re = regex::Regex::new(
-            r"^last\s+match\s+(?:of\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+in\s+(las?|euw|eune|na|br|kr|korea|jp|oce|tr|ru))?$",
-        )
-        .ok()?;
-        let caps = re.captures(lower)?;
-        let riot_id = format!(
-            "{}#{}",
-            caps.get(1)?.as_str().trim(),
-            caps.get(2)?.as_str().trim()
-        );
-        let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
-        return Some((riot_id, region, 1));
-    }
-
-    if matches!(
-        lower,
-        "mi ultima partida" | "mi última partida" | "ultima partida" | "última partida"
-    ) {
-        let (riot_id, region) = web_lol_defaults()?;
-        return Some((riot_id, region, 1));
-    }
-    if matches!(
-        lower,
-        "mis partidas" | "mi historial" | "como va mi lol" | "cómo va mi lol"
-    ) {
-        let (riot_id, region) = web_lol_defaults()?;
-        return Some((riot_id, region, 5));
-    }
-    let re = regex::Regex::new(
-        r"^(?:ultima|última)\s+partida\s+(?:de\s+)?([a-zA-Z0-9_ ]+?)#([a-zA-Z0-9]+?)(?:\s+en\s+(las?|euw|eune|na|br|kr|jp|oce|tr|ru))?$",
-    )
-    .ok()?;
-    let caps = re.captures(lower)?;
-    let riot_id = format!(
-        "{}#{}",
-        caps.get(1)?.as_str().trim(),
-        caps.get(2)?.as_str().trim()
-    );
-    let region = normalize_web_lol_region(caps.get(3).map(|m| m.as_str()));
-    Some((riot_id, region, 1))
-}
-
-fn extract_action(text: &str) -> Option<serde_json::Value> {
-    if let Some(start) = text.find('{') {
-        if let Some(end) = text[start..].find('}') {
-            let json_str = &text[start..=start + end];
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(json_str) {
-                if val.get("action").is_some() {
-                    return Some(val);
-                }
-            }
-        }
-    }
-    None
-}
-
-async fn execute_web_action(action: &serde_json::Value) -> Option<String> {
-    let act = action["action"].as_str()?;
-    match act {
-        "open_app" => {
-            let app = action["app"].as_str()?;
-            let result = crate::open_any_app_with_notify(None, app.to_string()).await;
-            Some(result.unwrap_or_else(|e| e))
-        }
-        "search" => {
-            let query = action["query"].as_str()?;
-            let url = format!(
-                "https://www.google.com/search?q={}",
-                query.replace(' ', "+")
-            );
-            let _ = open::that(&url);
-            Some(if crate::language_is_english() {
-                format!("Searched: {}", query)
-            } else {
-                format!("Busque: {}", query)
-            })
-        }
-        "open_url" => {
-            let url = action["url"].as_str()?;
-            let _ = open::that(url);
-            Some(if crate::language_is_english() {
-                format!("Opened: {}", url)
-            } else {
-                format!("Abri: {}", url)
-            })
-        }
-        "play_music" => {
-            let query = action["query"].as_str()?;
-            let url = format!(
-                "https://www.youtube.com/results?search_query={}",
-                query.replace(' ', "+")
-            );
-            let _ = open::that(&url);
-            Some(if crate::language_is_english() {
-                format!("Searching music: {}", query)
-            } else {
-                format!("Buscando musica: {}", query)
-            })
-        }
-        "shutdown" => {
-            let seconds = action["seconds"].as_u64();
-            Some(crate::system_shutdown_impl(seconds).unwrap_or_else(|e| e))
-        }
-        "cancel_shutdown" => Some(crate::system_cancel_shutdown_impl().unwrap_or_else(|e| e)),
-        "restart_explorer" => Some(crate::system_restart_explorer_impl().unwrap_or_else(|e| e)),
-        "restart_wifi" => Some(crate::system_restart_wifi_impl().unwrap_or_else(|e| e)),
-        "restart_bluetooth" => Some(crate::system_restart_bluetooth_impl().unwrap_or_else(|e| e)),
-        _ => None,
-    }
-}
-
-fn search_url_for_site(site: &str, query: &str) -> String {
-    let site = site.trim().to_lowercase();
-    let query = urlencoding::encode(query.trim());
-
-    match site.as_str() {
-        "google" | "g" => format!("https://www.google.com/search?q={}", query),
-        "youtube" | "yt" => format!("https://www.youtube.com/results?search_query={}", query),
-        "github" | "gh" => format!("https://github.com/search?q={}", query),
-        "reddit" => format!("https://www.reddit.com/search/?q={}", query),
-        "mercado" | "mercadolibre" | "ml" => {
-            format!("https://listado.mercadolibre.com.ar/{}", query)
-        }
-        "wikipedia" | "wiki" => format!("https://es.wikipedia.org/w/index.php?search={}", query),
-        "spotify" => format!("https://open.spotify.com/search/{}", query),
-        "steam" => format!("https://store.steampowered.com/search/?term={}", query),
-        _ => format!(
-            "https://www.google.com/search?q=site%3A{}+{}",
-            urlencoding::encode(site.as_str()),
-            query
-        ),
-    }
+        message: "cancelado".into(),
+    })
 }
 
 async fn open_app_handler(
@@ -2036,6 +1388,8 @@ pub async fn start_web_server(app_handle: AppHandle) {
     let api_routes = Router::new()
         .route("/login", post(login_handler))
         .route("/chat", post(chat_handler))
+        .route("/chat/decide", post(chat_decide_handler))
+        .route("/chat/cancel", post(chat_cancel_handler))
         .route("/open", post(open_app_handler))
         .route("/search", post(search_handler))
         .route("/url", post(open_url_handler))
@@ -2076,6 +1430,18 @@ pub async fn start_web_server(app_handle: AppHandle) {
 
     let app = Router::new()
         .route("/", get(web_ui))
+        .route(
+            "/static/chat-client.mjs",
+            get(|| async {
+                (
+                    [(
+                        axum::http::header::CONTENT_TYPE,
+                        "text/javascript; charset=utf-8",
+                    )],
+                    include_str!("../../src/chat-client.mjs"),
+                )
+            }),
+        )
         .nest("/api", api_routes)
         .nest("/shared", shared_routes)
         .layer(cors)

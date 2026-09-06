@@ -28,6 +28,13 @@
         <div id="neeko-section">
             <div id="speech-bubble" class="hidden">
                 <p id="bubble-text"></p>
+                <div id="action-confirmation" hidden role="group" aria-label="Confirmar acción">
+                    <pre id="action-details"></pre>
+                    <div class="action-choices">
+                        <button id="action-yes" type="button">Sí</button>
+                        <button id="action-no" type="button">No</button>
+                    </div>
+                </div>
             </div>
             <div id="neeko-sprite">
                 <img alt="Neeko" id="neeko-img" class="sprite-loading">
@@ -216,7 +223,7 @@
                     <button id="model-runtime-help-btn" class="advanced-link-btn" type="button" data-i18n="explanation">Explicacion</button>
                     <div id="model-runtime-help" class="model-runtime-help hidden">
                         <p><strong>Capas GPU:</strong> cuantas capas del modelo pasan a la placa de video. 0 significa solo CPU. Esto controla memoria VRAM usada, no limita el porcentaje de uso de GPU: con 15 capas la GPU puede marcar 80-100% mientras genera aunque no use toda la VRAM. En este modelo, 1 capa puede rondar 75 MB de VRAM para pesos; 4 capas aprox. 300 MB, 6 capas aprox. 450 MB y 15 capas aprox. 1.1 GB, mas contexto y overhead. Si hay ruido o picos fuertes, baja capas o usa Python con 0 capas.</p>
-                        <p><strong>Contexto:</strong> cuanta conversacion puede recordar el modelo en una respuesta. Mas contexto usa mas RAM/VRAM. 4608 suele estar bien; si va pesado, baja a 2048 o 1024.</p>
+                        <p><strong>Contexto:</strong> espacio para herramientas, memoria y conversación. El valor inicial es 8192. Más contexto usa más RAM/VRAM. Neeko limita el historial y avisa si las herramientas y tu mensaje no caben.</p>
                         <p><strong>Hilos CPU:</strong> cuantos hilos del procesador usa. Mas hilos puede responder mas rapido, pero deja menos margen para juegos o apps. Si tu CPU tiene 12 hilos, 6 es una mitad razonable.</p>
                         <p><strong>Ejemplo suave:</strong> Capas GPU 4-6, Contexto 4608, Hilos CPU 6. Depende mucho de tu grafica, VRAM, CPU y temperaturas.</p>
                     </div>

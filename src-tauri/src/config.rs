@@ -38,11 +38,11 @@ fn default_python_gpu_layers() -> u32 {
 }
 
 fn default_llama_context_size() -> u32 {
-    1024
+    8192
 }
 
 fn default_python_context_size() -> u32 {
-    4096
+    8192
 }
 
 fn default_model_threads() -> u32 {
@@ -63,6 +63,8 @@ pub fn normalize_language(language: &str) -> Option<&'static str> {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AppConfig {
+    #[serde(default)]
+    pub context_policy_version: u32,
     pub git_pat: String,
     pub git_default_path: String,
     #[serde(default)]
@@ -118,6 +120,7 @@ fn default_neeko_3d_animation() -> String {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            context_policy_version: 1,
             git_pat: String::new(),
             git_default_path: String::new(),
             ffmpeg_path: String::new(),
@@ -156,10 +159,22 @@ impl AppConfig {
             Some(p) => p,
             None => return Self::default(),
         };
-        std::fs::read_to_string(&path)
+        let mut config: Self = std::fs::read_to_string(&path)
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default()
+            .unwrap_or_default();
+        if config.context_policy_version == 0 {
+            // Upgrade historical defaults once; preserve other custom values.
+            if config.llama_context_size == 1024 {
+                config.llama_context_size = default_llama_context_size();
+            }
+            if config.python_context_size == 4096 {
+                config.python_context_size = default_python_context_size();
+            }
+            config.context_policy_version = 1;
+            let _ = config.save();
+        }
+        config
     }
 
     pub fn save(&self) -> Result<(), String> {

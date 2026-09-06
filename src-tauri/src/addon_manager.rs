@@ -39,6 +39,8 @@ fn default_true() -> bool {
 pub struct AddonCommand {
     pub id: String,
     #[serde(default)]
+    pub ai: Option<crate::assistant::ActionSpec>,
+    #[serde(default)]
     pub description: String,
     #[serde(default)]
     pub patterns: HashMap<String, Vec<String>>,

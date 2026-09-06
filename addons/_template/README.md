@@ -462,3 +462,8 @@ neeko-assistant/
       addon_manager.rs       # Sistema de addons (Rust)
       lib.rs                 # Backend
 ```
+# Integración con la IA
+
+Declarar `commands[].ai` en `addon.json` y registrar `aiHandler(params)` en JavaScript.
+El esquema, los campos admitidos, la confirmación y la ejecución compartida entre
+escritorio y celular se describen en [assistant-chat.md](../../docs/assistant-chat.md).

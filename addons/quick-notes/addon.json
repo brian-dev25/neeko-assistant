@@ -6,38 +6,97 @@
   "author": "Neeko",
   "minAppVersion": "1.2.0",
   "enabled": false,
-  "permissions": ["chat:commands", "ui:tabs", "ui:bubble"],
+  "permissions": [
+    "chat:commands",
+    "ui:tabs",
+    "ui:bubble"
+  ],
   "commands": [
     {
       "id": "save-note",
       "description": "Guardar una nota / Save a note",
       "patterns": {
-        "es": ["nota\\s+(.+)", "guarda(?:r)?\\s+nota\\s+(.+)"],
-        "en": ["note\\s+(.+)", "save\\s+note\\s+(.+)"]
+        "es": [
+          "nota\\s+(.+)",
+          "guarda(?:r)?\\s+nota\\s+(.+)"
+        ],
+        "en": [
+          "note\\s+(.+)",
+          "save\\s+note\\s+(.+)"
+        ]
+      },
+      "ai": {
+        "label": "Guardar una nota / Save a note",
+        "fields": {
+          "text": {
+            "type": "string"
+          }
+        }
       }
     },
     {
       "id": "list-notes",
       "description": "Ver todas las notas / List all notes",
       "patterns": {
-        "es": ["notas", "ver\\s+notas", "mis\\s+notas", "lista\\s+de\\s+notas"],
-        "en": ["notes", "show\\s+notes", "my\\s+notes", "list\\s+notes"]
+        "es": [
+          "notas",
+          "ver\\s+notas",
+          "mis\\s+notas",
+          "lista\\s+de\\s+notas"
+        ],
+        "en": [
+          "notes",
+          "show\\s+notes",
+          "my\\s+notes",
+          "list\\s+notes"
+        ]
+      },
+      "ai": {
+        "label": "Ver todas las notas / List all notes",
+        "fields": {}
       }
     },
     {
       "id": "delete-note",
       "description": "Borrar una nota por numero / Delete a note by number",
       "patterns": {
-        "es": ["borrar\\s+nota\\s+(\\d+)", "eliminar\\s+nota\\s+(\\d+)"],
-        "en": ["delete\\s+note\\s+(\\d+)", "remove\\s+note\\s+(\\d+)"]
+        "es": [
+          "borrar\\s+nota\\s+(\\d+)",
+          "eliminar\\s+nota\\s+(\\d+)"
+        ],
+        "en": [
+          "delete\\s+note\\s+(\\d+)",
+          "remove\\s+note\\s+(\\d+)"
+        ]
+      },
+      "ai": {
+        "label": "Borrar una nota por numero / Delete a note by number",
+        "fields": {
+          "number": {
+            "type": "number",
+            "integer": true,
+            "min": 1,
+            "max": 100000
+          }
+        }
       }
     },
     {
       "id": "clear-notes",
       "description": "Borrar todas las notas / Clear all notes",
       "patterns": {
-        "es": ["borrar\\s+todas\\s+las\\s+notas", "limpiar\\s+notas"],
-        "en": ["clear\\s+all\\s+notes", "delete\\s+all\\s+notes"]
+        "es": [
+          "borrar\\s+todas\\s+las\\s+notas",
+          "limpiar\\s+notas"
+        ],
+        "en": [
+          "clear\\s+all\\s+notes",
+          "delete\\s+all\\s+notes"
+        ]
+      },
+      "ai": {
+        "label": "Borrar todas las notas / Clear all notes",
+        "fields": {}
       }
     }
   ]

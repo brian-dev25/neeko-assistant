@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::sync::Mutex;
+static MUTATION: Mutex<()> = Mutex::new(());
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct KnowledgeFact {
@@ -62,10 +64,17 @@ fn save_store(store: &KnowledgeStore) -> Result<(), String> {
 }
 
 pub fn list_facts() -> Vec<KnowledgeFact> {
+    let _guard = MUTATION.lock().unwrap();
     load_store().facts
 }
 
-pub fn add_fact(category: &str, key: &str, value: &str, source: &str) -> KnowledgeFact {
+pub fn add_fact(
+    category: &str,
+    key: &str,
+    value: &str,
+    source: &str,
+) -> Result<KnowledgeFact, String> {
+    let _guard = MUTATION.lock().unwrap();
     let mut store = load_store();
 
     if category.eq_ignore_ascii_case("preferencia") {
@@ -74,7 +83,7 @@ pub fn add_fact(category: &str, key: &str, value: &str, source: &str) -> Knowled
                 && f.key.eq_ignore_ascii_case(key)
                 && f.value.eq_ignore_ascii_case(value)
         }) {
-            return existing.clone();
+            return Ok(existing.clone());
         }
     }
 
@@ -95,13 +104,13 @@ pub fn add_fact(category: &str, key: &str, value: &str, source: &str) -> Knowled
             existing.value = value.to_string();
             existing.source = source.to_string();
             let fact = existing.clone();
-            let _ = save_store(&store);
-            return fact;
+            save_store(&store)?;
+            return Ok(fact);
         }
     }
 
     let fact = KnowledgeFact {
-        id: format!("k_{}", chrono_now()),
+        id: format!("k_{}", crate::uuid_simple()),
         category: category.to_string(),
         key: key.to_string(),
         value: value.to_string(),
@@ -109,23 +118,25 @@ pub fn add_fact(category: &str, key: &str, value: &str, source: &str) -> Knowled
         created: chrono_now(),
     };
     store.facts.push(fact.clone());
-    let _ = save_store(&store);
-    fact
+    save_store(&store)?;
+    Ok(fact)
 }
 
-pub fn delete_fact(id: &str) -> bool {
+pub fn delete_fact(id: &str) -> Result<bool, String> {
+    let _guard = MUTATION.lock().unwrap();
     let mut store = load_store();
     let before = store.facts.len();
     store.facts.retain(|f| f.id != id);
     if store.facts.len() < before {
-        let _ = save_store(&store);
-        true
+        save_store(&store)?;
+        Ok(true)
     } else {
-        false
+        Ok(false)
     }
 }
 
 pub fn search_facts(query: &str) -> Vec<KnowledgeFact> {
+    let _guard = MUTATION.lock().unwrap();
     let store = load_store();
     let q = query.to_lowercase();
     store
@@ -139,18 +150,21 @@ pub fn search_facts(query: &str) -> Vec<KnowledgeFact> {
         .collect()
 }
 
-pub fn clear_all() -> bool {
+pub fn clear_all() -> Result<bool, String> {
+    let _guard = MUTATION.lock().unwrap();
     let store = KnowledgeStore::default();
-    let _ = save_store(&store);
-    true
+    save_store(&store)?;
+    Ok(true)
 }
 
 pub fn export_json() -> Result<String, String> {
+    let _guard = MUTATION.lock().unwrap();
     let store = load_store();
     serde_json::to_string_pretty(&store).map_err(|e| e.to_string())
 }
 
 pub fn import_json(json: &str) -> Result<usize, String> {
+    let _guard = MUTATION.lock().unwrap();
     let imported: KnowledgeStore =
         serde_json::from_str(json).map_err(|e| format!("JSON invalido: {}", e))?;
     let mut store = load_store();

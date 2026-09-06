@@ -5,6 +5,7 @@ node_modules/
 !scripts/
 scripts/*
 !scripts/bump-version.js
+!scripts/action-policy.test.mjs
 /*.bat
 /*.cmd
 /*.vbs

@@ -1,0 +1,14 @@
+﻿/* Common controls use the original styles.css. */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { display: flex; flex-direction: column; color: #e0e0e0; font-size: 13px; line-height: 1.5; }
+#top-bar { cursor: grab; }
+#messages { flex: 1; min-height: 0; overflow: auto; padding: 14px 20px; user-select: text; }
+#welcome, .message { width: fit-content; max-width: 100%; margin: 0 auto 14px; padding: 12px 18px; background: #2d2d44; border: 1px solid #7c3aed; border-radius: 16px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.message.user { margin-right: 0; }
+.message.assistant, .message.error { margin-left: 0; }
+.message.error { border-color: #f87171; }
+#action-confirmation { flex-shrink: 0; max-height: 45vh; overflow: auto; margin: 0 14px; padding: 12px 18px; background: #2d2d44; border: 1px solid #7c3aed; border-radius: 16px; }
+#status { flex-shrink: 0; margin: 0; padding: 4px 16px; color: #a0a0b0; font-size: 12px; }
+#status:empty { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

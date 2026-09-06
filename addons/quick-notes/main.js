@@ -62,6 +62,7 @@
     // ─── Comandos ───
 
     Neeko.commands.register('save-note', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'save-note').handler(['', String(params.text)], ''),
         patterns: {
             es: ['nota\\s+(.+)', 'guarda(?:r)?\\s+nota\\s+(.+)'],
             en: ['note\\s+(.+)', 'save\\s+note\\s+(.+)'],
@@ -84,6 +85,7 @@
     });
 
     Neeko.commands.register('list-notes', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'list-notes').handler([], ''),
         patterns: {
             es: ['notas', 'ver\\s+notas', 'mis\\s+notas', 'lista\\s+de\\s+notas'],
             en: ['notes', 'show\\s+notes', 'my\\s+notes', 'list\\s+notes'],
@@ -99,6 +101,7 @@
     });
 
     Neeko.commands.register('delete-note', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'delete-note').handler(['', String(params.number)], ''),
         patterns: {
             es: ['borrar\\s+nota\\s+(\\d+)', 'eliminar\\s+nota\\s+(\\d+)'],
             en: ['delete\\s+note\\s+(\\d+)', 'remove\\s+note\\s+(\\d+)'],
@@ -119,6 +122,7 @@
     });
 
     Neeko.commands.register('clear-notes', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'clear-notes').handler([], ''),
         patterns: {
             es: ['borrar\\s+todas\\s+las\\s+notas', 'limpiar\\s+notas'],
             en: ['clear\\s+all\\s+notes', 'delete\\s+all\\s+notes'],

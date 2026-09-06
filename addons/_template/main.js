@@ -5,6 +5,7 @@
 
     // ─── Registrar un comando ───
     Neeko.commands.register('my-command', {
+        aiHandler: async (params) => Neeko.commands.list().find(c => c.id === 'my-command').handler(['', String(params.text)], ''),
         patterns: {
             es: ['mi\\s+comando\\s+(.+)'],
             en: ['my\\s+command\\s+(.+)'],
