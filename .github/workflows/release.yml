@@ -18,20 +18,26 @@ jobs:
             args: ''
             artifact_name: 'neeko-assistant-windows'
     runs-on: ${{ matrix.platform }}
-    env:
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: lts/*
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify release tag
+        run: |
+          $version = node -p "require('./package.json').version"
+          $expectedTag = "v$version"
+          $releaseTag = "${{ github.ref_name }}"
+          if ($releaseTag -ne $expectedTag) {
+            throw "Release tag $releaseTag does not match package version $expectedTag"
+          }
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -43,19 +49,27 @@ jobs:
         with:
           key: ${{ matrix.platform }}
 
-      - name: Download llama-server
+      - name: Create placeholder sidecar binary
         run: |
-          mkdir -p src-tauri/binaries
-          curl -L -o src-tauri/binaries/llama-server.exe https://github.com/ggerganov/llama.cpp/releases/download/b4801/llama-server-win64.exe
+          New-Item -ItemType Directory -Force -Path "src-tauri/binaries"
+          $bytes = New-Object byte[] 512
+          $bytes[0] = 0x4D
+          $bytes[1] = 0x5A
+          $bytes[2] = 0x90
+          [System.IO.File]::WriteAllBytes("src-tauri\binaries\llama-server-x86_64-pc-windows-msvc.exe", $bytes)
 
       - name: Build Tauri App
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@action-v0.5.24
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: 'v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
