@@ -1,8 +1,9 @@
 {
   "name": "neeko-assistant",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Asistente Neeko - Tu assistente virtual estilo Clippy",
   "scripts": {
+    "test": "node --test scripts/action-policy.test.mjs tests/pet-region.test.mjs",
     "version:bump": "node scripts/bump-version.js",
     "tauri": "tauri",
     "dev": "tauri dev",

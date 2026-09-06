@@ -1,13 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicklasonmedia/tauri/dev/crates/tauri-cli/schema.json",
   "productName": "Neeko Assistant",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "identifier": "com.neeko.assistant",
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
+        "alwaysOnTop": false,
+        "transparent": true,
+        "shadow": false,
         "title": "Neeko Assistant",
         "width": 380,
         "height": 600,
@@ -17,6 +20,20 @@
         "decorations": false,
         "skipTaskbar": false,
         "url": "index.html"
+      },
+      {
+        "label": "chat",
+        "title": "Chat con Neeko",
+        "width": 440,
+        "height": 580,
+        "minWidth": 320,
+        "minHeight": 360,
+        "resizable": true,
+        "decorations": false,
+        "transparent": false,
+        "visible": false,
+        "focus": false,
+        "url": "chat.html"
       },
       {
         "label": "compressor",
@@ -55,7 +72,9 @@
     ],
     "resources": {
       "../addons/quick-notes/": "addons/quick-notes/",
-      "../addons/discord-rich-presence/": "addons/discord-rich-presence/"
+      "../addons/discord-rich-presence/": "addons/discord-rich-presence/",
+      "../addons/airi-theme/": "addons/airi-theme/",
+      "../addons/shazam/": "addons/shazam/"
     },
     "windows": {
       "nsis": {
