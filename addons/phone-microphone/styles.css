@@ -1,0 +1,71 @@
+.phone-microphone-panel { color: #ddd8ed; font-size: 13px; line-height: 1.6; }
+.phone-microphone-panel p { margin: 12px 0; overflow-wrap: anywhere; min-height: 1.6em; }
+.phone-microphone-panel fieldset { border: 1px solid #514464; border-radius: 10px; padding: 14px; margin: 14px 0; }
+.phone-microphone-panel legend { color: #c4b5fd; font-weight: 600; padding: 0 6px; }
+.phone-microphone-panel label { display: flex; flex-direction: column; gap: 5px; margin: 12px 0; }
+.phone-microphone-panel .phone-microphone-check { flex-direction: row; align-items: center; gap: 10px; cursor: pointer; }
+.phone-microphone-panel select, .phone-microphone-panel input[type=number] {
+    padding: 8px; border: 1px solid #79618f; border-radius: 8px;
+    background: #211d30; color: #f5f3ff; font: inherit; width: 100%; box-sizing: border-box;
+}
+.phone-microphone-panel input[type=range], .phone-microphone-panel meter { width: 100%; accent-color: #a78bfa; }
+.phone-microphone-panel meter { height: 22px; }
+.phone-microphone-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.phone-microphone-actions button {
+    border: 1px solid #9f7aea; border-radius: 12px; padding: 10px 16px;
+    background: #7c3aed; color: white; font: inherit; cursor: pointer; transition: background .15s, opacity .15s;
+}
+.phone-microphone-actions button:hover:not(:disabled) { background: #9050ee; }
+.phone-microphone-panel :focus-visible { outline: 2px solid #ddd6fe; outline-offset: 3px; }
+.phone-microphone-panel :disabled { opacity: .45; cursor: not-allowed; }
+
+/* Status and device areas - fixed min-height to prevent layout shifting */
+.phone-microphone-panel [data-status] {
+    background: #211d30; border-radius: 10px; padding: 14px;
+    min-height: 48px; word-break: break-word;
+}
+.phone-microphone-panel [data-error] { color: #ffb4b4; }
+.phone-microphone-panel [data-device] {
+    min-height: 1.6em; padding: 4px 0; font-weight: 500; color: #c4b5fd;
+}
+.phone-microphone-panel [data-address] {
+    min-height: 1.6em; font-family: monospace; color: #a78bfa;
+}
+.phone-microphone-panel [data-metrics] {
+    min-height: 1.6em; font-size: 12px; color: #9f8fce;
+}
+.phone-microphone-panel [data-aec] {
+    min-height: 1.6em; font-size: 12px; color: #9f8fce; margin: 4px 0;
+}
+
+/* Custom checkbox styling */
+.phone-microphone-check input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    width: 18px; height: 18px; min-width: 18px; min-height: 18px;
+    border: 2px solid #79618f; border-radius: 4px; background: #211d30;
+    cursor: pointer; position: relative; transition: background .15s, border-color .15s;
+    flex-shrink: 0;
+}
+.phone-microphone-check input[type="checkbox"]:checked {
+    background: #7c3aed; border-color: #a78bfa;
+}
+.phone-microphone-check input[type="checkbox"]:checked::after {
+    content: ''; position: absolute; left: 4px; top: 1px;
+    width: 6px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.phone-microphone-check input[type="checkbox"]:disabled {
+    opacity: .35; cursor: not-allowed;
+}
+.phone-microphone-check input[type="checkbox"]:focus-visible {
+    outline: 2px solid #ddd6fe; outline-offset: 2px;
+}
+
+.phone-microphone-panel [hidden] { display: none !important; }
+.phone-microphone-panel output { color: #c4b5fd; font-variant-numeric: tabular-nums; }
+.phone-microphone-sensitivity { position: relative; display: block; height: 28px; --threshold: 60%; }
+.phone-microphone-sensitivity::before { content: ''; position: absolute; top: 12px; left: 0; right: 0; height: 5px; border-radius: 4px; background: linear-gradient(to right, #b88b25 0 var(--threshold), #399d65 var(--threshold) 100%); }
+.phone-microphone-sensitivity [data-input-fill] { position: absolute; left: 0; top: 8px; height: 13px; width: 0; background: #fff3; border-right: 2px solid #fff; pointer-events: none; transition: width .08s linear; }
+.phone-microphone-sensitivity input[type=range] { position: absolute; inset: 0; margin: 0; appearance: none; background: transparent; cursor: pointer; }
+.phone-microphone-sensitivity input::-webkit-slider-runnable-track { height: 5px; background: transparent; }
+.phone-microphone-sensitivity input::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; margin-top: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #888; }

@@ -1,5 +1,6 @@
 import { ChatClient, confirmationControls, confirmationText, attachInfo } from './chat-client.mjs';
 import { PetRegion } from './pet-region.mjs';
+import { PetActivity } from './pet-activity.mjs';
 let THREE = null;
 let GLTFLoaderClass = null;
 
@@ -1343,6 +1344,13 @@ async function init() {
             else await NeekoAddons.loadAddon(addon);
         }
     });
+    const petActivity = new PetActivity(({ thinking, talking }) => {
+        setTalking(talking);
+        setThinking(thinking);
+    });
+    await window.__TAURI__.event.listen('neeko:chat-state', ({ payload }) => {
+        petActivity.update(payload);
+    });
     await window.__TAURI__.event.listen('neeko:settings-saved', async ({ payload }) => {
         const config = JSON.parse(await invoke('lol_get_config'));
         setLanguage(config.language || 'es');
@@ -1755,6 +1763,7 @@ function updateLlamaUI(running) {
             }
         } catch (e) {
             showBubble("Error: " + e);
+            updateLlamaUI(await invoke('llama_status').catch(() => false));
         }
         toggle.disabled = false;
     };

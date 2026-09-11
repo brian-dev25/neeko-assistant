@@ -1,0 +1,16 @@
+{
+  "id": "screen-translate",
+  "name": "Screen Translate",
+  "version": "1.1.0",
+  "description": "Traduccion integrada en Neeko con OCR local, idiomas independientes y texto superpuesto. No utiliza la IA de Neeko.",
+  "author": "Neeko · OCR basado en MORT",
+  "minAppVersion": "1.0.4",
+  "enabled": false,
+  "permissions": [
+    "ui:tabs",
+    "screen:capture",
+    "native:screen-translate",
+    "network:http"
+  ],
+  "commands": []
+}

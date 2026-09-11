@@ -1,31 +1,40 @@
-name: Release
+name: release-tauri
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.0.5"
+        required: true
+        type: string
   push:
     tags:
-      - 'v*'
-
-permissions:
-  contents: write
+      - "v*"
 
 jobs:
-  release:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'windows-latest'
-            args: ''
-            artifact_name: 'neeko-assistant-windows'
-    runs-on: ${{ matrix.platform }}
+  release-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm'
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Setup .NET for bundled OCR worker
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
       - name: Install dependencies
         run: npm ci
@@ -34,20 +43,10 @@ jobs:
         run: |
           $version = node -p "require('./package.json').version"
           $expectedTag = "v$version"
-          $releaseTag = "${{ github.ref_name }}"
+          $releaseTag = "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
           if ($releaseTag -ne $expectedTag) {
             throw "Release tag $releaseTag does not match package version $expectedTag"
           }
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.platform }}
 
       - name: Create placeholder sidecar binary
         run: |
@@ -58,18 +57,88 @@ jobs:
           $bytes[2] = 0x90
           [System.IO.File]::WriteAllBytes("src-tauri\binaries\llama-server-x86_64-pc-windows-msvc.exe", $bytes)
 
-      - name: Build Tauri App
+      - name: Build Tauri App (NSIS Installer)
         uses: tauri-apps/tauri-action@action-v0.5.24
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: 'v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          tagName: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          releaseName: "Neeko Assistant ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          releaseBody: "Build de Neeko Assistant con updater Tauri."
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
-          args: ${{ matrix.args }}
+
+      - name: Build Portable Version
+        run: |
+          $root = "${{ github.workspace }}"
+          $tauri = "$root\src-tauri"
+          $output = "$root\dist-portable"
+          $profile = "release"
+          $tag = "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+
+          # Create temp config with app bundle target
+          $conf = Get-Content -LiteralPath "$tauri\tauri.conf.json" -Raw | ConvertFrom-Json
+          $conf.bundle.targets = @("app")
+          $tempConf = "$tauri\tauri.portable.json"
+          $conf | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $tempConf -Encoding UTF8
+
+          try {
+            # Build portable (reuses compiled artifacts, only repackages)
+            Push-Location $tauri
+            npx tauri build --config $tempConf 2>&1
+            Pop-Location
+
+            # Find the built exe
+            $exePath = Get-ChildItem "$tauri\target\$profile" -Recurse -Filter "neeko-assistant.exe" -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -notlike "*\deps\*" -and $_.FullName -notlike "*\build\*" } |
+              Select-Object -First 1
+
+            if (-not $exePath) {
+              throw "Could not find neeko-assistant.exe in portable build"
+            }
+
+            $appDir = $exePath.DirectoryName
+
+            # Assemble portable folder
+            if (Test-Path $output) { Remove-Item $output -Recurse -Force }
+            New-Item -ItemType Directory -Path $output -Force | Out-Null
+
+            Copy-Item "$appDir\neeko-assistant.exe" "$output\" -Force
+            Copy-Item "$appDir\*.dll" "$output\" -Force -ErrorAction SilentlyContinue
+
+            # Copy resources
+            if (Test-Path "$appDir\resources") {
+              Copy-Item "$appDir\resources" "$output\resources" -Recurse -Force
+            } else {
+              New-Item -ItemType Directory -Path "$output\resources" -Force | Out-Null
+              if (Test-Path "$root\addons") {
+                Copy-Item "$root\addons" "$output\resources\addons" -Recurse -Force
+              }
+              New-Item -ItemType Directory -Path "$output\resources\binaries" -Force | Out-Null
+              if (Test-Path "$tauri\binaries\screen-translate") {
+                Copy-Item "$tauri\binaries\screen-translate" "$output\resources\binaries\screen-translate" -Recurse -Force
+              }
+            }
+
+            # Create zip
+            $zipPath = "$root\Neeko-Assistant-Portable.zip"
+            if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($output, $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+
+            $size = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
+            Write-Host "Portable build complete: $zipPath ($size MB)"
+          } finally {
+            if (Test-Path $tempConf) { Remove-Item $tempConf -Force }
+          }
+
+      - name: Upload portable to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          gh release upload $tag "Neeko-Assistant-Portable.zip" --clobber

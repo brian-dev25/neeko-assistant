@@ -1,0 +1,2987 @@
+{
+  "commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+  "languages": [
+    {
+      "code": "afr",
+      "translationCode": "af",
+      "sha": "09e69cf5478cd6a0fb3ec5e7e7fa95a04f5cafb3",
+      "size": 2652786
+    },
+    {
+      "code": "amh",
+      "translationCode": "am",
+      "sha": "7a302b2bf6306c34177f594e0824eafc48906965",
+      "size": 5470094
+    },
+    {
+      "code": "ara",
+      "translationCode": "ar",
+      "sha": "c8d129c67821c1592cac46836686b057ecc203dc",
+      "size": 1432056
+    },
+    {
+      "code": "asm",
+      "translationCode": "as",
+      "sha": "086035c6eacd5788c1f06d58c250023cee2aeb28",
+      "size": 2045427
+    },
+    {
+      "code": "aze",
+      "translationCode": "az",
+      "sha": "27bc73edf08e5e5f0c3e43c315c5c6d965c2f075",
+      "size": 3524799
+    },
+    {
+      "code": "aze_cyrl",
+      "translationCode": "az",
+      "sha": "e2b1b953a5b8db9247c6ddfcb58f062dc0b3b574",
+      "size": 1943672
+    },
+    {
+      "code": "bel",
+      "translationCode": "be",
+      "sha": "65d83dad535f876de31847f5fa2ff1bdd57c7bab",
+      "size": 3692098
+    },
+    {
+      "code": "ben",
+      "translationCode": "bn",
+      "sha": "7e9054d1de309714009a85555f5276168d41af9c",
+      "size": 855841
+    },
+    {
+      "code": "bod",
+      "translationCode": "bo",
+      "sha": "7bb5029466eaef46aad59fc23b96648df0e4f176",
+      "size": 1966440
+    },
+    {
+      "code": "bos",
+      "translationCode": "bs",
+      "sha": "95bed5c32e3759347db0471569303f06e3485f42",
+      "size": 2498242
+    },
+    {
+      "code": "bre",
+      "translationCode": "br",
+      "sha": "c01691329561938fb7d491ea7611c591202952dd",
+      "size": 6335007
+    },
+    {
+      "code": "bul",
+      "translationCode": "bg",
+      "sha": "1e65588d127d918ef3ba95b785b446f15827d60f",
+      "size": 1675212
+    },
+    {
+      "code": "cat",
+      "translationCode": "ca",
+      "sha": "3fcd350dd2bb76503de90249111fff4e3c6aa0f0",
+      "size": 1146012
+    },
+    {
+      "code": "ceb",
+      "translationCode": "ceb",
+      "sha": "5a1b96928e54b175db96f00d2aa84b5878d301b9",
+      "size": 716214
+    },
+    {
+      "code": "ces",
+      "translationCode": "cs",
+      "sha": "dd6fc79a62f9fcd1c7c6da06b31bb4fdb10dc173",
+      "size": 3795684
+    },
+    {
+      "code": "chi_sim",
+      "translationCode": "zh-CN",
+      "sha": "388bac276d033d06e5ed5ba7a7ad14ae58f97dab",
+      "size": 2469156
+    },
+    {
+      "code": "chi_sim_vert",
+      "translationCode": "zh-CN",
+      "sha": "f9898e91068a9d04bcacf6d2a244da40e9f30c0c",
+      "size": 1927902
+    },
+    {
+      "code": "chi_tra",
+      "translationCode": "zh-TW",
+      "sha": "1955cd8b8d076b898616e9c2c1ace65b43105356",
+      "size": 2366642
+    },
+    {
+      "code": "chi_tra_vert",
+      "translationCode": "zh-TW",
+      "sha": "94bc5dbd7fa25dd89ac9c5bd18f3fc6d8409aa0e",
+      "size": 1824756
+    },
+    {
+      "code": "chr",
+      "translationCode": "chr",
+      "sha": "e0799a2b888466e5bc2ca60f1f2fb4a7ff4c6990",
+      "size": 374944
+    },
+    {
+      "code": "cos",
+      "translationCode": "co",
+      "sha": "3105b7fb0cd6c26f4fb144ec5d594430e88927cb",
+      "size": 2299099
+    },
+    {
+      "code": "cym",
+      "translationCode": "cy",
+      "sha": "900cf17f74514934f87e9a8df3b29cb16b5606fe",
+      "size": 2208919
+    },
+    {
+      "code": "dan",
+      "translationCode": "da",
+      "sha": "85501b582937493f9ae6a64ccd0a6bb0a2ea33d5",
+      "size": 2580059
+    },
+    {
+      "code": "deu",
+      "translationCode": "de",
+      "sha": "97ed7b2b60f2771c07040660ef0f6daf596dc7bf",
+      "size": 1525436
+    },
+    {
+      "code": "deu_latf",
+      "translationCode": "de",
+      "sha": "11a641044a93413454f75fbb8e05b085bd0b9d8d",
+      "size": 6423052
+    },
+    {
+      "code": "div",
+      "translationCode": "dv",
+      "sha": "53b46df7d6ae94f75913d6377182867ea09d950b",
+      "size": 1774535
+    },
+    {
+      "code": "dzo",
+      "translationCode": "dz",
+      "sha": "3c31175be56ab4db42af614f384ea52ce949082c",
+      "size": 449596
+    },
+    {
+      "code": "ell",
+      "translationCode": "el",
+      "sha": "ed98ae1a88d84414da316e6eeab3232f2c68639b",
+      "size": 1419514
+    },
+    {
+      "code": "eng",
+      "translationCode": "en",
+      "sha": "bbef4675053b5b468cdb477053e28b1c698ba08e",
+      "size": 4113088
+    },
+    {
+      "code": "enm",
+      "translationCode": "en",
+      "sha": "e49b5b86da60f2e728ff2b7f4357692ac32b6a6d",
+      "size": 3101551
+    },
+    {
+      "code": "epo",
+      "translationCode": "eo",
+      "sha": "235fc67adf52f43d34b409d44d426d560aefc8e3",
+      "size": 4728393
+    },
+    {
+      "code": "equ",
+      "translationCode": "",
+      "sha": "27b470378dc8718f1dc5a93931fefa3340336e4d",
+      "size": 2251950
+    },
+    {
+      "code": "est",
+      "translationCode": "et",
+      "sha": "a2b52c3388358e6dfc4eb8d64d8fc6afbb3630ea",
+      "size": 4458101
+    },
+    {
+      "code": "eus",
+      "translationCode": "eu",
+      "sha": "6247f975443ec82c219c39e0b5ea76b4833c82fe",
+      "size": 5175921
+    },
+    {
+      "code": "fao",
+      "translationCode": "fo",
+      "sha": "1b845e73759785908aef57161ae4c86a70cce622",
+      "size": 3439772
+    },
+    {
+      "code": "fas",
+      "translationCode": "fa",
+      "sha": "1a17ee02076107e73abd15d2038389150c8f824f",
+      "size": 431500
+    },
+    {
+      "code": "fil",
+      "translationCode": "tl",
+      "sha": "785f80decce6ddb6b50bd99f4840414359c806ff",
+      "size": 1841715
+    },
+    {
+      "code": "fin",
+      "translationCode": "fi",
+      "sha": "73f92402f1891b9066e0e145f245145a2402105c",
+      "size": 7865732
+    },
+    {
+      "code": "fra",
+      "translationCode": "fr",
+      "sha": "d9e2b2160be0d1ca3b8f1bf2730fae476ef3b4a6",
+      "size": 1130365
+    },
+    {
+      "code": "frk",
+      "translationCode": "de",
+      "sha": "d473893bcabcef536ed36480f976fcce482bd87c",
+      "size": 20
+    },
+    {
+      "code": "frm",
+      "translationCode": "fr",
+      "sha": "ed06039efef821b78f22c86abb6c5aea7f02461e",
+      "size": 2024948
+    },
+    {
+      "code": "fry",
+      "translationCode": "fy",
+      "sha": "17199d2c33e201d6ad4003a6c86db5f8f273ddc1",
+      "size": 1906018
+    },
+    {
+      "code": "gla",
+      "translationCode": "gd",
+      "sha": "e8bae7f1863dd1872ab7d2b2e7f319874c480e60",
+      "size": 3068307
+    },
+    {
+      "code": "gle",
+      "translationCode": "ga",
+      "sha": "a7abc7be9aadc862b31ab7c7bc672051cd0245fb",
+      "size": 1181824
+    },
+    {
+      "code": "glg",
+      "translationCode": "gl",
+      "sha": "7bc00b38f40f8de1575397f7d05387e5fbbacca4",
+      "size": 2554555
+    },
+    {
+      "code": "grc",
+      "translationCode": "el",
+      "sha": "e94990006fc18e88ab120e7ca6681cc3b290269b",
+      "size": 2246328
+    },
+    {
+      "code": "guj",
+      "translationCode": "gu",
+      "sha": "151b9aad2945e3103118e5d36eee288f631d985a",
+      "size": 1418394
+    },
+    {
+      "code": "hat",
+      "translationCode": "ht",
+      "sha": "30d3baeaeef791781d782e58feb415b25921df3f",
+      "size": 1976902
+    },
+    {
+      "code": "heb",
+      "translationCode": "he",
+      "sha": "7356caf3cddc9c867fe6727e17726727b8284608",
+      "size": 961404
+    },
+    {
+      "code": "hin",
+      "translationCode": "hi",
+      "sha": "a8f0aaec09378115b12a2c6287c57695d082aea2",
+      "size": 1122751
+    },
+    {
+      "code": "hrv",
+      "translationCode": "hr",
+      "sha": "6dd4f8638a58eb0663e8f9a80a355c505dcf01a6",
+      "size": 4103348
+    },
+    {
+      "code": "hun",
+      "translationCode": "hu",
+      "sha": "5d24fa8e922d6b57853dcb0cc490060c76643cab",
+      "size": 5296273
+    },
+    {
+      "code": "hye",
+      "translationCode": "hy",
+      "sha": "ec2e2f3adea785e8964b9771871c44349a6e1b40",
+      "size": 3463717
+    },
+    {
+      "code": "iku",
+      "translationCode": "iu",
+      "sha": "6eab87ffe818b5f89baa869c458cb0a6dbed6b2d",
+      "size": 2802266
+    },
+    {
+      "code": "ind",
+      "translationCode": "id",
+      "sha": "3013f50cd2af9aceca00e865ed889144865f0848",
+      "size": 1122661
+    },
+    {
+      "code": "isl",
+      "translationCode": "is",
+      "sha": "20d3bdf8cb8f2289a1f45aa9cdf4ddf2a22e7462",
+      "size": 2278973
+    },
+    {
+      "code": "ita",
+      "translationCode": "it",
+      "sha": "edbffbe0e51892b240630b5eeabededa7e7c9c4f",
+      "size": 2701314
+    },
+    {
+      "code": "ita_old",
+      "translationCode": "it",
+      "sha": "c8a2c3c3d8c82a2d953b0fc64b949c1aa0918c09",
+      "size": 3286123
+    },
+    {
+      "code": "jav",
+      "translationCode": "jw",
+      "sha": "3155b8184d50af28dbf8dcbd972e26b388ab1581",
+      "size": 2982741
+    },
+    {
+      "code": "jpn",
+      "translationCode": "ja",
+      "sha": "c4178f89991bde90b7fdc647e3e1901868423bd0",
+      "size": 2471260
+    },
+    {
+      "code": "jpn_vert",
+      "translationCode": "ja",
+      "sha": "43f38defe4b83588876d0d7a6dee928be1b73af0",
+      "size": 3037480
+    },
+    {
+      "code": "kan",
+      "translationCode": "kn",
+      "sha": "78252baeed24bcf327e62226c321c60242108a24",
+      "size": 3608331
+    },
+    {
+      "code": "kat",
+      "translationCode": "ka",
+      "sha": "1a3ae11fdd248891dd3fc74f156a0ce246ec1a15",
+      "size": 2524769
+    },
+    {
+      "code": "kat_old",
+      "translationCode": "ka",
+      "sha": "f4ae5ab4b3fe4bb3226639d9b23fa71513a40ec8",
+      "size": 423167
+    },
+    {
+      "code": "kaz",
+      "translationCode": "kk",
+      "sha": "f889e2b8ffd093d4f2dff8ffca2fa0b73296c028",
+      "size": 4734644
+    },
+    {
+      "code": "khm",
+      "translationCode": "km",
+      "sha": "d466dc2a7e35bf90cb7b54364985703728398687",
+      "size": 1446926
+    },
+    {
+      "code": "kir",
+      "translationCode": "ky",
+      "sha": "3e04f2954f33dd021b95de4befffb68904d9e142",
+      "size": 9928497
+    },
+    {
+      "code": "kmr",
+      "translationCode": "ku",
+      "sha": "d1afefb7c5a67e273c6612aba77753021506b557",
+      "size": 3568615
+    },
+    {
+      "code": "kor",
+      "translationCode": "ko",
+      "sha": "60986d44497689f3abace0b148199476d93292e1",
+      "size": 1677415
+    },
+    {
+      "code": "kor_vert",
+      "translationCode": "ko",
+      "sha": "ea0a4963591f153a21c8f237de2a1c644b57f2b9",
+      "size": 1113715
+    },
+    {
+      "code": "lao",
+      "translationCode": "lo",
+      "sha": "10bd41ae9352889f85a489eb3183eb0cbebc2516",
+      "size": 6386744
+    },
+    {
+      "code": "lat",
+      "translationCode": "la",
+      "sha": "30dab6a24339f262d1eb21a3ee272d16c46aeba3",
+      "size": 3187463
+    },
+    {
+      "code": "lav",
+      "translationCode": "lv",
+      "sha": "71d925c8b6c73980157fd0128412b46e6e8396b5",
+      "size": 2717247
+    },
+    {
+      "code": "lit",
+      "translationCode": "lt",
+      "sha": "af9e2b3cd6a65650206b7d89f1b93b51683b9692",
+      "size": 3154896
+    },
+    {
+      "code": "ltz",
+      "translationCode": "lb",
+      "sha": "c1ac5b922bbcad34b2654ba471c0a752c0397404",
+      "size": 2606426
+    },
+    {
+      "code": "mal",
+      "translationCode": "ml",
+      "sha": "70e96f02cbc2f26630225112cd323a7f0b6ccdf3",
+      "size": 5275996
+    },
+    {
+      "code": "mar",
+      "translationCode": "mr",
+      "sha": "79138fadcdb256ec7b59e3bf9df18bd5fb492bee",
+      "size": 2118233
+    },
+    {
+      "code": "mkd",
+      "translationCode": "mk",
+      "sha": "fb0b245fb9ec61696e818887a70d8413b2914905",
+      "size": 1600188
+    },
+    {
+      "code": "mlt",
+      "translationCode": "mt",
+      "sha": "4242f9cd016987f16feb06973e988eced9604787",
+      "size": 2308796
+    },
+    {
+      "code": "mon",
+      "translationCode": "mn",
+      "sha": "2ef212c519edc66ff2508f48dbe1bb836a4ea274",
+      "size": 2137042
+    },
+    {
+      "code": "mri",
+      "translationCode": "mi",
+      "sha": "eab6b1a98e4b6ed510d6443a5e3d14519da3b338",
+      "size": 862973
+    },
+    {
+      "code": "msa",
+      "translationCode": "ms",
+      "sha": "f0e2b8bef0a681f09baac99a418529205ee80201",
+      "size": 1747801
+    },
+    {
+      "code": "mya",
+      "translationCode": "my",
+      "sha": "cf28ddca604dc7f46bc34f2f4c6a193a0706c03b",
+      "size": 4640561
+    },
+    {
+      "code": "nep",
+      "translationCode": "ne",
+      "sha": "948e365b55f9fe8179dde2ff0134feffb210496e",
+      "size": 1002911
+    },
+    {
+      "code": "nld",
+      "translationCode": "nl",
+      "sha": "53ce95a9c2488a9a0228939944a184157373d0ae",
+      "size": 6050296
+    },
+    {
+      "code": "nor",
+      "translationCode": "no",
+      "sha": "9209df2c9904c127437c07e16c287cdefd024e7c",
+      "size": 3610079
+    },
+    {
+      "code": "oci",
+      "translationCode": "oc",
+      "sha": "4017d4405b09333f22a3de2a4d30cf009bdb4a9b",
+      "size": 6322087
+    },
+    {
+      "code": "ori",
+      "translationCode": "or",
+      "sha": "ae0f9ed13d5c9ad4a4de57c7266c434b83a9f583",
+      "size": 1480066
+    },
+    {
+      "code": "pan",
+      "translationCode": "pa",
+      "sha": "d4f00533a6c76ce4045aa6ad40b39f47eeaa333f",
+      "size": 497721
+    },
+    {
+      "code": "pol",
+      "translationCode": "pl",
+      "sha": "2382f568f0ce0c4c0a7f4380a291255514e5e97f",
+      "size": 4765518
+    },
+    {
+      "code": "por",
+      "translationCode": "pt",
+      "sha": "e9f373e95c66b4bf557c263721ef31f78e5bc301",
+      "size": 1982756
+    },
+    {
+      "code": "pus",
+      "translationCode": "ps",
+      "sha": "220cdf92efdc76a227439c0b8734196af9743b98",
+      "size": 1772087
+    },
+    {
+      "code": "que",
+      "translationCode": "qu",
+      "sha": "d80c1f308973b3129183843759f23fdcb1c5c2be",
+      "size": 5026336
+    },
+    {
+      "code": "ron",
+      "translationCode": "ro",
+      "sha": "04cd2bc7b471431354e9446e973f3472f442e189",
+      "size": 2376323
+    },
+    {
+      "code": "rus",
+      "translationCode": "ru",
+      "sha": "b146cb2263acbc6383f8e92ea0ce759537687bb8",
+      "size": 3861738
+    },
+    {
+      "code": "san",
+      "translationCode": "sa",
+      "sha": "3df043f3247fd41a21ac47c3b199bc87643e984b",
+      "size": 12404677
+    },
+    {
+      "code": "sin",
+      "translationCode": "si",
+      "sha": "d0c8584e78c44666efcd7fbd47940a8a1121550d",
+      "size": 1727413
+    },
+    {
+      "code": "slk",
+      "translationCode": "sk",
+      "sha": "ca99e3e82f69a0e16b48cdfec3c4e706758269f2",
+      "size": 4427661
+    },
+    {
+      "code": "slv",
+      "translationCode": "sl",
+      "sha": "835954e891897d3c8b63db48cb5c2712ef2e6b11",
+      "size": 3003829
+    },
+    {
+      "code": "snd",
+      "translationCode": "sd",
+      "sha": "1ef6548d22977dc1f236be879dce3a62ac6a47ed",
+      "size": 1694035
+    },
+    {
+      "code": "spa",
+      "translationCode": "es",
+      "sha": "72e901f13ca52cfe34cf239a368b9ed3c0ddaf26",
+      "size": 2294433
+    },
+    {
+      "code": "spa_old",
+      "translationCode": "es",
+      "sha": "42b281f55736b2f714598accfc2a78f409db1f0c",
+      "size": 2894755
+    },
+    {
+      "code": "sqi",
+      "translationCode": "sq",
+      "sha": "9624fbf33452a95dd5a0a3a93fe9876108104895",
+      "size": 1874705
+    },
+    {
+      "code": "srp",
+      "translationCode": "sr",
+      "sha": "530fb4b1cb27f369bbee7eb0add89bfd73d6f15c",
+      "size": 2149931
+    },
+    {
+      "code": "srp_latn",
+      "translationCode": "sr",
+      "sha": "5f81e591adad58a179a2d371aacccaf0801f93a2",
+      "size": 3281787
+    },
+    {
+      "code": "sun",
+      "translationCode": "su",
+      "sha": "894891425c1fe302ce1d8f115a3c00967c6c2832",
+      "size": 1369500
+    },
+    {
+      "code": "swa",
+      "translationCode": "sw",
+      "sha": "633d73b35869600452eec58dcd9036cc702c3e48",
+      "size": 2167651
+    },
+    {
+      "code": "swe",
+      "translationCode": "sv",
+      "sha": "684e1fa66e4a55b983febf5f9ed04f26ad946e59",
+      "size": 4167034
+    },
+    {
+      "code": "syr",
+      "translationCode": "syr",
+      "sha": "462aefc8a1485ae4c38db82f7f50fd105bf30195",
+      "size": 2207208
+    },
+    {
+      "code": "tam",
+      "translationCode": "ta",
+      "sha": "fa1793d68f9aba8bf191e8ff1036e2271d288e44",
+      "size": 3237963
+    },
+    {
+      "code": "tat",
+      "translationCode": "tt",
+      "sha": "9485ca27d48bb161a47584f8381420462ef6fa27",
+      "size": 1072896
+    },
+    {
+      "code": "tel",
+      "translationCode": "te",
+      "sha": "ee8a33b0f658fc75b8cbfe8c10413eac4f41e6ad",
+      "size": 2769654
+    },
+    {
+      "code": "tgk",
+      "translationCode": "tg",
+      "sha": "044766728ce9cb2cc73976175b970a4cea9a870a",
+      "size": 2602685
+    },
+    {
+      "code": "tha",
+      "translationCode": "th",
+      "sha": "ea28de3985668cac00d261c5b91f023ea66e19cd",
+      "size": 1072600
+    },
+    {
+      "code": "tir",
+      "translationCode": "ti",
+      "sha": "55e62eb0297e07360db5e9dc5dd86aab8e0a1e9c",
+      "size": 378822
+    },
+    {
+      "code": "ton",
+      "translationCode": "to",
+      "sha": "9eff0fd002798089f5f7d8307be968a36f1ce433",
+      "size": 947249
+    },
+    {
+      "code": "tur",
+      "translationCode": "tr",
+      "sha": "1f0b331ef29f50ceb7c44da58e38c7ec42314d0a",
+      "size": 4550554
+    },
+    {
+      "code": "uig",
+      "translationCode": "ug",
+      "sha": "36124d6b0ed1c2654a13551203c25b44b4013978",
+      "size": 2794272
+    },
+    {
+      "code": "ukr",
+      "translationCode": "uk",
+      "sha": "d02cf90b2911a3da66dac6ae380bcefb18dd7663",
+      "size": 3825102
+    },
+    {
+      "code": "urd",
+      "translationCode": "ur",
+      "sha": "715a159d4abea25294c82971be28be215b3d1c4a",
+      "size": 1398718
+    },
+    {
+      "code": "uzb",
+      "translationCode": "uz",
+      "sha": "109abc765273b2c9eabd55781f0a619320c80007",
+      "size": 6470703
+    },
+    {
+      "code": "uzb_cyrl",
+      "translationCode": "uz",
+      "sha": "c2ff8b9c282a9712b5f24970927377bc18dea7cf",
+      "size": 1563501
+    },
+    {
+      "code": "vie",
+      "translationCode": "vi",
+      "sha": "e54a5912fb634c581c4a45ae9f37cbc021ec7140",
+      "size": 531275
+    },
+    {
+      "code": "yid",
+      "translationCode": "yi",
+      "sha": "6349588bbabf99f8a812e8231c98c015ea7b60c6",
+      "size": 545606
+    },
+    {
+      "code": "yor",
+      "translationCode": "yo",
+      "sha": "3e0cd582f65f17844039173057dfc015bf19f61d",
+      "size": 963400
+    },
+    {
+      "code": "afr_standard",
+      "translationCode": "af",
+      "sha": "a0b86d86b7d4c6b313e73c79a0fc8c2400f7e292",
+      "size": 7851157,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "afr"
+    },
+    {
+      "code": "amh_standard",
+      "translationCode": "am",
+      "sha": "4025db626bae6dcdcdb2cf96b97bb333565efba9",
+      "size": 8423467,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "amh"
+    },
+    {
+      "code": "ara_standard",
+      "translationCode": "ar",
+      "sha": "42e5c4b387e45f0e54213ce6964543dd6fc6aea0",
+      "size": 2494806,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ara"
+    },
+    {
+      "code": "asm_standard",
+      "translationCode": "as",
+      "sha": "2d6e50d87e38c8ceb80a69dd157c98be07cdced8",
+      "size": 2045457,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "asm"
+    },
+    {
+      "code": "aze_standard",
+      "translationCode": "az",
+      "sha": "8ec678bda6c694269e4ee6b3044533e03846dcc4",
+      "size": 10139884,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "aze"
+    },
+    {
+      "code": "aze_cyrl_standard",
+      "translationCode": "az",
+      "sha": "7ede6aeff904ffed6726b0301dc353b65c353b31",
+      "size": 4726411,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "aze_cyrl"
+    },
+    {
+      "code": "bel_standard",
+      "translationCode": "be",
+      "sha": "5955af0798f8a8451fb39d0fa06626d6660b8645",
+      "size": 11185811,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "bel"
+    },
+    {
+      "code": "ben_standard",
+      "translationCode": "bn",
+      "sha": "68872d3e92dcf3eca491ba0536628c5b8ebfc1c1",
+      "size": 1789439,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ben"
+    },
+    {
+      "code": "bod_standard",
+      "translationCode": "bo",
+      "sha": "8b05da61a341d6385c62a9a376d357fb2048c49c",
+      "size": 1966470,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "bod"
+    },
+    {
+      "code": "bos_standard",
+      "translationCode": "bs",
+      "sha": "4a0e06748ea667c8b4989a050dcdfa1cf2df40e1",
+      "size": 7930443,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "bos"
+    },
+    {
+      "code": "bre_standard",
+      "translationCode": "br",
+      "sha": "ebb6a98c2a60544c40451c9555ac08a8a7bcb98c",
+      "size": 6335020,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "bre"
+    },
+    {
+      "code": "bul_standard",
+      "translationCode": "bg",
+      "sha": "da4ff782facd6ec3a32e9861fe5941a800d194dd",
+      "size": 8371797,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "bul"
+    },
+    {
+      "code": "cat_standard",
+      "translationCode": "ca",
+      "sha": "2602a26aec3622c24fd8687a5028f73163e95d2e",
+      "size": 6502025,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "cat"
+    },
+    {
+      "code": "ceb_standard",
+      "translationCode": "ceb",
+      "sha": "f3d4f3f51514bcd85102f3830dd8a353020c9379",
+      "size": 2402839,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ceb"
+    },
+    {
+      "code": "ces_standard",
+      "translationCode": "cs",
+      "sha": "d8384a707dac23ef68011499c476b6deda41ec33",
+      "size": 16238266,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ces"
+    },
+    {
+      "code": "chi_sim_standard",
+      "translationCode": "zh-CN",
+      "sha": "eeb66cfbd9c02b170a6aeeece673910793d8d8c4",
+      "size": 44366093,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "chi_sim"
+    },
+    {
+      "code": "chi_sim_vert_standard",
+      "translationCode": "zh-CN",
+      "sha": "851996ca18c6c894925a17ab4eb74b78b94b9448",
+      "size": 2470991,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "chi_sim_vert"
+    },
+    {
+      "code": "chi_tra_standard",
+      "translationCode": "zh-TW",
+      "sha": "5f1fe2712b7f7e44d8ca43f351307375b67f08f9",
+      "size": 59025073,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "chi_tra"
+    },
+    {
+      "code": "chi_tra_vert_standard",
+      "translationCode": "zh-TW",
+      "sha": "a7949354a4d7fcf3eaff8da6c94c6546f0b9de1e",
+      "size": 2368306,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "chi_tra_vert"
+    },
+    {
+      "code": "chr_standard",
+      "translationCode": "chr",
+      "sha": "928c5e9ba4e68d2a8a00e39477df405198facfa6",
+      "size": 1458011,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "chr"
+    },
+    {
+      "code": "cos_standard",
+      "translationCode": "co",
+      "sha": "57eb6199a871485933f369ab5df2663331544df1",
+      "size": 2299112,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "cos"
+    },
+    {
+      "code": "cym_standard",
+      "translationCode": "cy",
+      "sha": "b0a06d239c0189071812335dd4aa1150899e2870",
+      "size": 5998144,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "cym"
+    },
+    {
+      "code": "dan_standard",
+      "translationCode": "da",
+      "sha": "f32034cc427963d917a2804d080c52ba1479c1ba",
+      "size": 10578171,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "dan"
+    },
+    {
+      "code": "deu_standard",
+      "translationCode": "de",
+      "sha": "36f623a0b724d546ba831e7eeead33bf4c6cb24f",
+      "size": 15437534,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "deu"
+    },
+    {
+      "code": "deu_latf_standard",
+      "translationCode": "de",
+      "sha": "6b83eb0f1e806d9a8e56073debbae7e7a1978e4f",
+      "size": 22874034,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "deu_latf"
+    },
+    {
+      "code": "div_standard",
+      "translationCode": "dv",
+      "sha": "fcbefb5840f031cd6f6c0120709238c77518760e",
+      "size": 1774548,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "div"
+    },
+    {
+      "code": "dzo_standard",
+      "translationCode": "dz",
+      "sha": "1ba85d80f7807379b5c572a979a9bbe7dca5a2e7",
+      "size": 449626,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "dzo"
+    },
+    {
+      "code": "ell_standard",
+      "translationCode": "el",
+      "sha": "6e60373e4d2421b5248d1f2476903d685c9efb9e",
+      "size": 7543380,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ell"
+    },
+    {
+      "code": "eng_standard",
+      "translationCode": "en",
+      "sha": "f4744c201359d02ced6914c77f0de68ee9bbdd74",
+      "size": 23466654,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "eng"
+    },
+    {
+      "code": "enm_standard",
+      "translationCode": "en",
+      "sha": "492743cf52c091497aea9d768e21648dc38c2cef",
+      "size": 5207312,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "enm"
+    },
+    {
+      "code": "epo_standard",
+      "translationCode": "eo",
+      "sha": "96229c590378d621ef8b62e5b5919f6c15c20b9c",
+      "size": 11330444,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "epo"
+    },
+    {
+      "code": "equ_standard",
+      "translationCode": "",
+      "sha": "27b470378dc8718f1dc5a93931fefa3340336e4d",
+      "size": 2251950,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "equ"
+    },
+    {
+      "code": "est_standard",
+      "translationCode": "et",
+      "sha": "35b510c39e9a37ad5364f5f813fce748cc7f5634",
+      "size": 15301628,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "est"
+    },
+    {
+      "code": "eus_standard",
+      "translationCode": "eu",
+      "sha": "541e17457927106697754503088b805711232fd7",
+      "size": 10145441,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "eus"
+    },
+    {
+      "code": "fao_standard",
+      "translationCode": "fo",
+      "sha": "bae700b870bec421f405d6dd3a75e78b685050c0",
+      "size": 3439785,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fao"
+    },
+    {
+      "code": "fas_standard",
+      "translationCode": "fa",
+      "sha": "a0b9843164d928caad5afb0bd6973c964ba5b0b9",
+      "size": 561272,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fas"
+    },
+    {
+      "code": "fil_standard",
+      "translationCode": "tl",
+      "sha": "4e8d922c4fff8534f151f6a71a5e229523c98a5d",
+      "size": 2509440,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fil"
+    },
+    {
+      "code": "fin_standard",
+      "translationCode": "fi",
+      "sha": "a0b6d153611c0e15246c85752cbba35e81cf5658",
+      "size": 21140513,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fin"
+    },
+    {
+      "code": "fra_standard",
+      "translationCode": "fr",
+      "sha": "250c7749ba301ce50c3317631c6a61b03b6410ce",
+      "size": 14213351,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fra"
+    },
+    {
+      "code": "frm_standard",
+      "translationCode": "fr",
+      "sha": "4a5671ba9dfaa41031da2d16bcfb1c1e29fe4ff9",
+      "size": 17856636,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "frm"
+    },
+    {
+      "code": "fry_standard",
+      "translationCode": "fy",
+      "sha": "8a4b54268e10024f431256701f7ab78899578a39",
+      "size": 1906031,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "fry"
+    },
+    {
+      "code": "gla_standard",
+      "translationCode": "gd",
+      "sha": "af3f2f03291f32b7b83753376e9a989f93f35561",
+      "size": 3068320,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "gla"
+    },
+    {
+      "code": "gle_standard",
+      "translationCode": "ga",
+      "sha": "c508b329ea9e2eab2968b6a73dd5c631072f4088",
+      "size": 4664254,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "gle"
+    },
+    {
+      "code": "glg_standard",
+      "translationCode": "gl",
+      "sha": "45743ab5f7e79e728ea3fe4ce55e66c52ce04175",
+      "size": 8074927,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "glg"
+    },
+    {
+      "code": "grc_standard",
+      "translationCode": "el",
+      "sha": "a306f3e7ce0bb55ff5a45e4b6c4432180e488d08",
+      "size": 7428728,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "grc"
+    },
+    {
+      "code": "guj_standard",
+      "translationCode": "gu",
+      "sha": "f8567c21069972aca110852f7dd2fb4ddc62148b",
+      "size": 1963128,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "guj"
+    },
+    {
+      "code": "hat_standard",
+      "translationCode": "ht",
+      "sha": "d6025d7d09bfab5fa2c52d1f1a13f4320459d3cc",
+      "size": 3326722,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "hat"
+    },
+    {
+      "code": "heb_standard",
+      "translationCode": "he",
+      "sha": "3463445a64e4c6e985fa3ef158c641d729e31511",
+      "size": 5413459,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "heb"
+    },
+    {
+      "code": "hin_standard",
+      "translationCode": "hi",
+      "sha": "aa169cf89557769348aba38b9f5ecbcc682db806",
+      "size": 1651010,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "hin"
+    },
+    {
+      "code": "hrv_standard",
+      "translationCode": "hr",
+      "sha": "0f3604756d8deabaef4b4e244d133b56d726f9c9",
+      "size": 13797409,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "hrv"
+    },
+    {
+      "code": "hun_standard",
+      "translationCode": "hu",
+      "sha": "750965161e2964523be07fdbbca6ec15c0a3dd2c",
+      "size": 18051690,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "hun"
+    },
+    {
+      "code": "hye_standard",
+      "translationCode": "hy",
+      "sha": "fd7b0b81795288c007139d43f50dd7edec341043",
+      "size": 3594112,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "hye"
+    },
+    {
+      "code": "iku_standard",
+      "translationCode": "iu",
+      "sha": "9aea84d105de89fbb3b064cd66491e4e35713fb2",
+      "size": 3797385,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "iku"
+    },
+    {
+      "code": "ind_standard",
+      "translationCode": "id",
+      "sha": "7019b8dc4d3c10a0f92a1f2ee8d954392f5a6cfa",
+      "size": 8279230,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ind"
+    },
+    {
+      "code": "isl_standard",
+      "translationCode": "is",
+      "sha": "20b20af536bdb996196d96b294283f6fa4768a82",
+      "size": 9037703,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "isl"
+    },
+    {
+      "code": "ita_standard",
+      "translationCode": "it",
+      "sha": "92ef3007914cc07e23a57fd3b3c6347cee97abf3",
+      "size": 15951669,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ita"
+    },
+    {
+      "code": "ita_old_standard",
+      "translationCode": "it",
+      "sha": "694c68bc27bd25d09275bf79eb05e5178e3c6656",
+      "size": 17345259,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ita_old"
+    },
+    {
+      "code": "jav_standard",
+      "translationCode": "jw",
+      "sha": "d1df3d6b91150de5699c696c2a0300698751095b",
+      "size": 7386965,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "jav"
+    },
+    {
+      "code": "jpn_standard",
+      "translationCode": "ja",
+      "sha": "7fd5b76b53b2dca7e49e6fb13f704ee31aa16509",
+      "size": 35659159,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "jpn"
+    },
+    {
+      "code": "jpn_vert_standard",
+      "translationCode": "ja",
+      "sha": "b1a31da4ce8e0da4d3849edfbb41650df41ea2db",
+      "size": 3039939,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "jpn_vert"
+    },
+    {
+      "code": "kan_standard",
+      "translationCode": "kn",
+      "sha": "5be4daf6b6fb716f37ffde9c2cf9b06d6b01488c",
+      "size": 3608311,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kan"
+    },
+    {
+      "code": "kat_standard",
+      "translationCode": "ka",
+      "sha": "5bdabae7939de8ff4ae7a9d5adc74669b02a84df",
+      "size": 8744377,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kat"
+    },
+    {
+      "code": "kat_old_standard",
+      "translationCode": "ka",
+      "sha": "53a737cfb517ec65bd3562d028b670b9450523ea",
+      "size": 1082383,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kat_old"
+    },
+    {
+      "code": "kaz_standard",
+      "translationCode": "kk",
+      "sha": "9f66a948a05545b1947bb3c02eec8ea38f643eaf",
+      "size": 9263539,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kaz"
+    },
+    {
+      "code": "khm_standard",
+      "translationCode": "km",
+      "sha": "c6af44581b9e517e480b79b7bea0b6857b91b1aa",
+      "size": 1446906,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "khm"
+    },
+    {
+      "code": "kir_standard",
+      "translationCode": "ky",
+      "sha": "388778a7f54f2b36a58167c088e720f933be6ec0",
+      "size": 15430595,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kir"
+    },
+    {
+      "code": "kmr_standard",
+      "translationCode": "ku",
+      "sha": "1f7671f19acdfb3a3ca6993701e5068118138d69",
+      "size": 3568645,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kmr"
+    },
+    {
+      "code": "kor_standard",
+      "translationCode": "ko",
+      "sha": "cc689b2b2569fdfadd68b55b3914f68c004f5253",
+      "size": 15317715,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kor"
+    },
+    {
+      "code": "kor_vert_standard",
+      "translationCode": "ko",
+      "sha": "016065ca0641b03c43ba2676347a500488300fe6",
+      "size": 1128590,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "kor_vert"
+    },
+    {
+      "code": "lao_standard",
+      "translationCode": "lo",
+      "sha": "6c70a236adebda5f63536fe63304b9bcf1fd517f",
+      "size": 7055204,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "lao"
+    },
+    {
+      "code": "lat_standard",
+      "translationCode": "la",
+      "sha": "5ccd52da62fc14472f1981598b0cf5f936a2f6e2",
+      "size": 9215366,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "lat"
+    },
+    {
+      "code": "lav_standard",
+      "translationCode": "lv",
+      "sha": "2735c157d6aa261b68531063d0c733691a76c83a",
+      "size": 10635271,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "lav"
+    },
+    {
+      "code": "lit_standard",
+      "translationCode": "lt",
+      "sha": "fae4c3669c91c79d2b1ab787ec2108dfd091d391",
+      "size": 12629538,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "lit"
+    },
+    {
+      "code": "ltz_standard",
+      "translationCode": "lb",
+      "sha": "7aa29169a8dc209b960daf0c2a19742e24a6e278",
+      "size": 2606439,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ltz"
+    },
+    {
+      "code": "mal_standard",
+      "translationCode": "ml",
+      "sha": "d9dbf0471ba60dcec41333e59ac858c6a519b4c7",
+      "size": 5953416,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mal"
+    },
+    {
+      "code": "mar_standard",
+      "translationCode": "mr",
+      "sha": "21b2679a0c7e0acbc436eef41edd6928f87897ba",
+      "size": 3193116,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mar"
+    },
+    {
+      "code": "mkd_standard",
+      "translationCode": "mk",
+      "sha": "303578a7aa1eaf3c1b0ff5f3494d9de5cb7ecd36",
+      "size": 5323418,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mkd"
+    },
+    {
+      "code": "mlt_standard",
+      "translationCode": "mt",
+      "sha": "712765599364625897134f589a992c1729100846",
+      "size": 7426902,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mlt"
+    },
+    {
+      "code": "mon_standard",
+      "translationCode": "mn",
+      "sha": "a7be4dd6c6ab13e2ac3edc1e540d0df97d8ee279",
+      "size": 2137055,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mon"
+    },
+    {
+      "code": "mri_standard",
+      "translationCode": "mi",
+      "sha": "5047877b26bfe4d7207cdad3c3503c3edc1b8315",
+      "size": 862986,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mri"
+    },
+    {
+      "code": "msa_standard",
+      "translationCode": "ms",
+      "sha": "406d26835bd9ad47767f387d5fa632a0a84c2adc",
+      "size": 8243366,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "msa"
+    },
+    {
+      "code": "mya_standard",
+      "translationCode": "my",
+      "sha": "0075bb6f9daf0273d2f838b78da3c8bdc5a40799",
+      "size": 4640591,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "mya"
+    },
+    {
+      "code": "nep_standard",
+      "translationCode": "ne",
+      "sha": "98e530c8356872f32f7d98a2c09b174277bbd1ed",
+      "size": 2189424,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "nep"
+    },
+    {
+      "code": "nld_standard",
+      "translationCode": "nl",
+      "sha": "db30235cd1a3f68be97895b735e5386a868d3ae1",
+      "size": 23163950,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "nld"
+    },
+    {
+      "code": "nor_standard",
+      "translationCode": "no",
+      "sha": "f2ce26114b63edb4f18ac3ddf49a16502ce54458",
+      "size": 12397893,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "nor"
+    },
+    {
+      "code": "oci_standard",
+      "translationCode": "oc",
+      "sha": "614c489e10f1bdff83ed0900760ab717b8d3eb7e",
+      "size": 6322100,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "oci"
+    },
+    {
+      "code": "ori_standard",
+      "translationCode": "or",
+      "sha": "1062bf0734201cf1e9be51c2e1d733d570abc2f9",
+      "size": 1480096,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ori"
+    },
+    {
+      "code": "pan_standard",
+      "translationCode": "pa",
+      "sha": "328f806ae121f8070d1c0d7a8ad9149a82a30ecc",
+      "size": 1698789,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "pan"
+    },
+    {
+      "code": "pol_standard",
+      "translationCode": "pl",
+      "sha": "fba79589cd619c21cb5989ec8be2388f1963b52f",
+      "size": 19344135,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "pol"
+    },
+    {
+      "code": "por_standard",
+      "translationCode": "pt",
+      "sha": "992bb0f4cd4d36cae179b9497bec56873e82eaf2",
+      "size": 15336931,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "por"
+    },
+    {
+      "code": "pus_standard",
+      "translationCode": "ps",
+      "sha": "696b52f7d576b9d7684b2ebca637cc2686f606d8",
+      "size": 1772117,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "pus"
+    },
+    {
+      "code": "que_standard",
+      "translationCode": "qu",
+      "sha": "ea481c6f01e6792bf358cd413a5453562d248827",
+      "size": 5026349,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "que"
+    },
+    {
+      "code": "ron_standard",
+      "translationCode": "ro",
+      "sha": "df596d431da3c68cdb98ebefa441959ea139d360",
+      "size": 11008634,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ron"
+    },
+    {
+      "code": "rus_standard",
+      "translationCode": "ru",
+      "sha": "8b71c2d3814369d85f8ca75e7a265aaa3d3ab9ae",
+      "size": 19920885,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "rus"
+    },
+    {
+      "code": "san_standard",
+      "translationCode": "sa",
+      "sha": "7678f930a7bb1973aa0eaf55c4b79aba46122fe5",
+      "size": 12404680,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "san"
+    },
+    {
+      "code": "sin_standard",
+      "translationCode": "si",
+      "sha": "fb27f5cf979c4d4e0b7857717cfc0d89b3692874",
+      "size": 1727443,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "sin"
+    },
+    {
+      "code": "slk_standard",
+      "translationCode": "sk",
+      "sha": "6eb8f38e62b8850ae154850867a0d7a0d439bd56",
+      "size": 14100356,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "slk"
+    },
+    {
+      "code": "slv_standard",
+      "translationCode": "sl",
+      "sha": "89b3622882879c11187156dba7f9a74749afdde1",
+      "size": 9942454,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "slv"
+    },
+    {
+      "code": "snd_standard",
+      "translationCode": "sd",
+      "sha": "27d4842ce140be90f49d5d9aade05734b2b4ed1e",
+      "size": 1694065,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "snd"
+    },
+    {
+      "code": "spa_standard",
+      "translationCode": "es",
+      "sha": "f703e0535e08fce166b3554b330b28f86a369de1",
+      "size": 18256019,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "spa"
+    },
+    {
+      "code": "spa_old_standard",
+      "translationCode": "es",
+      "sha": "76904756d4571d0b32421771acca19885de7a1b7",
+      "size": 19628379,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "spa_old"
+    },
+    {
+      "code": "sqi_standard",
+      "translationCode": "sq",
+      "sha": "1b54161035052524e2cb0785931d9353bd64b398",
+      "size": 8575759,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "sqi"
+    },
+    {
+      "code": "srp_standard",
+      "translationCode": "sr",
+      "sha": "8908c8e7a82b190cd2c8447b209ffeb31d1a2265",
+      "size": 7434267,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "srp"
+    },
+    {
+      "code": "srp_latn_standard",
+      "translationCode": "sr",
+      "sha": "ec7e93da05ef3b5d5d8318a573e3a9322c21b43b",
+      "size": 9375025,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "srp_latn"
+    },
+    {
+      "code": "sun_standard",
+      "translationCode": "su",
+      "sha": "ffaf69cb6a4b75df535f5c9853d6d854264a8f19",
+      "size": 1369513,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "sun"
+    },
+    {
+      "code": "swa_standard",
+      "translationCode": "sw",
+      "sha": "938830f630ca62d9cc4d4479e50f94428e07faa2",
+      "size": 6029030,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "swa"
+    },
+    {
+      "code": "swe_standard",
+      "translationCode": "sv",
+      "sha": "df32ac26c28c36ad1920fa8fd1c17d8d92502ecf",
+      "size": 13627152,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "swe"
+    },
+    {
+      "code": "syr_standard",
+      "translationCode": "syr",
+      "sha": "be57e5986496fdf376dabd381ce3938e9b47615d",
+      "size": 2207238,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "syr"
+    },
+    {
+      "code": "tam_standard",
+      "translationCode": "ta",
+      "sha": "dec17b5fb968c2e50181e08d46a1c261f92e1a29",
+      "size": 3353079,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tam"
+    },
+    {
+      "code": "tat_standard",
+      "translationCode": "tt",
+      "sha": "7174273a0f6ae9072f263cca0161532a855466c9",
+      "size": 1072909,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tat"
+    },
+    {
+      "code": "tel_standard",
+      "translationCode": "te",
+      "sha": "1b1925d2562bd8ebe3dc319b292cefdd35a763ad",
+      "size": 3315170,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tel"
+    },
+    {
+      "code": "tgk_standard",
+      "translationCode": "tg",
+      "sha": "493464182b99cc33f4839f85a98c67f0b1ed90de",
+      "size": 3721580,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tgk"
+    },
+    {
+      "code": "tha_standard",
+      "translationCode": "th",
+      "sha": "fa80ee4baa528376a226e2251b4804593a3f196b",
+      "size": 1072519,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tha"
+    },
+    {
+      "code": "tir_standard",
+      "translationCode": "ti",
+      "sha": "057009ee738ab32a8d1c5be48fd70ec3ff3252ad",
+      "size": 2184930,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tir"
+    },
+    {
+      "code": "ton_standard",
+      "translationCode": "to",
+      "sha": "1d0fe53a088665cf996b52c518d61447a1f157e4",
+      "size": 947262,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ton"
+    },
+    {
+      "code": "tur_standard",
+      "translationCode": "tr",
+      "sha": "81f4b0a8be19d85d29321b7b71d5668616b791d2",
+      "size": 18750612,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "tur"
+    },
+    {
+      "code": "uig_standard",
+      "translationCode": "ug",
+      "sha": "f8cf2f156d0106f26cb104f02fa3c8ab772e2f64",
+      "size": 2794302,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "uig"
+    },
+    {
+      "code": "ukr_standard",
+      "translationCode": "uk",
+      "sha": "65bebacefa7a1df86456df3a7476fdbee252ca85",
+      "size": 12408644,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "ukr"
+    },
+    {
+      "code": "urd_standard",
+      "translationCode": "ur",
+      "sha": "dfc34ada6ec9ce9fe89ac63427b42a487282902a",
+      "size": 1398748,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "urd"
+    },
+    {
+      "code": "uzb_standard",
+      "translationCode": "uz",
+      "sha": "cf9f7e03d87130a2e5ba19566eed00c97ed62f9d",
+      "size": 10757098,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "uzb"
+    },
+    {
+      "code": "uzb_cyrl_standard",
+      "translationCode": "uz",
+      "sha": "434d2776a2a2dcd7eab9069a80bf23f626ec9bf3",
+      "size": 4905658,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "uzb_cyrl"
+    },
+    {
+      "code": "vie_standard",
+      "translationCode": "vi",
+      "sha": "85c1d84f880889e65e2ba32528a43b04babfb5c1",
+      "size": 7763728,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "vie"
+    },
+    {
+      "code": "yid_standard",
+      "translationCode": "yi",
+      "sha": "6fcd77b109171221d9cd2221b3531c6751678537",
+      "size": 4882707,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "yid"
+    },
+    {
+      "code": "yor_standard",
+      "translationCode": "yo",
+      "sha": "35f8142f7327cd563a2fe4d78c9009a2e9ff72f3",
+      "size": 963413,
+      "repository": "tessdata",
+      "revision": "ced78752cc61322fb554c280d13360b35b8684e4",
+      "ocrCode": "yor"
+    },
+    {
+      "code": "afr_best",
+      "translationCode": "af",
+      "sha": "40ac7eabfe869e4d48d8410c1b5cdc7b88a7b39a",
+      "size": 12800552,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "afr"
+    },
+    {
+      "code": "amh_best",
+      "translationCode": "am",
+      "sha": "a25f63e65b0023d95516356d5ab4158feee4fba5",
+      "size": 8389639,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "amh"
+    },
+    {
+      "code": "ara_best",
+      "translationCode": "ar",
+      "sha": "4b687c7d54c86cf6219aebe781b47284fd5d41f0",
+      "size": 12603724,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ara"
+    },
+    {
+      "code": "asm_best",
+      "translationCode": "as",
+      "sha": "c2638071e3f0f8f195a59d4c27073da349a9f662",
+      "size": 11315350,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "asm"
+    },
+    {
+      "code": "aze_best",
+      "translationCode": "az",
+      "sha": "f18d1e9a95b3df16b6229ab99afa010cef718c6e",
+      "size": 6281404,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "aze"
+    },
+    {
+      "code": "aze_cyrl_best",
+      "translationCode": "az",
+      "sha": "5c671e0342f24e065096406b48437c226133ff31",
+      "size": 4700277,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "aze_cyrl"
+    },
+    {
+      "code": "bel_best",
+      "translationCode": "be",
+      "sha": "4421405ac619b62d53bb3a226ed6f1069953566e",
+      "size": 10870278,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "bel"
+    },
+    {
+      "code": "ben_best",
+      "translationCode": "bn",
+      "sha": "b16a79b0bf5a66e70a0f73165ed0eb92c688ee20",
+      "size": 11045427,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ben"
+    },
+    {
+      "code": "bod_best",
+      "translationCode": "bo",
+      "sha": "e6309bdc3ebfac9d7163a0de4da978c52ca23e38",
+      "size": 8623846,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "bod"
+    },
+    {
+      "code": "bos_best",
+      "translationCode": "bs",
+      "sha": "b217d3c2fda11ac8366104679bba533602c76b70",
+      "size": 5264248,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "bos"
+    },
+    {
+      "code": "bre_best",
+      "translationCode": "br",
+      "sha": "d92118421479211ddae32474795f257134f72499",
+      "size": 15640760,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "bre"
+    },
+    {
+      "code": "bul_best",
+      "translationCode": "bg",
+      "sha": "72f4f79f886f1ee4af0fb432f1b39e57cc361ee1",
+      "size": 8844613,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "bul"
+    },
+    {
+      "code": "cat_best",
+      "translationCode": "ca",
+      "sha": "f68513407b07255f7b3a53215e9bc1fa55686e75",
+      "size": 3802329,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "cat"
+    },
+    {
+      "code": "ceb_best",
+      "translationCode": "ceb",
+      "sha": "afa487092c3a865ca6090d6097a7adbbdbe80a96",
+      "size": 3452674,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ceb"
+    },
+    {
+      "code": "ces_best",
+      "translationCode": "cs",
+      "sha": "d762752614325b5b60733804b70b8281ab9c8543",
+      "size": 10918912,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ces"
+    },
+    {
+      "code": "chi_sim_best",
+      "translationCode": "zh-CN",
+      "sha": "da7fa49ded2895ebe974c6ea3a6cc1af8595f1af",
+      "size": 13077423,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "chi_sim"
+    },
+    {
+      "code": "chi_sim_vert_best",
+      "translationCode": "zh-CN",
+      "sha": "2284498de65d8ba930bc2ff71495dccbb5e69832",
+      "size": 13077507,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "chi_sim_vert"
+    },
+    {
+      "code": "chi_tra_best",
+      "translationCode": "zh-TW",
+      "sha": "c1dd109cd5bbec27381f578e9a425cef88466244",
+      "size": 12985735,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "chi_tra"
+    },
+    {
+      "code": "chi_tra_vert_best",
+      "translationCode": "zh-TW",
+      "sha": "930343b23e1a4fa13fd2c666e0655bfaaeba8ec1",
+      "size": 12985521,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "chi_tra_vert"
+    },
+    {
+      "code": "chr_best",
+      "translationCode": "chr",
+      "sha": "87337066d1f6e85eefe33058d5a69b1988e4fa6d",
+      "size": 2258703,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "chr"
+    },
+    {
+      "code": "cos_best",
+      "translationCode": "co",
+      "sha": "a9c0fec80af495e94a5d1400beea6fe97b8a0652",
+      "size": 8830216,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "cos"
+    },
+    {
+      "code": "cym_best",
+      "translationCode": "cy",
+      "sha": "ded660f6f9f1917be5c3e97e7a790da055975906",
+      "size": 8750784,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "cym"
+    },
+    {
+      "code": "dan_best",
+      "translationCode": "da",
+      "sha": "c790ec5c7ae4b0134fce9daa4699334c27bac8fd",
+      "size": 9758142,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "dan"
+    },
+    {
+      "code": "deu_best",
+      "translationCode": "de",
+      "sha": "6dd654880db617f3edfa00bc2ed9c9e3107b8fd0",
+      "size": 8628461,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "deu"
+    },
+    {
+      "code": "deu_latf_best",
+      "translationCode": "de",
+      "sha": "cc64c41d469dd0d2791e26d6da8c0fa5d4ef94c0",
+      "size": 12938047,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "deu_latf"
+    },
+    {
+      "code": "div_best",
+      "translationCode": "dv",
+      "sha": "f1c2794521c8b430f1f29878485b197a6a0d9001",
+      "size": 4574116,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "div"
+    },
+    {
+      "code": "dzo_best",
+      "translationCode": "dz",
+      "sha": "b24a17af8b1354e6947b327fcf5a8fc783932d2b",
+      "size": 3243805,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "dzo"
+    },
+    {
+      "code": "ell_best",
+      "translationCode": "el",
+      "sha": "f6f73870885f4fd6e63371244c7f3d5904e1b276",
+      "size": 8945021,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ell"
+    },
+    {
+      "code": "eng_best",
+      "translationCode": "en",
+      "sha": "176dc3220de7db34d3b3aecbfa42043a6038348b",
+      "size": 15400601,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "eng"
+    },
+    {
+      "code": "enm_best",
+      "translationCode": "en",
+      "sha": "95c4bcce8e0325c81cba03351a322608e0330dff",
+      "size": 13281564,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "enm"
+    },
+    {
+      "code": "epo_best",
+      "translationCode": "eo",
+      "sha": "90aefd6d452e144ba48b5770341be7592cdda76a",
+      "size": 7402169,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "epo"
+    },
+    {
+      "code": "equ_best",
+      "translationCode": "",
+      "sha": "27b470378dc8718f1dc5a93931fefa3340336e4d",
+      "size": 2251950,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "equ"
+    },
+    {
+      "code": "est_best",
+      "translationCode": "et",
+      "sha": "0a5bc369b103b9486f0fc364262dccf2348d3871",
+      "size": 15833749,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "est"
+    },
+    {
+      "code": "eus_best",
+      "translationCode": "eu",
+      "sha": "1ad03ea7fee8bf4fb144b34568db3cf8cfd57096",
+      "size": 7933869,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "eus"
+    },
+    {
+      "code": "fao_best",
+      "translationCode": "fo",
+      "sha": "53ded67d0be8744a32327a8da92ee7b3b20bdcb4",
+      "size": 10030003,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fao"
+    },
+    {
+      "code": "fas_best",
+      "translationCode": "fa",
+      "sha": "326a26e8522dce12596fc0de314710c5cc7055d0",
+      "size": 3325955,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fas"
+    },
+    {
+      "code": "fil_best",
+      "translationCode": "tl",
+      "sha": "7fa2c5af5bdd9c9f308a0429727cb55c0dd41ccf",
+      "size": 8978743,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fil"
+    },
+    {
+      "code": "fin_best",
+      "translationCode": "fi",
+      "sha": "5896d6214ad70a02b8ce4ef969d9d369398324f7",
+      "size": 14369979,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fin"
+    },
+    {
+      "code": "fra_best",
+      "translationCode": "fr",
+      "sha": "f73e7dec0669dbac6443d8f83054b8b2a3146729",
+      "size": 3972885,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fra"
+    },
+    {
+      "code": "frm_best",
+      "translationCode": "fr",
+      "sha": "b1cf37686d494bcdacd177417ffc3c8ccee1b3e9",
+      "size": 4043005,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "frm"
+    },
+    {
+      "code": "fry_best",
+      "translationCode": "fy",
+      "sha": "e085d033be5d871d74a9244ae3dc629c5bdb8bf3",
+      "size": 8442509,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "fry"
+    },
+    {
+      "code": "gla_best",
+      "translationCode": "gd",
+      "sha": "cef7956da4065d023625e759ff9e84a21598b9f5",
+      "size": 9599424,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "gla"
+    },
+    {
+      "code": "gle_best",
+      "translationCode": "ga",
+      "sha": "32f0536d856fa407650e819e31c7a16978bf971e",
+      "size": 3942458,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "gle"
+    },
+    {
+      "code": "glg_best",
+      "translationCode": "gl",
+      "sha": "ed95a43108559b215a43ffce9f58108326028d3c",
+      "size": 12709487,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "glg"
+    },
+    {
+      "code": "grc_best",
+      "translationCode": "el",
+      "sha": "d556abf33b3347f0b7a50c55072fc59619f900aa",
+      "size": 5168122,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "grc"
+    },
+    {
+      "code": "guj_best",
+      "translationCode": "gu",
+      "sha": "2284f7e1c8aeecd01cc1a4c01315b1d739ba762a",
+      "size": 8515761,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "guj"
+    },
+    {
+      "code": "hat_best",
+      "translationCode": "ht",
+      "sha": "0f3d42574c4233a7c67ecda0b0d6329b2271e4f6",
+      "size": 12128251,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "hat"
+    },
+    {
+      "code": "heb_best",
+      "translationCode": "he",
+      "sha": "0fc27335b628e0e7992c58804c0437662ec54b06",
+      "size": 3704077,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "heb"
+    },
+    {
+      "code": "hin_best",
+      "translationCode": "hi",
+      "sha": "bb1e1c2da68a2b56d74fdf49a9dd53e7198b3302",
+      "size": 11895564,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "hin"
+    },
+    {
+      "code": "hrv_best",
+      "translationCode": "hr",
+      "sha": "0c81abc72092231abdd0221279b9f5d963ef649d",
+      "size": 11195424,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "hrv"
+    },
+    {
+      "code": "hun_best",
+      "translationCode": "hu",
+      "sha": "d2cd8ec070f4341f4cf75bdc7da08755c272ffc1",
+      "size": 12350405,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "hun"
+    },
+    {
+      "code": "hye_best",
+      "translationCode": "hy",
+      "sha": "33938b0d9c2e1befec0e485c75a4e2059c022b0b",
+      "size": 6372242,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "hye"
+    },
+    {
+      "code": "iku_best",
+      "translationCode": "iu",
+      "sha": "b964752686f526da8bbac7f10b78ff069539bd5f",
+      "size": 6139484,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "iku"
+    },
+    {
+      "code": "ind_best",
+      "translationCode": "id",
+      "sha": "8df4926187c806b35607519eee0c5a6e970a630a",
+      "size": 8253606,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ind"
+    },
+    {
+      "code": "isl_best",
+      "translationCode": "is",
+      "sha": "bbcd030b8113176ab168f8fcc3df66258a5c4b78",
+      "size": 9486436,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "isl"
+    },
+    {
+      "code": "ita_best",
+      "translationCode": "it",
+      "sha": "8a09dcab553d22307b8110af0848ed71e5560cc8",
+      "size": 8863635,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ita"
+    },
+    {
+      "code": "ita_old_best",
+      "translationCode": "it",
+      "sha": "25ead0d26f2f0d81b7e7f3864247a75c88820ed3",
+      "size": 9852171,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ita_old"
+    },
+    {
+      "code": "jav_best",
+      "translationCode": "jw",
+      "sha": "81e409548f90e43f4bf6fd50a32463553f743ffd",
+      "size": 8650382,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "jav"
+    },
+    {
+      "code": "jpn_best",
+      "translationCode": "ja",
+      "sha": "d2a8eab80ba3aba7654ac789b82f70b64d1cf051",
+      "size": 14330109,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "jpn"
+    },
+    {
+      "code": "jpn_vert_best",
+      "translationCode": "ja",
+      "sha": "ea8e1ab655d629e7865f289f3a8ea6daeb50bb89",
+      "size": 14330809,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "jpn_vert"
+    },
+    {
+      "code": "kan_best",
+      "translationCode": "kn",
+      "sha": "8f2e98e1d36ee516a1638522e569d2c4d11ac86d",
+      "size": 10233763,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kan"
+    },
+    {
+      "code": "kat_best",
+      "translationCode": "ka",
+      "sha": "8abab366b817b7f39a6330cfb6d90205cd32086e",
+      "size": 4487336,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kat"
+    },
+    {
+      "code": "kat_old_best",
+      "translationCode": "ka",
+      "sha": "ec7fe2afe5bca3c257d3a692f606ba0bff4b24f9",
+      "size": 3174400,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kat_old"
+    },
+    {
+      "code": "kaz_best",
+      "translationCode": "kk",
+      "sha": "ef5f6c521b066935bf8a8d5c4d4c7e3436ee3315",
+      "size": 7528853,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kaz"
+    },
+    {
+      "code": "khm_best",
+      "translationCode": "km",
+      "sha": "4b5ab11f50df8205657f407f027a2a25edcbe6f1",
+      "size": 8104332,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "khm"
+    },
+    {
+      "code": "kir_best",
+      "translationCode": "ky",
+      "sha": "77c0efe7dfe613507717dad6a26172f7e5bb5733",
+      "size": 11948344,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kir"
+    },
+    {
+      "code": "kmr_best",
+      "translationCode": "ku",
+      "sha": "fa1780bb1b0c31eab4f17de9d3ee23f6a4cb6e42",
+      "size": 10196464,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kmr"
+    },
+    {
+      "code": "kor_best",
+      "translationCode": "ko",
+      "sha": "c82615b5228c9981c33a0985b32224d97b7fb43a",
+      "size": 12528128,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kor"
+    },
+    {
+      "code": "kor_vert_best",
+      "translationCode": "ko",
+      "sha": "8d5ee900d7cb7b874cb46d615b7873969e783cd1",
+      "size": 3964469,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "kor_vert"
+    },
+    {
+      "code": "lao_best",
+      "translationCode": "lo",
+      "sha": "bdd2715bd1f76852b9430997eef890495e8637ef",
+      "size": 13532551,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "lao"
+    },
+    {
+      "code": "lat_best",
+      "translationCode": "la",
+      "sha": "02b4059d9a5e53d110b072729183d63472d47ec9",
+      "size": 9705145,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "lat"
+    },
+    {
+      "code": "lav_best",
+      "translationCode": "lv",
+      "sha": "bb98786317620461b8253ee5c3f498f4ff9da6ef",
+      "size": 5623473,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "lav"
+    },
+    {
+      "code": "lit_best",
+      "translationCode": "lt",
+      "sha": "1f0b242ee68123ffbfe9eb63e90b2f6e4803c230",
+      "size": 10252680,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "lit"
+    },
+    {
+      "code": "ltz_best",
+      "translationCode": "lb",
+      "sha": "8f4b19a1c6e84cae7255cdc74cb2377724816d68",
+      "size": 12721945,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ltz"
+    },
+    {
+      "code": "mal_best",
+      "translationCode": "ml",
+      "sha": "349b089a477374a6d3bc535f99c0c734b9275a71",
+      "size": 12524967,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mal"
+    },
+    {
+      "code": "mar_best",
+      "translationCode": "mr",
+      "sha": "93d5e21d8c2eeeff34f7865bdef3c87fe472f26a",
+      "size": 13437670,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mar"
+    },
+    {
+      "code": "mkd_best",
+      "translationCode": "mk",
+      "sha": "24be6b1287c8675b747a512c3f71e6609f813a36",
+      "size": 3453054,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mkd"
+    },
+    {
+      "code": "mlt_best",
+      "translationCode": "mt",
+      "sha": "c53d788d276525896ee79609b97a94da06e33b4a",
+      "size": 5060029,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mlt"
+    },
+    {
+      "code": "mon_best",
+      "translationCode": "mn",
+      "sha": "d56f13ede00ec99bda944c87cb62e5b6306be7d3",
+      "size": 8646663,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mon"
+    },
+    {
+      "code": "mri_best",
+      "translationCode": "mi",
+      "sha": "55e52377e078992701d91d36790b21c6731c5514",
+      "size": 3610177,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mri"
+    },
+    {
+      "code": "msa_best",
+      "translationCode": "ms",
+      "sha": "c4816abcc62dab52fe2bb74518b3927fb664e2c8",
+      "size": 8230552,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "msa"
+    },
+    {
+      "code": "mya_best",
+      "translationCode": "my",
+      "sha": "4adbb96ab500fb339f988de33eb8bb5717e8e6a6",
+      "size": 14971060,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "mya"
+    },
+    {
+      "code": "nep_best",
+      "translationCode": "ne",
+      "sha": "2e552631af6d03efb9700819c2302481e31f27d3",
+      "size": 12387399,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "nep"
+    },
+    {
+      "code": "nld_best",
+      "translationCode": "nl",
+      "sha": "e4d30d0e558bab61d618b60722764a1a30596a04",
+      "size": 8903736,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "nld"
+    },
+    {
+      "code": "nor_best",
+      "translationCode": "no",
+      "sha": "8913672c357f44d44b40540dfce7d0469fb7f991",
+      "size": 14312333,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "nor"
+    },
+    {
+      "code": "oci_best",
+      "translationCode": "oc",
+      "sha": "59da8803d1842ac8a2377d70cc47752fc25f0e17",
+      "size": 12917692,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "oci"
+    },
+    {
+      "code": "ori_best",
+      "translationCode": "or",
+      "sha": "7cf73f62541de3eac181453614983e13d1dea0a6",
+      "size": 8110602,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ori"
+    },
+    {
+      "code": "pan_best",
+      "translationCode": "pa",
+      "sha": "bb8e64abf7cb56938dce621c149bdc20a9bbee03",
+      "size": 11893154,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "pan"
+    },
+    {
+      "code": "pol_best",
+      "translationCode": "pl",
+      "sha": "6c149bd1f9bc6da3948ebc81be1a0d9de0a597f4",
+      "size": 11978867,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "pol"
+    },
+    {
+      "code": "por_best",
+      "translationCode": "pt",
+      "sha": "01743fdba931e706f79d86620ce18424036220f2",
+      "size": 8159939,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "por"
+    },
+    {
+      "code": "pus_best",
+      "translationCode": "ps",
+      "sha": "18c502919b3c031cca8cc219ac54cbea90a12bdf",
+      "size": 11987930,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "pus"
+    },
+    {
+      "code": "que_best",
+      "translationCode": "qu",
+      "sha": "8f10669b361bdfc1924938c361ba7b6db90f9e51",
+      "size": 10774587,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "que"
+    },
+    {
+      "code": "ron_best",
+      "translationCode": "ro",
+      "sha": "cafc0e00a05a68175c46c56f6ef3d717231878c2",
+      "size": 9595755,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ron"
+    },
+    {
+      "code": "rus_best",
+      "translationCode": "ru",
+      "sha": "702e3c43c863cf3325002c9d2cc38045e01314a9",
+      "size": 15301764,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "rus"
+    },
+    {
+      "code": "san_best",
+      "translationCode": "sa",
+      "sha": "41a7c21605b0b8e2fd636a38e2969cb606162f06",
+      "size": 15136202,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "san"
+    },
+    {
+      "code": "sin_best",
+      "translationCode": "si",
+      "sha": "96c1864bea3a622997887f041761e3a3a84f6490",
+      "size": 8282713,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "sin"
+    },
+    {
+      "code": "slk_best",
+      "translationCode": "sk",
+      "sha": "09b2dbe22141bd9973d91507f6ed261392527a29",
+      "size": 11542252,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "slk"
+    },
+    {
+      "code": "slv_best",
+      "translationCode": "sl",
+      "sha": "28da1ff38ea817481cb38616c9afd26dcafbf6d6",
+      "size": 5879151,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "slv"
+    },
+    {
+      "code": "snd_best",
+      "translationCode": "sd",
+      "sha": "66c2b387b4b0596d9869d88ea68d146950b0d4d2",
+      "size": 11981538,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "snd"
+    },
+    {
+      "code": "spa_best",
+      "translationCode": "es",
+      "sha": "18ceb5679049d25f9e5486a1571359829530e7e0",
+      "size": 13570187,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "spa"
+    },
+    {
+      "code": "spa_old_best",
+      "translationCode": "es",
+      "sha": "344d09416d0344be4709f7b5b330a5874dfd28b4",
+      "size": 9476925,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "spa_old"
+    },
+    {
+      "code": "sqi_best",
+      "translationCode": "sq",
+      "sha": "45c642b46a964c3b69348bca741978ac2bb998ce",
+      "size": 4631498,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "sqi"
+    },
+    {
+      "code": "srp_best",
+      "translationCode": "sr",
+      "sha": "f353b2ec90eb6ffc1343a469c04b967bfa440b40",
+      "size": 9345851,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "srp"
+    },
+    {
+      "code": "srp_latn_best",
+      "translationCode": "sr",
+      "sha": "76c5c17f14fa9b73cf9a9db6f5961492ce74f72d",
+      "size": 9831713,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "srp_latn"
+    },
+    {
+      "code": "sun_best",
+      "translationCode": "su",
+      "sha": "d8551203bc8b87163e5862b6d40bef14c4d73bd0",
+      "size": 4132820,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "sun"
+    },
+    {
+      "code": "swa_best",
+      "translationCode": "sw",
+      "sha": "af6272eaa471eb63ee69c86ab66083f648c9622d",
+      "size": 4914855,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "swa"
+    },
+    {
+      "code": "swe_best",
+      "translationCode": "sv",
+      "sha": "3d8beb8153194cda278c055a45cf4d808bc37469",
+      "size": 14325549,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "swe"
+    },
+    {
+      "code": "syr_best",
+      "translationCode": "syr",
+      "sha": "e53e8855703092fae154376c6fe90427c3d2db91",
+      "size": 12498294,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "syr"
+    },
+    {
+      "code": "tam_best",
+      "translationCode": "ta",
+      "sha": "8fbaab122ac77d816de3cc8b58ec314db64ca96e",
+      "size": 6023201,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tam"
+    },
+    {
+      "code": "tat_best",
+      "translationCode": "tt",
+      "sha": "ac08e8f9bf5b0ee999ec6e379146e738942c7529",
+      "size": 7585204,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tat"
+    },
+    {
+      "code": "tel_best",
+      "translationCode": "te",
+      "sha": "1c413574a26db896ba3baa4e33f4d17e55f290bd",
+      "size": 9098795,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tel"
+    },
+    {
+      "code": "tgk_best",
+      "translationCode": "tg",
+      "sha": "f2fe50409726f24eec78653f54da85e7e13af263",
+      "size": 4602842,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tgk"
+    },
+    {
+      "code": "tha_best",
+      "translationCode": "th",
+      "sha": "b975c85f60f82febe6f8c5a52a3eb74f3ceb01b9",
+      "size": 7614571,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tha"
+    },
+    {
+      "code": "tir_best",
+      "translationCode": "ti",
+      "sha": "1001e49c7aa955aa868cdbf13270d4ae36010d64",
+      "size": 2410256,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tir"
+    },
+    {
+      "code": "ton_best",
+      "translationCode": "to",
+      "sha": "234fef71961a2f354c98f1ddfd35b648f30aaad8",
+      "size": 3729371,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ton"
+    },
+    {
+      "code": "tur_best",
+      "translationCode": "tr",
+      "sha": "297ecddbccd5e597037d2be34043bb0a0c53f3be",
+      "size": 7456265,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "tur"
+    },
+    {
+      "code": "uig_best",
+      "translationCode": "ug",
+      "sha": "9a6b9bf3fd0642c19b8918d93d0c20761ffe7ce3",
+      "size": 13074609,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "uig"
+    },
+    {
+      "code": "ukr_best",
+      "translationCode": "uk",
+      "sha": "be88f63252a3d9e81cdac161e11e4e8498129cfa",
+      "size": 10859081,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "ukr"
+    },
+    {
+      "code": "urd_best",
+      "translationCode": "ur",
+      "sha": "3815f0640b06255391f69e5b184052c442ee3d34",
+      "size": 7994323,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "urd"
+    },
+    {
+      "code": "uzb_best",
+      "translationCode": "uz",
+      "sha": "5b240340e79802aed87f57cdff0a35ad6a7c10f7",
+      "size": 12953454,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "uzb"
+    },
+    {
+      "code": "uzb_cyrl_best",
+      "translationCode": "uz",
+      "sha": "6826c8a36371683d0b29cf2d5b6a717b92f46e7e",
+      "size": 4325478,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "uzb_cyrl"
+    },
+    {
+      "code": "vie_best",
+      "translationCode": "vi",
+      "sha": "28bc301dc848861eb6ba734b866152b2a04732fc",
+      "size": 12435550,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "vie"
+    },
+    {
+      "code": "yid_best",
+      "translationCode": "yi",
+      "sha": "875531660a3b205f3a01519e0aae82186ec8c6ce",
+      "size": 3278995,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "yid"
+    },
+    {
+      "code": "yor_best",
+      "translationCode": "yo",
+      "sha": "d3c5893d8ca442a6a1e2e05c012f34d9419068d8",
+      "size": 3736121,
+      "repository": "tessdata_best",
+      "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+      "ocrCode": "yor"
+    }
+  ]
+}

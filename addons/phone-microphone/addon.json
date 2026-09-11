@@ -1,0 +1,11 @@
+{
+  "id": "phone-microphone",
+  "name": "Phone Microphone",
+  "version": "1.0.0",
+  "description": "Usá MicYou en Android como micrófono de Windows por Wi-Fi o USB. Requiere VB-CABLE. Audio y procesamiento locales.",
+  "author": "Neeko · MicYou core © LanRhyme",
+  "minAppVersion": "1.0.4",
+  "enabled": false,
+  "permissions": ["ui:tabs"],
+  "commands": []
+}

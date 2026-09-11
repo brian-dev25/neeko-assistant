@@ -8,3 +8,9 @@
 .shazam-actions [data-cancel] { background: #39334b; }
 .shazam-actions [hidden] { display: none; }
 .shazam-panel [data-status] { background: #211d30; border-radius: 10px; padding: 14px; }
+.shazam-history { list-style: none; padding: 0; margin: 0; }
+.shazam-actions input { width: 90px; padding: 10px; border: 1px solid #79618f; border-radius: 8px; background: #211d30; color: #f5f3ff; font: inherit; }
+.shazam-history li { position: relative; margin: 8px 0; padding: 12px; border: 1px solid #514464; border-radius: 10px; overflow-wrap: anywhere; }
+.shazam-history strong, .shazam-history span { display: block; }
+.shazam-history span { color: #bdb4cf; font-size: 12px; }
+.shazam-history button { margin-top: 8px; padding: 5px 12px; border: 1px solid #79618f; border-radius: 6px; background: #39334b; color: #f5f3ff; cursor: pointer; }

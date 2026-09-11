@@ -8,7 +8,13 @@
         <p>Al pulsar Escuchar se capturan 10 segundos del escritorio y se consulta Shazam por Internet. No usa el micrófono.</p>
         <div class="shazam-actions"><button type="button" data-listen>♫ Escuchar</button>
         <button type="button" data-cancel hidden>Cancelar</button></div>
-        <p role="status" aria-live="polite" data-status>Listo para escuchar.</p>`;
+        <p role="status" aria-live="polite" data-status>Listo para escuchar.</p>
+        <h4>Historial de canciones</h4>
+        <label for="shazam-history-limit">Cantidad máxima de canciones</label>
+        <div class="shazam-actions"><input id="shazam-history-limit" type="number" min="1" max="1000" step="1" value="15" required>
+        <button type="button" data-save-limit>Aplicar límite</button></div>
+        <p>Por defecto: 15. Al reducir el límite se conservan las más recientes y se borran las anteriores.</p>
+        <ul class="shazam-history" data-history></ul>`;
     const listen = panel.querySelector('[data-listen]');
     const prepare = panel.querySelector('[data-prepare]');
     const cancel = panel.querySelector('[data-cancel]');
@@ -17,6 +23,51 @@
     let busy = false;
     let preparing = false;
     let unlisten;
+    const limitInput = panel.querySelector('#shazam-history-limit');
+    const saveLimit = panel.querySelector('[data-save-limit]');
+    Neeko.invoke('shazam_history_limit').then(limit => { if (!disposed) limitInput.value = limit; }).catch(error => { status.textContent = String(error); });
+    saveLimit.addEventListener('click', async () => {
+        if (!limitInput.reportValidity()) return;
+        saveLimit.disabled = true;
+        try {
+            await Neeko.invoke('shazam_set_history_limit', { limit: Number(limitInput.value) });
+            await refreshHistory();
+            status.textContent = 'Límite de canciones guardado.';
+        } catch (error) { status.textContent = String(error); }
+        finally { saveLimit.disabled = false; }
+    });
+    async function refreshHistory() {
+        try {
+            const songs = await Neeko.invoke('shazam_history');
+            if (disposed) return;
+            const list = panel.querySelector('[data-history]');
+            list.replaceChildren();
+            if (!songs.length) {
+                const empty = document.createElement('li');
+                empty.textContent = 'Todavía no hay canciones reconocidas.';
+                list.appendChild(empty);
+            }
+            for (const song of songs) {
+                const row = document.createElement('li');
+                const title = document.createElement('strong');
+                title.textContent = song.title;
+                const detail = document.createElement('span');
+                detail.textContent = `${song.artist} · ${new Date(song.found_at).toLocaleString()}`;
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.textContent = 'Borrar';
+                remove.setAttribute('aria-label', `Borrar ${song.title} del historial`);
+                remove.addEventListener('click', async () => {
+                    remove.disabled = true;
+                    try { await Neeko.invoke('shazam_history_delete', { id: song.id }); await refreshHistory(); }
+                    catch (error) { status.textContent = String(error); remove.disabled = false; }
+                });
+                row.append(title, detail, remove);
+                list.appendChild(row);
+            }
+        } catch (error) { if (!disposed) status.textContent = String(error); }
+    }
+    void refreshHistory();
     Neeko.events.on('shazam-setup-progress', event => {
         if (!disposed && preparing) status.textContent = event.payload;
     }).then(stop => { if (disposed) stop(); else unlisten = stop; }).catch(console.error);
@@ -47,7 +98,10 @@
         }, 10000);
         try {
             const result = await Neeko.invoke('shazam_listen');
-            if (!disposed) status.textContent = result.message;
+            if (!disposed) {
+                status.textContent = result.message + (result.history_error ? ` (No se pudo guardar el historial: ${result.history_error})` : '');
+                await refreshHistory();
+            }
         } catch (error) {
             if (!disposed) status.textContent = String(error);
         } finally {

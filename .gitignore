@@ -6,6 +6,8 @@ node_modules/
 scripts/*
 !scripts/bump-version.js
 !scripts/action-policy.test.mjs
+!scripts/vendor-micyou.py
+!scripts/build-screen-ocr.mjs
 /*.bat
 /*.cmd
 /*.vbs
@@ -15,6 +17,9 @@ scripts/*
 src-tauri/target/
 src-tauri/binaries/
 src-tauri/gen/
+dist-portable/
+native/**/bin/
+native/**/obj/
 src-tauri/**/*.sig
 src-tauri/**/latest.json
 *.blockmap
@@ -66,3 +71,8 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Generated experimental driver packages and independent Rust builds
+/driver/build/
+/driver/service/target/
+/driver/transport/target/

@@ -1,0 +1,12 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: transparent; overflow: hidden; height: 100%; font-family: 'Segoe UI', sans-serif; }
+#bar { display: flex; align-items: center; gap: 3px; padding: 4px 6px; background: rgba(23,37,54,0.92); border: 1px solid rgba(96,117,139,0.4); border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.4); user-select: none; }
+#bar:hover { border-color: #2886f9; }
+[data-drag] { cursor: move; flex: 1; display: flex; align-items: center; gap: 3px; }
+button { width: 28px; height: 28px; border: 1px solid rgba(96,117,139,0.5); border-radius: 5px; background: rgba(38,59,80,0.9); color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s, border-color 0.12s; flex-shrink: 0; }
+button:hover { background: rgba(53,87,118,0.95); border-color: #2886f9; }
+button:active { transform: scale(0.94); }
+button.active { background: rgba(40,134,249,0.35); border-color: #2886f9; color: #82c8ff; }
+button[disabled] { opacity: 0.4; cursor: default; }
+#status { font-size: 10px; color: #8fa8c2; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 4px; flex-shrink: 1; }

@@ -6,6 +6,10 @@ const input = document.getElementById('chat-input');
 const send = document.getElementById('send-btn');
 const status = document.getElementById('status');
 const openUrl = url => invoke('open_url', { url });
+let petEvents = Promise.resolve();
+const petState = state => {
+    petEvents = petEvents.then(() => window.__TAURI__.event.emitTo('main', 'neeko:chat-state', state)).catch(console.error);
+};
 
 function appendMessage(text, role = 'assistant', info) {
     document.getElementById('welcome')?.remove();
@@ -25,6 +29,7 @@ const client = new ChatClient({
     cancel: session => invoke('assistant_cancel', { session: `chat-window:${session}` }),
 }, {
     busy: value => {
+        petState({ state: value ? 'thinking' : 'idle' });
         send.textContent = value ? '\u2715' : '\u27a4';
         send.classList.toggle('cancel-mode', value);
         send.title = value ? 'Cancelar' : 'Enviar';
@@ -33,12 +38,16 @@ const client = new ChatClient({
         if (!value) { send.disabled = false; input.focus(); }
     },
     confirm: (proposal, signal) => {
+        petState({ state: 'waiting' });
         status.textContent = 'Esperando tu confirmación';
         return confirmationControls(document.getElementById('action-confirmation'), document.getElementById('action-details'),
             document.getElementById('action-yes'), document.getElementById('action-no'), proposal, signal, 'es', openUrl);
     },
-    executing: approved => { status.textContent = approved ? 'Ejecutando…' : 'Cancelando acción…'; },
-    message: (text, info) => appendMessage(text, 'assistant', info),
+    executing: approved => {
+        petState({ state: approved ? 'thinking' : 'waiting' });
+        status.textContent = approved ? 'Ejecutando…' : 'Cancelando acción…';
+    },
+    message: (text, info) => { appendMessage(text, 'assistant', info); petState({ state: 'reply', text }); },
     error: text => appendMessage(text, 'error'),
 });
 
@@ -52,6 +61,7 @@ document.getElementById('input-bar').addEventListener('submit', event => {
     void client.send(text);
 });
 async function cancelRequest() {
+    petState({ state: 'cancelled' });
     send.disabled = true;
     try { await client.cancel(); appendMessage('Solicitud cancelada.'); }
     catch (error) { appendMessage(String(error), 'error'); }

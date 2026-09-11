@@ -19,6 +19,8 @@ use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::{broadcast, watch};
 
 mod addon_manager;
+mod phone_microphone;
+mod screen_translate;
 mod assistant;
 mod research;
 mod pet_region;
@@ -34,6 +36,7 @@ mod web_server;
 const LLAMA_SERVER_URL: &str = "http://127.0.0.1:8080";
 
 static LLAMA_PROCESS: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
+static LLAMA_LIFECYCLE: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 static EXIT_REQUESTED: AtomicBool = AtomicBool::new(false);
 static DOWNLOAD_PROGRESS: OnceLock<broadcast::Sender<DownloadProgress>> = OnceLock::new();
 static CANCEL_DOWNLOADS: OnceLock<Mutex<HashMap<String, watch::Sender<bool>>>> = OnceLock::new();
@@ -280,7 +283,9 @@ pub(crate) fn apply_start_with_windows(app: &AppHandle, enabled: bool) -> Result
     let autostart_manager = app.autolaunch();
     if enabled {
         autostart_manager.enable().map_err(|e| e.to_string())?;
-    } else {
+    } else if autostart_manager.is_enabled().map_err(|e| e.to_string())? {
+        // Deleting a missing Windows Run entry returns ERROR_FILE_NOT_FOUND.
+        // Saving an already disabled preference should be a successful no-op.
         autostart_manager.disable().map_err(|e| e.to_string())?;
     }
     Ok(())
@@ -387,6 +392,7 @@ fn set_neeko_3d_animation(animation: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn start_llama_server() -> Result<String, String> {
+    let _lifecycle = LLAMA_LIFECYCLE.lock().await;
     let model_path = get_model_path();
     if model_path.is_empty() {
         stop_tracked_llama_process();
@@ -411,25 +417,33 @@ async fn start_llama_server() -> Result<String, String> {
         }
     }
 
-    if model_path.is_empty() {
-        return Err("No encontré el modelo GGUF".to_string());
-    }
-
     let config = config::AppConfig::load();
-    let mut command = build_model_server_command(&config, &model_path)?;
+    if !is_llama_server_running() {
+        let mut command = build_model_server_command(&config, &model_path)?;
 
-    #[cfg(target_os = "windows")]
-    command.creation_flags(0x08000000);
+        #[cfg(target_os = "windows")]
+        command.creation_flags(0x08000000);
 
-    let child = command.spawn().map_err(|e| format!("Error: {}", e))?;
-    eprintln!("[NEEKO] llama-server spawned OK");
-    if let Ok(mut process) = llama_process().lock() {
-        *process = Some(child);
+        let child = command.spawn().map_err(|e| format!("Error: {}", e))?;
+        eprintln!("[NEEKO] llama-server spawned; waiting for /health");
+        if let Ok(mut process) = llama_process().lock() {
+            *process = Some(child);
+        }
     }
 
     // Wait for ready
-    for _ in 0..30 {
+    for _ in 0..60 {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        {
+            let mut process = llama_process().lock().map_err(|e| e.to_string())?;
+            if let Some(child) = process.as_mut() {
+                if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
+                    *process = None;
+                    set_llama_was_running_value(false);
+                    return Err(format!("llama-server se cerró antes de iniciar ({status}). Verificá que el ejecutable tenga sus DLL y que el modelo sea compatible."));
+                }
+            }
+        }
         if let Ok(resp) = client
             .get(format!("{}/health", LLAMA_SERVER_URL))
             .send()
@@ -442,7 +456,9 @@ async fn start_llama_server() -> Result<String, String> {
         }
     }
 
-    Err("LLaMA no arrancó a tiempo".to_string())
+    stop_tracked_llama_process();
+    set_llama_was_running_value(false);
+    Err("LLaMA no arrancó a tiempo. Revisá el modelo y los recursos disponibles.".to_string())
 }
 
 fn build_model_server_command(
@@ -480,6 +496,7 @@ fn build_llama_server_command(
         exe_dir
             .join("binaries")
             .join("llama-server-x86_64-pc-windows-msvc.exe"),
+        exe_dir.join("llama-server.exe"),
         exe_dir
             .join("..\\..\\binaries")
             .join("llama-server-x86_64-pc-windows-msvc.exe"),
@@ -490,7 +507,14 @@ fn build_llama_server_command(
 
     let sidecar_exe = candidates_exe
         .iter()
-        .find(|p| p.exists())
+        .find(|p| {
+            if !p.is_file() { return false; }
+            let mut probe = Command::new(p);
+            if let Some(parent) = p.parent() { probe.current_dir(parent); }
+            #[cfg(windows)]
+            probe.creation_flags(0x08000000);
+            probe.arg("--version").output().is_ok_and(|result| result.status.success())
+        })
         .cloned()
         .ok_or_else(|| "No encontre el sidecar llama-server.exe".to_string())?;
 
@@ -911,6 +935,7 @@ ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 
 #[tauri::command]
 async fn stop_llama_server() -> Result<String, String> {
+    let _lifecycle = LLAMA_LIFECYCLE.lock().await;
     set_llama_was_running_value(false);
     let mut process = llama_process().lock().unwrap();
     if let Some(mut child) = process.take() {
@@ -1222,7 +1247,7 @@ async fn check_local_ai() -> Result<String, String> {
         }
     }
 
-    Err("not_running".to_string())
+    Ok("stopped".to_string())
 }
 
 #[tauri::command]
@@ -3081,8 +3106,10 @@ fn addon_enable(addon_id: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn addon_disable(addon_id: String) -> Result<String, String> {
+async fn addon_disable(app: AppHandle, addon_id: String) -> Result<String, String> {
     addon_manager().disable_addon(&addon_id)?;
+    if addon_id == "phone-microphone" { phone_microphone::stop().await?; }
+    if addon_id == "screen-translate" { screen_translate::stop(&app).await; }
     Ok(format!("Addon {} deshabilitado", addon_id))
 }
 
@@ -3231,12 +3258,18 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             addon_list,
+            screen_translate::screen_translate,
+            phone_microphone::phone_microphone,
             addon_enable,
             addon_disable,
             addon_get_js,
             addon_get_css,
             music_recognition::shazam_listen,
             music_recognition::shazam_prepare,
+            music_recognition::shazam_history,
+            music_recognition::shazam_history_limit,
+            music_recognition::shazam_set_history_limit,
+            music_recognition::shazam_history_delete,
             music_recognition::shazam_cancel,
             addon_get_all_js,
             addon_get_all_css,
@@ -3330,12 +3363,26 @@ pub fn run() {
         ])
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if _window.label() == "screen-translate-overlay" {
+                    api.prevent_close();
+                    let app = _window.app_handle().clone();
+                    tauri::async_runtime::spawn(async move { screen_translate::stop(&app).await; });
+                    return;
+                }
                 if !EXIT_REQUESTED.load(Ordering::SeqCst) {
                     api.prevent_close();
                     let _ = _window.hide();
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running neeko assistant");
+        .build(tauri::generate_context!())
+        .expect("error while building neeko assistant")
+        .run(|_app, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                tauri::async_runtime::block_on(screen_translate::stop(_app));
+                if let Err(error) = tauri::async_runtime::block_on(phone_microphone::stop()) {
+                    eprintln!("[NEEKO Phone Microphone] Cleanup: {error}");
+                }
+            }
+        });
 }
