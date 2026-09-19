@@ -58,21 +58,21 @@
                 <label>Contorno<input name="outlineColor" type="color" value="#000000"></label>
                 <label class="st-check"><input name="verticalText" type="checkbox"> Texto vertical (japonés)</label>
                 <label class="st-check"><input name="autoFontSize" type="checkbox"> Tamaño automático de fuente</label>
-                <label>Fuente m?nima (px)<input name="minFontSize" type="number" min="8" max="48" value="10"></label>
-                <label>Fuente m?xima (px)<input name="maxFontSize" type="number" min="8" max="72" value="48"></label>
+                <label>Fuente mínima (px)<input name="minFontSize" type="number" min="8" max="48" value="10"></label>
+                <label>Fuente máxima (px)<input name="maxFontSize" type="number" min="8" max="72" value="48"></label>
                 <label class="st-check"><input name="expandBlocks" type="checkbox" checked> Ampliar cajas sin tapar otros bloques</label>
-                <label class="st-check"><input name="autoColors" type="checkbox"> Colores autom?ticos desde la imagen</label>
+                <label class="st-check"><input name="autoColors" type="checkbox"> Colores automáticos desde la imagen</label>
                 <label class="st-check"><input name="ttsEnabled" type="checkbox"> Leer traducción en voz alta</label>
                 <label>Velocidad TTS (-10 a 10)<input name="ttsRate" type="number" min="-10" max="10" value="0"></label>
                 <p>El modo sobre bloques deja pasar los clics al juego. Ctrl + Alt + F10 permite desbloquearlo.</p>
             </details>
-            <details><summary>Texto y traducci?n</summary>
-                <label class="st-check"><input name="mergeParagraphs" type="checkbox" checked> Agrupar l?neas de un mismo p?rrafo</label>
-                <label class="st-check"><input name="joinLines" type="checkbox" checked> Unir saltos de l?nea dentro de cada bloque al traducir</label>
-                <label class="st-check"><input name="batchTranslation" type="checkbox" checked> Traducir bloques juntos (con comprobaci?n de separadores)</label>
-                <label class="st-check"><input name="persistentCache" type="checkbox"> Conservar cach? de traducciones al reiniciar</label>
-                <p>La cach? guarda texto y traducciones en este equipo. No a?ade un historial al panel.</p>
-                <button type="button" data-action="clear-cache">Borrar cach? guardada</button>
+            <details><summary>Texto y traducción</summary>
+                <label class="st-check"><input name="mergeParagraphs" type="checkbox" checked> Agrupar líneas de un mismo párrafo</label>
+                <label class="st-check"><input name="joinLines" type="checkbox" checked> Unir saltos de línea dentro de cada bloque al traducir</label>
+                <label class="st-check"><input name="batchTranslation" type="checkbox" checked> Traducir bloques juntos (con comprobación de separadores)</label>
+                <label class="st-check"><input name="persistentCache" type="checkbox"> Conservar caché de traducciones al reiniciar</label>
+                <p>La caché guarda texto y traducciones en este equipo. No añade un historial al panel.</p>
+                <button type="button" data-action="clear-cache">Borrar caché guardada</button>
             </details>
             <details><summary>Correcciones y diccionario por juego</summary>
                 <label class="st-check"><input name="wholeWords" type="checkbox"> Aplicar correcciones solo a palabras completas</label>
@@ -126,6 +126,41 @@
             <p data-result-translation hidden></p>
         </fieldset>`;
     const $ = selector => panel.querySelector(selector);
+    // Keep a short everyday workflow; move the existing controls rather than
+    // duplicating inputs or maintaining a second set of settings.
+    const advanced = document.createElement('details');
+    advanced.className = 'st-advanced';
+    advanced.innerHTML = '<summary>Ajustes avanzados</summary><p class="st-hint">Motor de reconocimiento, apariencia, diccionarios y perfiles.</p>';
+    const basic = document.createElement('fieldset');
+    basic.dataset.basicOptions = '';
+    basic.innerHTML = '<legend>1 · Idiomas</legend>';
+    const area = document.createElement('fieldset');
+    area.dataset.basicOptions = '';
+    area.innerHTML = '<legend>2 · Elegí qué traducir</legend>';
+    const actions = document.createElement('fieldset');
+    actions.className = 'st-primary';
+    actions.innerHTML = '<legend>3 · Traducir</legend><div class="st-actions"></div>';
+    const result = $('[data-result-empty]').closest('fieldset');
+    const prepare = $('[data-action="prepare"]');
+    prepare.textContent = 'Preparar traductor';
+    $('[name="source"]').closest('label').firstChild.textContent = 'Idioma del juego';
+    basic.append(prepare, $('[name="source"]').closest('label'), $('[name="target"]').closest('label'));
+    const select = $('[data-action="select"]');
+    select.textContent = 'Elegir área de la pantalla';
+    area.append(select, $('[data-region]'));
+    const actionRow = actions.querySelector('.st-actions');
+    for (const [action, title] of [['once','Probar una vez'],['start','Iniciar continuo'],['stop','Detener']]) {
+        const button = $(`[data-action="${action}"]`); button.textContent = title; actionRow.append(button);
+    }
+    actions.append($('[data-status]'), $('[data-error]'));
+    for (const fieldset of [...panel.children].filter(el => el.tagName === 'FIELDSET' && el !== result)) advanced.append(fieldset);
+    advanced.querySelectorAll('details[open]').forEach(el => el.open = false);
+    // Detailed operations remain available, but no longer interrupt setup.
+    panel.replaceChildren();
+    const title = document.createElement('h4'); title.textContent = 'Traductor de pantalla';
+    const intro = document.createElement('p'); intro.className = 'st-hint';
+    intro.textContent = 'Elegí el idioma de destino, marcá el texto y comenzá. No usa la IA de Neeko.';
+    panel.append(title, intro, basic, area, actions, result, advanced);
     let disposed = false, busy = false, state = null, off, offShortcuts;
     let settingsKey = '', languagesKey = '', profilesKey = '', windowsKey = '';
     const displayNames = new Intl.DisplayNames(['es'], { type: 'language' });
@@ -152,8 +187,10 @@
         for (const input of panel.querySelectorAll('input[type="number"]')) if (!input.reportValidity()) throw new Error('Revisá los valores de configuración.');
         return {
             ...(state?.settings ?? {}),
-            ...Object.fromEntries(['colorFilter','filterColor','colorTolerance','erode','mergeParagraphs','joinLines','batchTranslation','persistentCache','wholeWords','minFontSize','maxFontSize','autoColors','expandBlocks'].map(name=>{
-                const input=$(`[name="${name}"]`);return [name,input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value];
+            ...Object.fromEntries(['colorFilter','filterColor','colorTolerance','erode','mergeParagraphs','joinLines','batchTranslation','persistentCache','wholeWords','minFontSize','maxFontSize','autoColors','expandBlocks'].flatMap(name=>{
+                const input=$(`[name="${name}"]`);
+                if (!input) return [];
+                return [[name,input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value]];
             })),
             inputMode:$('[name="inputMode"]').value,
             region: state?.settings.region ?? null,
@@ -184,6 +221,7 @@
     function controls() {
         const running = !!state?.active || ['preparing', 'selecting'].includes(state?.phase);
         $('[data-options]').disabled = busy || running || !state;
+        panel.querySelectorAll('[data-basic-options]').forEach(group => group.disabled = busy || running || !state);
         $('[data-profiles]').disabled = busy || running || !state;
         $('[name="engine"]').disabled=busy || running || !state;
         $('[name="tesseractEnglishFilter"]').disabled=busy || running || !state;
@@ -222,7 +260,7 @@
         }
         $('[data-metrics]').textContent=`Consultas: ${value.requests ?? 0} · Caché: ${value.cacheHits ?? 0} · ${value.paused ? 'Pausado' : value.locked ? 'Clics pasan al juego' : 'Overlay editable'}`;
         const region = value.settings.region;
-        $('[data-region]').textContent = region ? `Principal: ${region.width} × ${region.height} px en (${region.x}, ${region.y}). Adicionales: ${value.settings.regions?.length ?? 0} · Exclusiones: ${value.settings.exclusions?.length ?? 0}.` : 'Sin región seleccionada.';
+        $('[data-region]').textContent = region ? `Área seleccionada · ${region.width} × ${region.height} píxeles.` : 'Marcá con el mouse el texto del juego que querés traducir.';
         const profileKey = JSON.stringify(value.profiles);
         if (profilesKey !== profileKey) {
             profilesKey = profileKey;
@@ -251,11 +289,14 @@
         catch (e) { error(e); }
         finally { busy = false; if (!disposed) controls(); }
     }
-    panel.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => perform(async () => {
+    panel.querySelectorAll('[data-action]').forEach(button => {
+        if (['import-mort-db','import-mort-simple','export-mort-db','clear-glossary'].includes(button.dataset.action)) return;
+        button.addEventListener('click', () => perform(async () => {
         const action = button.dataset.action;
-        if (['settings', 'start', 'once', 'select','select-add','select-exclude','install','export'].includes(action)) await call('settings', readSettings());
+        if (['settings', 'prepare', 'start', 'once', 'select','select-add','select-exclude','install','export'].includes(action)) await call('settings', readSettings());
         if (action !== 'settings') await call(action);
-    })));
+        }));
+    });
     $('[data-reset-regions]').addEventListener('click',()=>perform(()=>call('settings',{...readSettings(),regions:[],exclusions:[]})));
     $('[data-profile-save]').addEventListener('click', () => perform(async () => {
         const name = $('[data-profile-name]').value.trim();

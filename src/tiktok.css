@@ -1,0 +1,22 @@
+.status.warning { border-color: #eab308; }
+.status p { overflow-wrap: anywhere; }
+#original-btn {
+    padding: 10px 14px;
+    border: 1px solid #49405e;
+    border-radius: 6px;
+    background: #252033;
+    color: #eee;
+    cursor: pointer;
+}
+#original-btn:disabled { opacity: 0.65; cursor: default; }
+.engine-panel { display: grid; gap: 12px; }
+.engine-panel p { color: #bdb6ce; font-size: 13px; line-height: 1.5; }
+#engine-requirements { font-size: 12px; }
+select { width: 100%; min-height: 42px; padding: 8px; color: #f5f3ff; background: #211d30; border: 1px solid #49405e; border-radius: 6px; font: inherit; }
+header, footer { flex-shrink: 0; }
+.engine-guide { padding: 16px; border: 1px solid #423554; border-left: 3px solid #a78bfa; border-radius: 6px; background: #191522; }
+.engine-guide dl { display: grid; gap: 12px; }
+.engine-guide dt { color: #e2d6ff; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.engine-guide dd { margin: 0; color: #c8c1d6; font-size: 13px; line-height: 1.5; }
+#engine-mode-guide { margin-top: 14px; padding-top: 12px; border-top: 1px solid #423554; }
+.engine-guide .engine-evidence { margin-top: 14px; color: #aaa1bb; font-size: 12px; }

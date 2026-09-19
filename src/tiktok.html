@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preparar para TikTok</title>
+    <link rel="stylesheet" href="compress.css">
+    <link rel="stylesheet" href="tiktok.css">
+</head>
+<body>
+    <div id="app">
+        <header id="top-bar" data-tauri-drag-region>
+            <div><strong>Preparar para TikTok</strong><span>Neeko Assistant</span></div>
+            <div id="window-controls">
+                <button id="minimize-btn" type="button" title="Minimizar">−</button>
+                <button id="close-btn" type="button" title="Cerrar">×</button>
+            </div>
+        </header>
+        <main>
+            <section class="file-zone">
+                <div><label for="video-path">Video de entrada</label>
+                    <input id="video-path" type="text" placeholder="Elegí un video o pegá su ruta completa"></div>
+                <button id="pick-file-btn" type="button">Elegir archivo</button>
+            </section>
+            <section class="engine-panel">
+                <label for="engine-select">Motor
+                    <select id="engine-select" disabled><option>Cargando motores…</option></select>
+                </label>
+                <p id="engine-description"></p>
+                <p id="engine-requirements"></p>
+                <div id="engine-options" class="settings-grid"></div>
+                <aside class="engine-guide" aria-label="Guía del motor seleccionado" aria-live="polite">
+                    <dl>
+                        <div><dt>Cuándo probarlo</dt><dd id="engine-use"></dd></div>
+                        <div><dt>Qué cambia</dt><dd id="engine-change"></dd></div>
+                        <div><dt>Tené en cuenta</dt><dd id="engine-limit"></dd></div>
+                    </dl>
+                    <p id="engine-mode-guide" hidden></p>
+                    <p class="engine-evidence">Uso experimental: ningún motor tiene una mejora garantizada en TikTok. Compará cada salida con una subida del original.</p>
+                </aside>
+            </section>
+            <section class="hint">
+                <strong>Prepará tu video para subirlo</strong>
+                <p>Guardará una copia identificada por motor junto al video, conservando el original. Mistic recodifica; los otros motores modifican contenedor o tiempos.</p>
+                <p>La copia para subir puede no mostrar imagen en el reproductor de Windows. Usá el original para revisar el video.</p>
+            </section>
+            <section id="status" class="status idle" role="status" aria-live="polite">
+                <span id="status-title">Listo</span>
+                <p id="status-detail">Elegí un video y un motor para empezar.</p>
+            </section>
+        </main>
+        <footer>
+            <button id="original-btn" type="button" disabled>Ver original</button>
+            <button id="clear-btn" type="button" disabled>Abrir carpeta</button>
+            <button id="compress-btn" type="button" disabled>Preparar para TikTok</button>
+        </footer>
+    </div>
+    <script type="module" src="tiktok.js"></script>
+</body>
+</html>

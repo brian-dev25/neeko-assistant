@@ -57,6 +57,10 @@
       }
     }
   },
+  "open_tiktok_window": {
+    "label": "Preparar video para TikTok / Open TikTok video preparation",
+    "fields": {}
+  },
   "open_compressor_window": {
     "label": "Abrir compresor de video / Open video compressor",
     "fields": {

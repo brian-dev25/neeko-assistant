@@ -6,17 +6,21 @@ export class ChatClient {
         this.session = session;
         this.history = [];
         this.busy = false;
+        this.requestId = null;
     }
 
     async send(text) {
         if (this.busy || !text.trim()) return;
         this.busy = true;
+        this.requestId = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-');
         const controller = new AbortController();
         this.controller = controller;
         this.ui.busy(true);
+        const progress = startProgress(this.ui, controller.signal, this.transport, this.requestId);
         this.history.push({ role: 'user', content: text.trim() });
         try {
-            const reply = await this.transport.chat(this.session, this.history.slice(-40));
+            const reply = await this.transport.chat(this.session, this.history.slice(-40), this.requestId);
+            progress.stop();
             if (controller.signal.aborted) return;
             this.history.push({ role: 'assistant', content: JSON.stringify({ kind: reply.kind, message: reply.message, proposal: reply.details }) });
             if (reply.kind === 'action' && reply.proposal_id && reply.details) {
@@ -27,14 +31,18 @@ export class ChatClient {
                 const saveAccount = approved && reply.can_save_account === true && choice?.saveAccount === true;
                 if (controller.signal.aborted) return;
                 this.ui.executing?.(approved);
+                progress.stop();
+                if (approved && typeof reply.execution_message === 'string' && reply.execution_message.trim()) {
+                    deliverMessage(this.ui, reply.execution_message);
+                }
                 const result = saveAccount
                     ? await this.transport.decide(this.session, reply.proposal_id, approved, true)
                     : await this.transport.decide(this.session, reply.proposal_id, approved);
                 if (controller.signal.aborted) return;
                 this.history.push({ role: 'assistant', content: `App action result (${approved ? 'approved' : 'declined'}): ${result}` });
-                this.ui.message(result, approved ? reply.info : undefined);
+                deliverMessage(this.ui, result, approved ? reply.info : undefined, approved ? reply.sources : undefined);
             } else if (reply.kind === 'conversation' || reply.kind === 'question') {
-                this.ui.message(reply.message, reply.info);
+                deliverMessage(this.ui, reply.message, reply.info, reply.sources);
             } else {
                 throw new Error('Invalid assistant response');
             }
@@ -45,6 +53,7 @@ export class ChatClient {
                 this.ui.error(message);
             }
         } finally {
+            progress.stop();
             this.history.splice(0, Math.max(0, this.history.length - 40));
             if (this.controller === controller && !this.cancelling) {
                 this.controller = null;
@@ -62,6 +71,65 @@ export class ChatClient {
         try { await this.transport.cancel(this.session); }
         finally { this.controller = null; this.cancelling = false; this.busy = false; this.ui.busy(false); }
     }
+}
+
+function deliverMessage(ui, text, info, sources) {
+    if (Array.isArray(sources) && sources.length) ui.message(text, info, sources);
+    else ui.message(text, info);
+}
+
+const PHASE_LABELS = {
+    planning: { es: 'Preparando investigación…', en: 'Planning research…' },
+    searching: { es: 'Buscando fuentes…', en: 'Searching sources…' },
+    reading: { es: 'Leyendo contenido…', en: 'Reading content…' },
+    checking: { es: 'Comprobando datos…', en: 'Checking data…' },
+    writing: { es: 'Preparando respuesta…', en: 'Writing answer…' },
+    complete: { es: 'Listo', en: 'Done' },
+    cancelled: { es: 'Cancelado', en: 'Cancelled' },
+    error: { es: 'Error', en: 'Error' },
+    idle: { es: 'Pensando…', en: 'Thinking…' },
+};
+
+function startProgress(ui, signal, transport, requestId) {
+    if (typeof ui.progress !== 'function') return { stop() {} };
+    let timer = null;
+    let active = true;
+    let lastSequence = 0;
+
+    async function poll() {
+        if (!active || signal.aborted) return;
+        try {
+            const state = await transport.progress(requestId);
+            if (!active || signal.aborted) return;
+            if (state && (state.sequence || 0) > lastSequence) {
+                lastSequence = state.sequence || 0;
+                const lang = ui.language || 'es';
+                const label = PHASE_LABELS[state.phase] || PHASE_LABELS.idle;
+                ui.progress(state.phase, {
+                    phase: state.phase,
+                    text: label[lang] || label.es,
+                    operations: state.completed_operations || 0,
+                    domain: state.domain || null,
+                });
+            }
+        } catch {
+            // Silently ignore polling errors
+        }
+        if (active && !signal.aborted) {
+            timer = setTimeout(poll, 800);
+        }
+    }
+
+    // Start with neutral indicator, then begin polling after short delay
+    ui.progress('thinking', { phase: 'thinking', text: ui.language === 'en' ? 'Thinking…' : 'Pensando…' });
+    if (typeof transport.progress === 'function') timer = setTimeout(poll, 600);
+
+    return {
+        stop() {
+            active = false;
+            if (timer) clearTimeout(timer);
+        }
+    };
 }
 
 export function confirmationText(language) {
@@ -139,23 +207,63 @@ export function sourceUrl(info) {
     } catch { return null; }
 }
 
-export function attachInfo(parent, info, language = 'es', openUrl) {
-    const url = sourceUrl(info);
-    if (!url) return null;
-    const link = document.createElement('a');
-    link.className = 'assistant-info-trigger';
-    link.textContent = 'Info';
-    link.href = url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.title = language === 'en' ? 'Open source' : 'Abrir fuente';
-    link.setAttribute('aria-label', `${link.title}: ${new URL(url).hostname}`);
-    link.style.cssText = 'display:block;width:fit-content;margin:10px auto 0;padding:6px 14px;background:#38265b;color:#f5f3ff;border:1px solid #a78bfa;border-radius:8px;cursor:pointer;text-decoration:none';
-    if (openUrl) link.onclick = async event => {
-        event.preventDefault();
-        try { await openUrl(url); }
-        catch (error) { console.error('Could not open source:', error); }
+export function attachInfo(parent, info, language = 'es', openUrl, sources = []) {
+    const validSources = Array.isArray(sources) ? sources.filter(source => sourceUrl(source?.url)) : [];
+    const fallbackUrl = sourceUrl(info);
+    if (!validSources.length && !fallbackUrl) return null;
+    const button = document.createElement(validSources.length > 1 ? 'button' : 'a');
+    button.className = 'assistant-info-trigger';
+    button.textContent = 'Info';
+    button.style.cssText = 'display:block;width:fit-content;margin:10px auto 0;padding:6px 14px;background:#38265b;color:#f5f3ff;border:1px solid #a78bfa;border-radius:8px;cursor:pointer;text-decoration:none;font:inherit';
+    if (validSources.length <= 1) {
+        const url = validSources[0]?.url || fallbackUrl;
+        button.href = url;
+        button.target = '_blank';
+        button.rel = 'noopener noreferrer';
+        button.title = language === 'en' ? 'Open source' : 'Abrir fuente';
+        button.setAttribute('aria-label', `${button.title}: ${new URL(url).hostname}`);
+        if (openUrl) button.onclick = async event => {
+            event.preventDefault();
+            try { await openUrl(url); }
+            catch (error) { console.error('Could not open source:', error); }
+        };
+        parent.append(button);
+        return button;
+    }
+    button.type = 'button';
+    button.title = language === 'en' ? 'Show sources' : 'Ver fuentes';
+    button.onclick = () => {
+        const existing = parent.querySelector('.assistant-info-panel');
+        if (existing) { existing.remove(); return; }
+        const panel = document.createElement('div');
+        panel.className = 'assistant-info-panel';
+        panel.style.cssText = 'margin:10px 0 0;padding:10px;border:1px solid #7c3aed;border-radius:8px;background:#211b35;color:#f5f3ff;font-size:12px;line-height:1.45;text-align:left;white-space:normal';
+        const title = document.createElement('strong');
+        title.textContent = language === 'en' ? 'Sources' : 'Fuentes';
+        panel.append(title);
+        validSources.slice(0, 8).forEach((source, index) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'margin-top:8px';
+            const link = document.createElement('a');
+            link.href = source.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = `[${index + 1}] ${source.title || source.domain || source.url}`;
+            link.style.cssText = 'color:#c4b5fd;text-decoration:underline';
+            if (openUrl) link.onclick = async event => {
+                event.preventDefault();
+                try { await openUrl(source.url); }
+                catch (error) { console.error('Could not open source:', error); }
+            };
+            const meta = document.createElement('div');
+            const date = source.published_at || source.retrieved_at;
+            meta.textContent = [source.domain, source.provider, source.source_type, source.read_status, date].filter(Boolean).join(' | ');
+            meta.style.cssText = 'margin-top:2px;color:#ddd6fe';
+            row.append(link, meta);
+            panel.append(row);
+        });
+        parent.append(panel);
     };
-    parent.append(link);
-    return link;
+    parent.append(button);
+    return button;
 }

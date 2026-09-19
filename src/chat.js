@@ -11,22 +11,23 @@ const petState = state => {
     petEvents = petEvents.then(() => window.__TAURI__.event.emitTo('main', 'neeko:chat-state', state)).catch(console.error);
 };
 
-function appendMessage(text, role = 'assistant', info) {
+function appendMessage(text, role = 'assistant', info, sources) {
     document.getElementById('welcome')?.remove();
     const entry = document.createElement('div');
     entry.className = `message ${role}`;
     entry.textContent = text;
     messages.appendChild(entry);
-    attachInfo(entry, info, 'es', openUrl);
+    attachInfo(entry, info, 'es', openUrl, sources);
     // Keep the visible log bounded along with the model's conversation history.
     while (messages.children.length > 80) messages.firstElementChild.remove();
     messages.scrollTop = messages.scrollHeight;
 }
 
 const client = new ChatClient({
-    chat: (session, history) => invoke('assistant_chat', { session: `chat-window:${session}`, messages: history }),
+    chat: (session, history, requestId) => invoke('assistant_chat', { session: `chat-window:${session}`, messages: history, requestId }),
     decide: (session, proposalId, approved, saveAccount = false) => invoke('assistant_decide', { session: `chat-window:${session}`, proposalId, approved, saveAccount }),
     cancel: session => invoke('assistant_cancel', { session: `chat-window:${session}` }),
+    progress: (requestId) => invoke('research_progress', { requestId }),
 }, {
     busy: value => {
         petState({ state: value ? 'thinking' : 'idle' });
@@ -36,6 +37,17 @@ const client = new ChatClient({
         send.setAttribute('aria-label', send.title);
         status.textContent = value ? 'Neeko está pensando…' : '';
         if (!value) { send.disabled = false; input.focus(); }
+    },
+    progress: (step, details) => {
+        const labels = {
+            thinking: 'Neeko esta pensando...',
+            searching: 'Buscando informacion...',
+            reading: 'Leyendo fuentes...',
+            checking: 'Comprobando datos...',
+            preparing: 'Preparando respuesta...',
+            writing: 'Redactando respuesta...',
+        };
+        status.textContent = details?.text || labels[step] || labels.thinking;
     },
     confirm: (proposal, signal) => {
         petState({ state: 'waiting' });
@@ -47,7 +59,7 @@ const client = new ChatClient({
         petState({ state: approved ? 'thinking' : 'waiting' });
         status.textContent = approved ? 'Ejecutando…' : 'Cancelando acción…';
     },
-    message: (text, info) => { appendMessage(text, 'assistant', info); petState({ state: 'reply', text }); },
+    message: (text, info, sources) => { appendMessage(text, 'assistant', info, sources); petState({ state: 'reply', text }); },
     error: text => appendMessage(text, 'error'),
 });
 

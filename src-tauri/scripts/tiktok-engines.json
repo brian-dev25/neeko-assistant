@@ -1,0 +1,20 @@
+[
+  {"id":"bastien","name":"Bastien · tiktok-quality","description":"Motor original: MP4 H.264, ghost frames ×10, sin recodificar. Puede perder imagen en Windows.","requirements":"Python 3.10+","extensions":[".mp4"],"fields":[]},
+  {"id":"upload120","name":"Upload120","description":"Código JavaScript original, ejecutado localmente. Tres métodos de timing y metadata, sin recodificar.","requirements":"Python 3.10+ y Node.js","extensions":[".mp4",".mov",".m4v"],"fields":[
+    {"id":"method","label":"Método","default":"extension-signal","choices":[["extension-signal","TikTok Web Signal"],["balanced-sync","Balanced Sync"],["classic-force","Classic Force"]]},
+    {"id":"divider","label":"Multiplicador","default":"auto","choices":[["auto","Automático"],["2","×2"],["3","×3"],["4","×4"],["6","×6"],["8","×8"],["12","×12"],["16","×16"]]}
+  ]},
+  {"id":"utoku","name":"ut0ku · 120fps-method","description":"Adaptación del parche original: divide timescale y duración en mvhd/mdhd. Entrada de 60 o 120 FPS; puede alterar la reproducción local.","requirements":"Python 3.10+; FFprobe para FPS automáticos","extensions":[".mp4",".mov",".m4v"],"fields":[
+    {"id":"fps","label":"FPS del video de entrada","default":"auto","choices":[["auto","Detectar"],["60","60 FPS"],["120","120 FPS"]]}
+  ]},
+  {"id":"luisalves","name":"LuisAlves · FPS Compression Bypasser","description":"patcher.py original: ajusta timescale con la fórmula 30/FPS y conserva la duración declarada. Puede ralentizar video y audio.","requirements":"Python 3.10+; FFprobe para FPS automáticos","extensions":[".mp4",".mov",".m4v"],"fields":[
+    {"id":"fps","label":"FPS del video de entrada","default":"auto","choices":[["auto","Detectar"],["60","60 FPS"],["120","120 FPS"],["240","240 FPS"]]}
+  ]},
+  {"id":"paschafps","name":"Pascha · TikTok Quality Method v2","description":"Mismos parámetros FFmpeg del .bat: copia audio y video con itsscale. La salida puede verse lenta o defectuosa localmente.","requirements":"Python 3.10+ y FFmpeg","extensions":[".mp4",".mov",".mkv",".avi",".webm",".m4v"],"fields":[
+    {"id":"fps","label":"FPS del video de entrada","default":"60","choices":[["60","60 FPS · escala 2"],["120","120 FPS · escala 6"],["240","240 FPS · escala 12 (experimental)"]]}
+  ]},
+  {"id":"mistic","name":"MisticGG · fps-method","description":"Recodifica a H.265 a 60 FPS y aplica el parche elst original. Cambia la calidad/tamaño del video y conserva el audio por copia.","requirements":"Python 3.10+ y FFmpeg con encoder HEVC","extensions":[".mp4",".mov",".mkv",".avi",".webm",".m4v"],"fields":[
+    {"id":"preset","label":"Preset","default":"1080","choices":[["1080","1080p · 20 Mbps"],["720","720p · 12 Mbps"],["540","540p · 7 Mbps"]]},
+    {"id":"encoder","label":"Encoder","default":"auto","choices":[["auto","Automático (GPU → CPU)"],["hevc_nvenc","NVIDIA NVENC"],["hevc_amf","AMD AMF"],["hevc_qsv","Intel QSV"],["libx265","CPU · libx265"]]}
+  ]}
+]

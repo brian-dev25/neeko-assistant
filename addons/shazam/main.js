@@ -86,8 +86,9 @@
             if (!disposed) prepare.disabled = listen.disabled = false;
         }
     });
-    listen.addEventListener('click', async () => {
-        if (busy || preparing) return;
+    async function recognizeSong() {
+        if (disposed) throw new Error('El addon Shazam no está activo.');
+        if (busy || preparing) return { message: preparing ? 'Shazam se está preparando. Esperá a que termine.' : 'Shazam ya está escuchando. Esperá el resultado.' };
         busy = true;
         listen.disabled = true;
         prepare.disabled = true;
@@ -98,17 +99,29 @@
         }, 10000);
         try {
             const result = await Neeko.invoke('shazam_listen');
+            const message = result.message + (result.history_error ? ` (No se pudo guardar el historial: ${result.history_error})` : '');
             if (!disposed) {
-                status.textContent = result.message + (result.history_error ? ` (No se pudo guardar el historial: ${result.history_error})` : '');
+                status.textContent = message;
                 await refreshHistory();
             }
+            return { message };
         } catch (error) {
             if (!disposed) status.textContent = String(error);
+            throw error;
         } finally {
             clearTimeout(timer);
             busy = false;
             if (!disposed) { prepare.disabled = listen.disabled = false; cancel.hidden = true; }
         }
+    }
+    listen.addEventListener('click', () => { void recognizeSong().catch(() => {}); });
+    Neeko.commands.register('recognize-song', {
+        patterns: {
+            es: ['¿?qu[eé]\\s+est[aá]\\s+sonando\\??', '¿?qu[eé]\\s+canci[oó]n\\s+es(?:\\s+esta)?\\??', 'shazam'],
+            en: ["what(?:'s| is)\\s+playing\\??", 'what\\s+song\\s+is\\s+this\\??', 'shazam'],
+        },
+        handler: recognizeSong,
+        aiHandler: recognizeSong,
     });
     cancel.addEventListener('click', () => {
         status.textContent = 'Cancelando…';

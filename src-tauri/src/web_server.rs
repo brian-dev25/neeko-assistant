@@ -111,6 +111,8 @@ struct LocalSendCancelQuery {
 struct ChatRequest {
     session: String,
     messages: Vec<crate::assistant::Message>,
+    #[serde(default)]
+    request_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -1063,7 +1065,7 @@ async fn refresh_free_games(state: AppState, notify: bool) -> Vec<FreeGameOffer>
 async fn chat_handler(
     Json(payload): Json<ChatRequest>,
 ) -> Result<Json<crate::assistant::Reply>, (StatusCode, String)> {
-    crate::assistant::assistant_chat(format!("web:{}", payload.session), payload.messages)
+    crate::assistant::assistant_chat(format!("web:{}", payload.session), payload.messages, payload.request_id)
         .await
         .map(Json)
         .map_err(|error| (StatusCode::BAD_REQUEST, error))
@@ -1090,6 +1092,22 @@ async fn chat_cancel_handler(Json(payload): Json<ChatCancel>) -> Json<ApiRespons
     Json(ApiResponse {
         ok: true,
         message: "cancelado".into(),
+    })
+}
+
+#[derive(Deserialize)]
+struct ProgressQuery {
+    request_id: String,
+    generation: Option<u64>,
+}
+
+async fn research_progress_handler(
+    Query(query): Query<ProgressQuery>,
+) -> Json<serde_json::Value> {
+    let state = crate::research::progress::research_progress(query.request_id, query.generation);
+    Json(match state {
+        Some(s) => serde_json::to_value(s).unwrap_or_default(),
+        None => serde_json::json!({"phase": "idle", "completed_operations": 0}),
     })
 }
 
@@ -1390,6 +1408,7 @@ pub async fn start_web_server(app_handle: AppHandle) {
         .route("/chat", post(chat_handler))
         .route("/chat/decide", post(chat_decide_handler))
         .route("/chat/cancel", post(chat_cancel_handler))
+        .route("/research/progress", get(research_progress_handler))
         .route("/open", post(open_app_handler))
         .route("/search", post(search_handler))
         .route("/url", post(open_url_handler))

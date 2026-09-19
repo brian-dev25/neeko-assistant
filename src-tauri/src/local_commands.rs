@@ -77,6 +77,7 @@ pub fn detect(text: &str) -> Option<Value> {
     }
     let lower = text.to_lowercase();
     let simple = match lower.as_str() {
+        "tiktok" | "tik tok" | "preparar para tiktok" => "open_tiktok_window",
         "ip" | "mi ip" | "my ip" | "local ip" | "cuál es mi ip" | "cual es mi ip" => "get_ip",
         "comprimir" | "comprimí" | "comprimi" | "comprimir video" | "comprimí video"
         | "compress" | "compress video" | "quiero comprimir" | "achicar video" => {
@@ -206,6 +207,9 @@ mod tests {
     use super::*;
     #[test]
     fn offline_commands_preserve_parameters_and_do_not_match_negations() {
+        assert_eq!(detect("tiktok").unwrap()["action"], "open_tiktok_window");
+        assert_eq!(detect("Tik Tok").unwrap()["action"], "open_tiktok_window");
+        assert!(detect("no abras tiktok").is_none());
         assert_eq!(detect("ip").unwrap()["action"], "get_ip");
         assert_eq!(detect("abrí Discord").unwrap()["app"], "Discord");
         assert_eq!(detect("git status").unwrap()["action"], "git_status");

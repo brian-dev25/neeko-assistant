@@ -466,6 +466,7 @@ pub fn lol_save_config(
     riot_id: Option<String>,
     neeko_sprite: Option<String>,
     language: Option<String>,
+    source_research_enabled: Option<bool>,
 ) -> Result<String, String> {
     let mut config = AppConfig::load();
     if let Some(r) = region {
@@ -492,6 +493,9 @@ pub fn lol_save_config(
         config.language = crate::config::normalize_language(&language)
             .ok_or_else(|| "Idioma no valido".to_string())?
             .to_string();
+    }
+    if let Some(enabled) = source_research_enabled {
+        config.source_research_enabled = enabled;
     }
     config.save()?;
     Ok("Configuración guardada ✅".to_string())
@@ -526,6 +530,8 @@ pub fn lol_get_config() -> Result<String, String> {
         "lol_region": config.lol_region,
         "riot_id": config.riot_id,
         "language": crate::config::normalize_language(&config.language).unwrap_or("es"),
+        "source_research_enabled": config.source_research_enabled,
+        "legacy_airi_enabled": crate::addon_manager::AddonManager::new().is_enabled("airi-theme"),
         "start_with_windows": config.start_with_windows,
     })
     .to_string())

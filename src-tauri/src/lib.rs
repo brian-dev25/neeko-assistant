@@ -31,6 +31,7 @@ mod knowledge;
 mod local_commands;
 mod lol_api;
 mod video_compress;
+mod tiktok;
 mod web_server;
 
 const LLAMA_SERVER_URL: &str = "http://127.0.0.1:8080";
@@ -51,25 +52,28 @@ pub fn llama_process() -> &'static Mutex<Option<Child>> {
 }
 
 pub(crate) fn is_llama_server_running() -> bool {
-    let Ok(mut process) = llama_process().lock() else {
-        return false;
-    };
-
-    let Some(child) = process.as_mut() else {
-        return false;
-    };
-
-    match child.try_wait() {
-        Ok(Some(_)) => {
-            *process = None;
-            false
-        }
-        Ok(None) => true,
-        Err(_) => {
-            *process = None;
-            false
+    // 1. Check the tracked child process handle
+    if let Ok(mut process) = llama_process().lock() {
+        if let Some(child) = process.as_mut() {
+            match child.try_wait() {
+                Ok(Some(_)) => {
+                    *process = None;
+                }
+                Ok(None) => return true,
+                Err(_) => {
+                    *process = None;
+                }
+            }
         }
     }
+
+    // 2. Fallback: check if port 8080 accepts a TCP connection (server may have been
+    //    started externally or from a previous session).
+    std::net::TcpStream::connect_timeout(
+        &"127.0.0.1:8080".parse().unwrap(),
+        std::time::Duration::from_secs(2),
+    )
+    .is_ok()
 }
 
 fn stop_tracked_llama_process() {
@@ -139,13 +143,13 @@ fn cleanup_before_exit() {
 }
 
 #[tauri::command]
-fn llama_status() -> Result<bool, String> {
-    if get_model_path().is_empty() {
-        stop_tracked_llama_process();
-        return Ok(false);
-    }
-
-    Ok(is_llama_server_running())
+async fn llama_status() -> Result<bool, String> {
+    // The TCP fallback can wait when AI is off. Never run it on the UI thread.
+    tauri::async_runtime::spawn_blocking(|| {
+        !get_model_path().is_empty() && is_llama_server_running()
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -507,14 +511,7 @@ fn build_llama_server_command(
 
     let sidecar_exe = candidates_exe
         .iter()
-        .find(|p| {
-            if !p.is_file() { return false; }
-            let mut probe = Command::new(p);
-            if let Some(parent) = p.parent() { probe.current_dir(parent); }
-            #[cfg(windows)]
-            probe.creation_flags(0x08000000);
-            probe.arg("--version").output().is_ok_and(|result| result.status.success())
-        })
+        .find(|p| p.is_file())
         .cloned()
         .ok_or_else(|| "No encontre el sidecar llama-server.exe".to_string())?;
 
@@ -3286,6 +3283,11 @@ pub fn run() {
             open_settings_window,
             pet_region::pet_set_region,
             open_compressor_window,
+            tiktok::open_tiktok_window,
+            tiktok::prepare_tiktok,
+            tiktok::tiktok_engines,
+            tiktok::open_tiktok_output_folder,
+            tiktok::open_tiktok_original,
             open_app,
             open_url,
             search_web,
@@ -3294,6 +3296,7 @@ pub fn run() {
             list_models,
             get_model_path_cmd,
             chat_start,
+            research::progress::research_progress,
             assistant::assistant_chat,
             assistant::assistant_decide,
             assistant::assistant_cancel,

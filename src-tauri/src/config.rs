@@ -96,6 +96,8 @@ pub struct AppConfig {
     #[serde(default)]
     pub system_commands_enabled: bool,
     #[serde(default)]
+    pub source_research_enabled: bool,
+    #[serde(default)]
     pub start_with_windows: bool,
     #[serde(default = "default_language")]
     pub language: String,
@@ -138,6 +140,7 @@ impl Default for AppConfig {
             llama_threads: default_model_threads(),
             python_threads: default_model_threads(),
             system_commands_enabled: false,
+            source_research_enabled: false,
             start_with_windows: false,
             language: default_language(),
             render_3d: true,

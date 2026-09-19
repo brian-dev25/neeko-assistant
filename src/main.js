@@ -1,3 +1,4 @@
+import { initAppearance } from './appearance.mjs';
 import { ChatClient, confirmationControls, confirmationText, attachInfo } from './chat-client.mjs';
 import { PetRegion } from './pet-region.mjs';
 import { PetActivity } from './pet-activity.mjs';
@@ -30,6 +31,7 @@ document.addEventListener('pointerdown', event => {
     if (!inTopStrip && !event.target.closest('.modal-header h3, #top-bar')) return;
     void appWindow.startDragging().catch(console.error);
 });
+let appearance;
 const petRegion = new PetRegion(settingsWindow ? async () => {} : invoke);
 
 const neekoSection = document.getElementById('neeko-section');
@@ -206,6 +208,7 @@ const NeekoAddons = {
 
     async loadAddon(addon) {
         const addonId = addon.manifest.id;
+        if (addonId === 'airi-theme') return;
         if (NeekoAddons._loaded.has(addonId)) return;
 
         const record = NeekoAddons._ensureRecord(addonId);
@@ -419,6 +422,14 @@ const I18N = {
         aiAppearance: 'Apariencia de IA',
         neekoSprite: 'Sprite de Neeko:',
         render3d: 'Renderizar Neeko en 3D',
+        appearanceTheme: 'Tema:',
+        appearanceClassic: 'Neeko clásico',
+        appearanceDesktop: 'Neeko de escritorio',
+        appearanceHelp: 'Muestra a Neeko sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.',
+        appearanceSize: 'Tamaño de Neeko',
+        appearanceReset: 'Restablecer tamaño',
+        sourceResearch: 'Responder preguntas con busqueda y fuentes',
+        sourceResearchHelp: 'Activado: busca, lee fuentes y usa la IA para responder con citas (hasta dos rondas). Apagado: conversa sin buscar fuentes.',
         animation3d: 'Animacion 3D:',
         mouseTracking: 'Seguir mouse',
         loadEngine: 'Motor de carga:',
@@ -536,6 +547,14 @@ const I18N = {
         aiAppearance: 'AI Appearance',
         neekoSprite: 'Neeko sprite:',
         render3d: 'Render Neeko in 3D',
+        appearanceTheme: 'Theme:',
+        appearanceClassic: 'Classic Neeko',
+        appearanceDesktop: 'Desktop Neeko',
+        appearanceHelp: 'Shows Neeko without a background. Click to chat, drag to move and right-click for controls.',
+        appearanceSize: 'Neeko size',
+        appearanceReset: 'Reset size',
+        sourceResearch: 'Answer questions with search and sources',
+        sourceResearchHelp: 'On: searches, reads sources and uses AI to answer with citations (up to two rounds). Off: chats without searching sources.',
         animation3d: '3D animation:',
         mouseTracking: 'Follow mouse',
         loadEngine: 'Load engine:',
@@ -1260,7 +1279,7 @@ function showBubble(text) {
         notice.textContent = text;
         return;
     }
-    speechBubble.querySelectorAll('.assistant-info-trigger').forEach(button => button.remove());
+    speechBubble.querySelectorAll('.assistant-info-trigger, .assistant-info-panel').forEach(button => button.remove());
     bubbleText.textContent = text;
     speechBubble.classList.remove('hidden');
 }
@@ -1294,9 +1313,10 @@ function setThinking(thinking) {
 }
 
 const assistantClient = new ChatClient({
-    chat: (session, messages) => invoke('assistant_chat', { session: `desktop:${session}`, messages }),
+    chat: (session, messages, requestId) => invoke('assistant_chat', { session: `desktop:${session}`, messages, requestId }),
     decide: (session, proposalId, approved, saveAccount = false) => invoke('assistant_decide', { session: `desktop:${session}`, proposalId, approved, saveAccount }),
     cancel: (session) => invoke('assistant_cancel', { session: `desktop:${session}` }),
+    progress: (requestId) => invoke('research_progress', { requestId }),
 }, {
     busy: (busy) => {
         isProcessing = busy;
@@ -1308,7 +1328,25 @@ const assistantClient = new ChatClient({
     },
     confirm: confirmChatAction,
     executing: (approved) => { if (approved) showBubble(t('working')); },
-    message: (text, info) => { showBubble(text); attachInfo(speechBubble, info, currentLanguage, url => invoke('open_url', { url })); setTalking(true); setTimeout(() => setTalking(false), 1200); },
+    progress: (step, details) => {
+        const labels = currentLanguage === 'en' ? {
+            thinking: 'Neeko is thinking...',
+            searching: 'Searching information...',
+            reading: 'Reading sources...',
+            checking: 'Checking facts...',
+            preparing: 'Preparing answer...',
+            writing: 'Writing answer...',
+        } : {
+            thinking: 'Neeko esta pensando...',
+            searching: 'Buscando informacion...',
+            reading: 'Leyendo fuentes...',
+            checking: 'Comprobando datos...',
+            preparing: 'Preparando respuesta...',
+            writing: 'Redactando respuesta...',
+        };
+        showBubble(details?.text || labels[step] || labels.thinking);
+    },
+    message: (text, info, sources) => { showBubble(text); attachInfo(speechBubble, info, currentLanguage, url => invoke('open_url', { url }), sources); setTalking(true); setTimeout(() => setTalking(false), 1200); },
     error: (text) => showBubble(text),
 });
 
@@ -1328,12 +1366,11 @@ async function cancelRequest() {
 
 async function init() {
     await appWindow.setAlwaysOnTop(false);
+    appearance = await initAppearance({ invoke, setDesktopHitRegion: value => petRegion.enable(value), isSettingsWindow: settingsWindow });
     NeekoAddons.init();
     window.Neeko.ui.isSettingsWindow = settingsWindow;
     if (settingsWindow) {
         settingsBtn.click();
-        try { await invoke('check_local_ai'); setLocalAiModelAvailable(true); }
-        catch { setLocalAiModelAvailable(false); }
         await NeekoAddons.loadAddons();
         return;
     }
@@ -1668,6 +1705,7 @@ settingsBtn.addEventListener('click', async () => {
     }
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
+        appearance?.loadSettings();
         settingsOriginalLanguage = normalizeLanguage(config.language || currentLanguage);
         setLanguage(settingsOriginalLanguage);
         document.getElementById('cfg-git-pat').value = '';
@@ -1675,6 +1713,7 @@ settingsBtn.addEventListener('click', async () => {
         document.getElementById('cfg-neeko-sprite').value = normalizeNeekoSprite(config.neeko_sprite);
         const render3dEnabled = config.render_3d !== false;
         document.getElementById('cfg-render-3d').checked = render3dEnabled;
+        document.getElementById('cfg-source-research').checked = config.source_research_enabled === true;
         document.getElementById('cfg-neeko-3d-animation').value = config.neeko_3d_animation || 'Neeko_idle3.anm';
         document.getElementById('cfg-mouse-tracking').checked = neeko3dMouseTracking;
         document.getElementById('cfg-language').value = normalizeLanguage(config.language || currentLanguage);
@@ -1682,10 +1721,16 @@ settingsBtn.addEventListener('click', async () => {
         document.getElementById('cfg-lol-region').value = config.lol_region || 'las';
         document.getElementById('cfg-riot-id').value = config.riot_id || '';
     } catch { }
-    try {
-        const running = await invoke('llama_status');
+    // Detect the file without waiting for the AI health endpoint.
+    try { await invoke('get_model_path_cmd'); setLocalAiModelAvailable(true); }
+    catch { setLocalAiModelAvailable(false); }
+    const aiToggle = document.getElementById('cfg-llama-toggle');
+    aiToggle.disabled = true;
+    void invoke('llama_status').then(running => {
         updateLlamaUI(running && localAiModelAvailable);
-    } catch { }
+    }).catch(() => updateLlamaUI(false)).finally(() => {
+        aiToggle.disabled = !localAiModelAvailable;
+    });
     try {
         currentModelLoadEngine = await invoke('get_model_load_engine');
         document.getElementById('cfg-model-load-engine').value = currentModelLoadEngine;
@@ -1969,6 +2014,7 @@ saveSettingsBtn.addEventListener('click', async () => {
     const gitPath = document.getElementById('cfg-git-path').value.trim();
     const neekoSpriteValue = normalizeNeekoSprite(document.getElementById('cfg-neeko-sprite').value);
     const render3d = document.getElementById('cfg-render-3d').checked;
+    const sourceResearchEnabled = document.getElementById('cfg-source-research').checked;
     const region = document.getElementById('cfg-lol-region').value;
     const riotId = document.getElementById('cfg-riot-id').value.trim();
     const language = normalizeLanguage(document.getElementById('cfg-language').value);
@@ -1985,7 +2031,9 @@ saveSettingsBtn.addEventListener('click', async () => {
             region: region || null,
             riotId: riotId || null,
             language,
+            sourceResearchEnabled,
         });
+        appearance?.save();
         applyNeekoSprite(neekoSpriteValue);
         setLanguage(language);
         await refreshKnowledgeContext();
@@ -2018,7 +2066,8 @@ saveSettingsBtn.addEventListener('click', async () => {
     try {
         const engineChanged = modelLoadEngine !== currentModelLoadEngine;
         const runtimeChanged = modelRuntimeConfigChanged(modelRuntimeConfig);
-        const wasRunning = await invoke('llama_status').catch(() => false);
+        const wasRunning = (engineChanged || runtimeChanged)
+            && await invoke('llama_status').catch(() => false);
         await invoke('set_model_load_engine', { engine: modelLoadEngine });
         await invoke('set_model_runtime_config', modelRuntimeConfig);
         currentModelLoadEngine = modelLoadEngine;
@@ -2047,7 +2096,7 @@ saveSettingsBtn.addEventListener('click', async () => {
                 if (error === "no_model") {
                     autoStart = false;
                     autoStartInput.checked = false;
-                    showBubble("No encontrÃ© el modelo GGUF. Auto-iniciar LLaMA queda apagado.");
+                    showBubble("No encontre el modelo GGUF. Auto-iniciar LLaMA queda apagado.");
                 } else {
                     throw error;
                 }

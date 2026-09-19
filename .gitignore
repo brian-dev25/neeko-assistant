@@ -4,8 +4,11 @@ node_modules/
 # Local scripts / launchers
 !scripts/
 scripts/*
+!scripts/screen-translate-ui.test.html
 !scripts/bump-version.js
 !scripts/action-policy.test.mjs
+!scripts/tiktok.test.py
+!scripts/tiktok-ui.test.mjs
 !scripts/vendor-micyou.py
 !scripts/build-screen-ocr.mjs
 /*.bat
@@ -76,3 +79,5 @@ Desktop.ini
 /driver/build/
 /driver/service/target/
 /driver/transport/target/
+
+!scripts/appearance.test.mjs

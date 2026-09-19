@@ -63,38 +63,43 @@ de aprobación, ejecución o memoria. `Reply.info` contiene solamente la URL de 
 fuente o una cadena vacía; los clientes rechazan texto explicativo y enlaces no HTTP(S).
 Las consultas ejecutadas de LoL enlazan al perfil correspondiente de OP.GG.
 
-`research.rs` consulta Wikipedia para preguntas enciclopédicas como «cuándo nació
-Perón», «quién fue…» y «qué es…». Lee la introducción y la URL canónica del artículo:
-para nacimientos extrae la fecha biográfica y para otras consultas muestra la primera
-oración. Si no encuentra contenido o el resultado es una desambiguación, informa
-que no pudo consultar la fuente y no agrega Info. Funciona sin el modelo local.
-Los comandos de búsqueda existentes siguen abriendo el navegador; esto no implementa
-un buscador general ni consulta resultados de Google. Las demás respuestas del modelo
-local no llevan Info porque no tienen una fuente web consultada.
+El módulo de investigación (`research/`) usa un agente con herramientas para
+investigar preguntas del usuario. El flujo es:
 
-Prueba online opcional:
-`cargo test --manifest-path src-tauri/Cargo.toml --lib research::tests::live_birth_lookup -- --ignored`.
+1. **Resolver**: el modelo extrae la pregunta concreta, intención y entidades.
+2. **Planificar**: el modelo recibe un resumen operativo y elige una operación.
+3. **Ejecutar**: el backend valida y ejecuta (búsqueda/lectura/seguir enlace/github/reddit).
+4. **Repetir**: pasos 2-3 hasta que el modelo elija `finish` o se agote el presupuesto.
+5. **Redactar**: el modelo genera la respuesta final con citas a evidencia.
+6. **Verificar**: las citas se comprueban contra fuentes reales; las inválidas se eliminan.
 
-Las acciones incorporadas se declaran en `src-tauri/src/action-catalog.json`.
-Ese catálogo genera las instrucciones compactas, el esquema de salida y la
-validación de parámetros. Los comandos de sistema deshabilitados no se ofrecen.
+Presupuesto: 8 operaciones totales, 4 búsquedas, 6 documentos leídos, profundidad
+de seguimiento 3, deadline 180s. Las fuentes obtienen IDs estables (`s1`, `s2`, ...)
+que no se reasignan durante la investigación.
 
-El valor predeterminado de contexto es 8192 para ambos motores. La migración cambia
-una sola vez los defaults históricos de 1024 (Llama) y 4096 (Python); conserva los
-otros valores personalizados. Reiniciar el motor aplica su configuración nueva.
+El progreso se报告a las tres interfaces mediante polling cada 800ms:
+- Tauri: comando `research_progress`
+- Web: `GET /api/research/progress?request_id=...`
+Fases: `planning → searching → reading → checking → writing → complete`
 
-El presupuesto reserva 512 tokens de salida y margen para la plantilla. Para
-funcionar también con servidores sin `/tokenize`, se utiliza una cota conservadora
-basada en bytes UTF-8 y coste de mensajes, no una medición exacta del tokenizer.
-Se conservan mensajes recientes completos; no se recorta el último mensaje del
-usuario. Si no cabe junto con las instrucciones y herramientas, se devuelve un
-error que indica ajustar el contexto. Las memorias relevantes se incorporan una
-sola vez, con límite de tamaño. Las instrucciones de sistema enviadas por clientes
-se descartan; la personalidad y reglas se construyen en Rust.
+Google se renderiza con Edge en modo headless y un perfil temporal independiente.
+No lee cookies del navegador personal ni utiliza el modelo de Neeko. Se procesa
+un resultado orgánico con su título y fragmento; los enlaces opacos `/goto` se
+resuelven leyendo la redirección de Google, sin descargar destinos arbitrarios.
+El chat muestra el fragmento recuperado, no una síntesis completa del artículo.
+Los resultados web se tratan como datos y no pueden ejecutar comandos del chat.
 
-Guardar memoria requiere `knowledge_save_manual` con `category` opcional, `key` y
-`value`, y la misma aprobación que las demás acciones. No se procesan bloques
-ocultos `_save_knowledge`.
+La consulta tiene límites de tiempo, tamaño y concurrencia. Los procesos del
+navegador temporal pertenecen a un Job Object que se cierra al terminar o cancelar.
+Si Google no responde, una pregunta enciclopédica puede consultar Wikipedia como
+alternativa: el mensaje lo indica y el botón Info apunta a Wikipedia. Para otras
+consultas se muestra el error sin inventar una respuesta ni una fuente. No se
+intenta resolver captchas. Edge instalado e Internet son necesarios para Google.
+
+Validación: pruebas de enrutamiento, asociación texto/fuente, URLs y entrega de
+Info al cliente compartido. Las pruebas de Google real están marcadas `ignored`
+para que el test habitual no dependa de la red. Pueden ejecutarse con
+`cargo test --lib live_google -- --ignored --nocapture`.
 
 ## Respuestas restringidas
 

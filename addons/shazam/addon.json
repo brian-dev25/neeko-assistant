@@ -6,6 +6,19 @@
   "author": "Neeko",
   "minAppVersion": "1.0.3",
   "enabled": false,
-  "permissions": ["ui:tabs"],
-  "commands": []
+  "permissions": ["ui:tabs", "chat:commands"],
+  "commands": [
+    {
+      "id": "recognize-song",
+      "description": "Reconocer la música del escritorio / Identify desktop music",
+      "patterns": {
+        "es": ["¿?qu[eé]\\s+est[aá]\\s+sonando\\??", "¿?qu[eé]\\s+canci[oó]n\\s+es(?:\\s+esta)?\\??", "shazam"],
+        "en": ["what(?:'s| is)\\s+playing\\??", "what\\s+song\\s+is\\s+this\\??", "shazam"]
+      },
+      "ai": {
+        "label": "Escuchar 10 segundos del escritorio y reconocer la canción con Shazam / Identify desktop music with Shazam",
+        "fields": {}
+      }
+    }
+  ]
 }

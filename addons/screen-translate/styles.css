@@ -19,3 +19,12 @@
 .st-panel details { margin:12px 0; }
 .st-panel input[type=color] { width:60px; height:32px; }
 .st-panel select { max-width:70%; }
+.st-panel > fieldset { margin: 10px 0; padding: 12px 14px; border-color: #514769; background: #211f33; }
+.st-panel > .st-hint { margin-bottom: 14px; }
+.st-panel .st-primary [data-action="start"] { background: #8742dc; border-color: #a56cea; font-weight: 600; }
+.st-panel .st-primary [data-status] { color: #c6bfd9; font-size: 12px; }
+.st-panel .st-advanced { border-top: 1px solid #514769; padding-top: 14px; margin-top: 18px; }
+.st-panel .st-advanced > summary { font-weight: 600; color: #d5c7ff; }
+.st-panel [data-basic-options] label { display: block; }
+.st-panel [data-basic-options] select { display: block; width: 100%; max-width: 100%; margin-top: 5px; }
+.st-panel [data-region] { color: #bfb9ce; font-size: 12px; }

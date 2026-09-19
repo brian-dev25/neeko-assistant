@@ -1,27 +1,7 @@
-(() => {
-    if (Neeko.ui.isSettingsWindow) {
-        const panel = document.createElement('div');
-        panel.className = 'airi-preferences';
-        panel.innerHTML = `<h4>Neeko sobre el escritorio</h4><div class="airi-size-control">
-            <label for="airi-settings-size">Tamaño de Neeko <output></output></label>
-            <input id="airi-settings-size" type="range" min="30" max="100" step="1">
-            <button type="button">Restablecer tamaño</button></div>
-            <p>Arrastrá a Neeko para moverla. Configuración y chat tienen sus propias ventanas.</p>`;
-        const input = panel.querySelector('input');
-        const update = value => {
-            input.value = String(value);
-            panel.querySelector('output').textContent = `${value}%`;
-            localStorage.setItem('neeko-airi-size', String(value));
-        };
-        update(Math.max(30, Math.min(100, Number(localStorage.getItem('neeko-airi-size')) || 82)));
-        input.addEventListener('input', () => update(input.value));
-        panel.querySelector('button').addEventListener('click', () => update(82));
-        Neeko.ui.registerSettingsTab('airi-appearance', 'Escritorio', panel);
-        return;
-    }
+function activateDesktop({ invoke, setDesktopHitRegion }) {
     const root = document.documentElement;
     const sprite = document.getElementById('neeko-sprite');
-    if (!sprite || root.classList.contains('airi-pet')) return;
+    if (!sprite || root.classList.contains('airi-pet')) return () => {};
     const win = window.__TAURI__?.window?.getCurrentWindow();
     const listeners = new AbortController();
     const options = { signal: listeners.signal };
@@ -81,9 +61,9 @@
         hideMenu();
         if (openingChat || disposed) return;
         openingChat = true;
-        try { await Neeko.invoke('open_chat_window'); }
+        try { await invoke('open_chat_window'); }
         catch (error) {
-            console.error('[AIRI] No se pudo abrir el chat:', error);
+            console.error('[Neeko escritorio] No se pudo abrir el chat:', error);
             if (!disposed) {
                 const notice = document.createElement('p');
                 notice.textContent = 'No se pudo abrir el chat. Reiniciá Neeko con la versión nueva.';
@@ -111,7 +91,7 @@
                     bottom = Math.min(bottom, (area.position.y + area.size.height - origin.y) / scale);
                 }
             }
-        } catch (error) { console.error('[AIRI] Menu bounds:', error); }
+        } catch (error) { console.error('[Neeko escritorio] Menu bounds:', error); }
         if (disposed || request !== menuRequest) return;
         // Fit the menu into the visible portion of the pet window, without moving the pet.
         menu.style.maxWidth = `${Math.max(1, right - left - 16)}px`;
@@ -145,7 +125,7 @@
         pointer = null;
         dragged = true;
         hideMenu();
-        win?.startDragging().catch(error => console.error('[AIRI] No se pudo mover Neeko:', error));
+        win?.startDragging().catch(error => console.error('[Neeko escritorio] No se pudo mover Neeko:', error));
     }, options);
     window.addEventListener('pointerup', () => { pointer = null; }, options);
     window.addEventListener('pointercancel', () => { pointer = null; }, options);
@@ -185,8 +165,8 @@
             sprite.focus();
         }
     }, options);
-    Neeko.addon.onUnload(() => {
-        Neeko.ui.setDesktopHitRegion?.(false);
+    const dispose = () => {
+        setDesktopHitRegion(false);
         disposed = true;
         listeners.abort();
         observer.disconnect();
@@ -200,26 +180,73 @@
             else sprite.setAttribute(name, value);
         }
         win?.setAlwaysOnTop(false).catch(console.error);
-    });
-    const preferences = document.createElement('div');
-    preferences.className = 'airi-preferences';
-    preferences.innerHTML = `
-        <h4>Neeko sobre el escritorio</h4>
-        <p>Clic en Neeko: abrir el chat en otra ventana. Arrastrar: mover el personaje.</p>
-        <p>Clic derecho: configuración, minimizar o cerrar. Escape: cerrar el menú.</p>
-        <p>Desactivá AIRI en Addons para recuperar la interfaz normal.</p>
-        <p>La transparencia requiere reiniciar la versión de Neeko que incluye este modo.</p>`;
-    preferences.prepend(createSizeControl('airi-size-settings'));
-    Neeko.ui.registerSettingsTab('airi-appearance', 'Escritorio', preferences);
+    };
     applySize(size);
     root.classList.add('airi-pet');
-    Neeko.ui.setDesktopHitRegion?.(true);
+    setDesktopHitRegion(true);
     root.classList.toggle('airi-confirming', !confirmation.hidden);
     if (win) void (async () => {
         try {
             if (disposed) return;
             await win.setAlwaysOnTop(true);
             if (disposed) await win.setAlwaysOnTop(false);
-        } catch (error) { console.error('[AIRI] No se pudo ajustar la ventana:', error); }
+        } catch (error) { console.error('[Neeko escritorio] No se pudo ajustar la ventana:', error); }
     })();
-})();
+    return dispose;
+}
+
+const themeKey = 'neeko-appearance-theme';
+const sizeKey = 'neeko-airi-size';
+export function normalizeTheme(value) { return value === 'airi' || value === 'desktop' ? 'desktop' : 'classic'; }
+export function normalizeSize(value) { return Math.max(30, Math.min(100, Number(value) || 82)); }
+
+export async function initAppearance({ invoke, setDesktopHitRegion, isSettingsWindow }) {
+    if (localStorage.getItem(themeKey) === null) {
+        const config = JSON.parse(await invoke('lol_get_config'));
+        localStorage.setItem(themeKey, config.legacy_airi_enabled ? 'desktop' : 'classic');
+    }
+    let activeTheme, dispose;
+    const select = document.getElementById('cfg-appearance-theme');
+    const size = document.getElementById('cfg-appearance-size');
+    const output = document.getElementById('cfg-appearance-size-output');
+    const sizeRow = document.getElementById('appearance-size-row');
+    const helpText = document.getElementById('appearance-help-text');
+    function refreshControls() {
+        const isDesktop = select.value === 'desktop';
+        sizeRow.hidden = !isDesktop;
+        helpText.hidden = !isDesktop;
+        output.textContent = `${normalizeSize(size.value)}%`;
+    }
+    function loadSettings() {
+        select.value = normalizeTheme(localStorage.getItem(themeKey));
+        size.value = normalizeSize(localStorage.getItem(sizeKey));
+        refreshControls();
+    }
+    function apply() {
+        const theme = normalizeTheme(localStorage.getItem(themeKey));
+        if (!isSettingsWindow && activeTheme !== theme) {
+            dispose?.();
+            dispose = theme === 'desktop' ? activateDesktop({ invoke, setDesktopHitRegion }) : undefined;
+            activeTheme = theme;
+        }
+    }
+    select.addEventListener('change', refreshControls);
+    size.addEventListener('input', refreshControls);
+    document.getElementById('appearance-size-reset').addEventListener('click', () => {
+        size.value = 82;
+        refreshControls();
+    });
+    window.addEventListener('storage', event => {
+        if (event.key === themeKey) apply();
+    });
+    loadSettings();
+    apply();
+    return {
+        loadSettings,
+        save() {
+            localStorage.setItem(sizeKey, String(normalizeSize(size.value)));
+            localStorage.setItem(themeKey, normalizeTheme(select.value));
+            apply();
+        }
+    };
+}

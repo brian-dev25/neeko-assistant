@@ -4,6 +4,40 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { ChatClient, confirmationControls, sourceUrl, attachInfo } from '../src/chat-client.mjs';
 
+test('progress stays neutral without research and displays only reported research phases', async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let finish;
+    let state = null;
+    let requestId;
+    const steps = [];
+    const client = new ChatClient({
+        chat: (_session, _history, id) => {
+            requestId = id;
+            return new Promise(resolve => { finish = resolve; });
+        },
+        progress: async id => { assert.equal(id, requestId); return state; },
+    }, {
+        busy() {}, message() {}, error: assert.fail,
+        progress: (step, details) => steps.push([step, details.text]),
+    });
+    const sending = client.send('hola');
+    for (let i = 0; i < 6; i++) {
+        t.mock.timers.tick(800);
+        await Promise.resolve();
+    }
+    assert.deepEqual(steps, [['thinking', 'Pensando…']]);
+    state = { sequence: 1, phase: 'searching' };
+    t.mock.timers.tick(800);
+    await Promise.resolve();
+    assert.deepEqual(steps.at(-1), ['searching', 'Buscando fuentes…']);
+    finish({ kind: 'conversation', message: 'Hola' });
+    await sending;
+    state = { sequence: 2, phase: 'reading' };
+    t.mock.timers.tick(800);
+    await Promise.resolve();
+    assert.equal(steps.length, 2);
+});
+
 test('Info only links to a source, never approval metadata or URLs embedded in notes', () => {
     for (const value of [undefined, '', 'Action approved', 'Local memory: https://example.com', 'javascript:alert(1)', 'https://user:secret@example.com']) {
         assert.equal(sourceUrl(value), null);
@@ -14,6 +48,52 @@ test('Info only links to a source, never approval metadata or URLs embedded in n
 
 const proposal = { kind: 'action', message: 'Open compressor?', proposal_id: 'p1', details: 'Open video compressor' };
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { resolve, promise }; };
+
+test('execution notice appears before a pending result and only after approval', async () => {
+    for (const approved of [true, false]) {
+        const pending = deferred();
+        const messages = [];
+        const client = new ChatClient({
+            chat: async () => ({...proposal, execution_message:'Listening for 10 seconds…'}),
+            decide: async () => {
+                assert.deepEqual(messages, approved ? ['Listening for 10 seconds…'] : []);
+                return pending.promise;
+            },
+        }, {busy() {}, executing() {}, confirm:async()=>approved, message:text=>messages.push(text), error:assert.fail}, 'shazam-test');
+        const sending = client.send('que esta sonando?');
+        await new Promise(resolve => setImmediate(resolve));
+        assert.deepEqual(messages, approved ? ['Listening for 10 seconds…'] : []);
+        pending.resolve(approved ? 'Song — Artist' : 'Cancelled');
+        await sending;
+        assert.deepEqual(messages, approved ? ['Listening for 10 seconds…', 'Song — Artist'] : ['Cancelled']);
+    }
+});
+
+test('web answers display their fetched source without executing an action', async () => {
+    const messages = [];
+    const source = 'https://es.wikipedia.org/wiki/Marie_Curie';
+    const client = new ChatClient({
+        chat: async () => ({kind:'conversation',message:'Busqué en Google: fecha recuperada de la fuente.',info:source}),
+        decide: assert.fail,
+    }, {busy() {},message:(text,info)=>messages.push({text,info}),confirm:assert.fail,error:assert.fail}, 'web-session');
+    await client.send('que dia murio Marie Curie?');
+    assert.equal(messages.length, 1);
+    assert.equal(sourceUrl(messages[0].info), source);
+    assert.match(messages[0].text, /Busqué en Google/);
+});
+
+test('web answers pass multiple sources only when present', async () => {
+    const source = { source_id:'s1', title:'Source', url:'https://example.com/a', domain:'example.com' };
+    for (const [sources, expected] of [[undefined, [['answer', 'https://example.com/a']]], [[], [['answer', 'https://example.com/a']]], [[source], [['answer', 'https://example.com/a', [source]]]]]) {
+        const shown = [];
+        const client = new ChatClient({
+            chat: async () => ({kind:'conversation',message:'answer',info:'https://example.com/a',sources}),
+            decide: assert.fail,
+        }, {busy() {},message:(...args)=>shown.push(args),confirm:assert.fail,error:assert.fail}, 'sources-session');
+        await client.send('busca algo');
+        assert.deepEqual(shown, expected);
+    }
+});
 
 test('model actions require explicit approval in both clients', async () => {
     for (const [approval, requires_confirmation] of [[true, true], [false, true], [true, undefined]]) {

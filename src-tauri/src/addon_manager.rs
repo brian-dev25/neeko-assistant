@@ -172,6 +172,8 @@ impl AddonManager {
                 match std::fs::read_to_string(&manifest_path) {
                     Ok(content) => match serde_json::from_str::<AddonManifest>(&content) {
                         Ok(mut manifest) => {
+                            // Airi is now a built-in appearance; ignore older installed copies.
+                            if manifest.id == "airi-theme" { continue; }
                             if infos
                                 .iter()
                                 .any(|info: &AddonInfo| info.manifest.id == manifest.id)

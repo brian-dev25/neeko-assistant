@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neeko Assistant</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="appearance.css">
     <script type="importmap">
         {
             "imports": {
@@ -76,6 +77,17 @@
             <div class="settings-scroll">
                 <section id="settings-tab-general" class="settings-section settings-panel" role="tabpanel" data-settings-panel="general" hidden>
                     <h4 data-i18n="generalTitle">General</h4>
+                    <label for="cfg-appearance-theme" data-i18n="appearanceTheme">Tema:</label>
+                    <select id="cfg-appearance-theme">
+                        <option value="classic" data-i18n="appearanceClassic">Neeko clásico</option>
+                        <option value="desktop" data-i18n="appearanceDesktop">Neeko de escritorio</option>
+                    </select>
+                    <p id="appearance-help-text" data-i18n="appearanceHelp" hidden>Muestra a Neeko sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.</p>
+                    <div id="appearance-size-row" hidden>
+                        <label for="cfg-appearance-size"><span data-i18n="appearanceSize">Tamaño de Neeko</span> <output id="cfg-appearance-size-output" for="cfg-appearance-size">82%</output></label>
+                        <input id="cfg-appearance-size" type="range" min="30" max="100" value="82">
+                        <button id="appearance-size-reset" type="button" data-i18n="appearanceReset">Restablecer tamaño</button>
+                    </div>
                     <label for="cfg-language" data-i18n="languageLabel">Idioma:</label>
                     <select id="cfg-language">
                         <option value="es">Espa&ntilde;ol</option>
@@ -163,6 +175,12 @@
                         <input type="checkbox" id="cfg-render-3d">
                         <label for="cfg-render-3d" data-i18n="render3d">Renderizar Neeko en 3D</label>
                     </div>
+
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="cfg-source-research">
+                        <label for="cfg-source-research" data-i18n="sourceResearch">Responder preguntas con busqueda y fuentes</label>
+                    </div>
+                    <p style="color:#aab;font-size:11px;margin-top:-4px;" data-i18n="sourceResearchHelp">Activado: busca, lee fuentes y usa la IA para responder con citas (hasta dos rondas). Apagado: conversa sin buscar fuentes.</p>
 
                     <div id="neeko-3d-animation-row" class="hidden">
                         <label for="cfg-neeko-3d-animation" data-i18n="animation3d">Animacion 3D:</label>
