@@ -81,3 +81,6 @@ Desktop.ini
 /driver/transport/target/
 
 !scripts/appearance.test.mjs
+
+# Local documentation
+/docs/
