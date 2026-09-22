@@ -239,7 +239,7 @@ pub async fn run_agent(
         // Validar decisión
         if let Err(e) = tools::validate_decision(&decision, &state) {
             state.last_tool_feedback = Some(format!("Invalid operation: {e}. Choose a valid operation with all required arguments."));
-            eprintln!("[Neeko agent] Invalid decision: {e}");
+            eprintln!("[Neeko Asistente agent] Invalid decision: {e}");
             consecutive_unproductive += 1;
             if consecutive_unproductive >= 3 {
                 break;
@@ -313,7 +313,7 @@ pub async fn run_agent(
             }
             tools::ToolOutput::Error(e) => {
                 state.last_tool_feedback = Some(format!("Tool failed: {e}. Try a different strategy or query; do not repeat the same failed operation."));
-                eprintln!("[Neeko agent] Tool error: {e}");
+                eprintln!("[Neeko Asistente agent] Tool error: {e}");
                 consecutive_unproductive += 1;
             }
         }

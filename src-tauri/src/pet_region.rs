@@ -5,7 +5,7 @@ pub struct HitRect { x: f64, y: f64, width: f64, height: f64 }
 
 #[tauri::command]
 pub fn pet_set_region(window: tauri::WebviewWindow, rects: Option<Vec<HitRect>>) -> Result<(), String> {
-    if window.label() != "main" { return Err("Solo disponible para Neeko".into()); }
+    if window.label() != "main" { return Err("Solo disponible para Neeko Asistente".into()); }
     if let Some(rects) = &rects {
         if rects.len() > 4096 || rects.iter().any(|r| [r.x, r.y, r.width, r.height].iter().any(|v| !v.is_finite() || v.abs() > 32768.0) || r.width < 0.0 || r.height < 0.0) {
             return Err("Región inválida".into());

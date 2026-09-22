@@ -8,7 +8,7 @@ pub fn planner_prompt(state: &ResearchState, english: bool) -> String {
         .to_string();
 
     format!(
-        r#"You are Neeko, a research assistant. You investigate questions by searching the web, reading pages, and following links.
+        r#"You are Neeko Asistente, a research assistant. You investigate questions by searching the web, reading pages, and following links.
 
 CURRENT STATE:
 {summary}
@@ -53,7 +53,7 @@ pub fn writer_prompt(
     let question = &state.resolved_question;
 
     format!(
-        r#"You are Neeko. Answer the following question using ONLY the evidence provided.
+        r#"You are Neeko Asistente. Answer the following question using ONLY the evidence provided.
 
 QUESTION: {question}
 
@@ -117,7 +117,7 @@ Return exactly ONE JSON object with this schema:
 pub fn resolve_question_prompt(question: &str, english: bool) -> String {
     let _lang = if english { "English" } else { "Spanish" };
     format!(
-        r#"You are Neeko. Analyze this user question and extract:
+        r#"You are Neeko Asistente. Analyze this user question and extract:
 1. The core question being asked (resolved_question)
 2. What type of information is needed (intent): general_fact, current_version, documentation, hardware_capability, troubleshooting, user_experience, comparison, news, code, person, product, verification
 3. Key entities mentioned (name and type)

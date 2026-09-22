@@ -185,7 +185,7 @@ pub async fn shazam_prepare(app: tauri::AppHandle, window: tauri::WebviewWindow)
             None => {
                 progress("Instalando Python. Esto puede tardar unos minutos…");
                 crate::install_python_with_winget(&app)?;
-                crate::find_system_python().ok_or("Reiniciá Neeko para detectar Python y volvé a preparar Shazam")?
+                crate::find_system_python().ok_or("Reiniciá Neeko Asistente para detectar Python y volvé a preparar Shazam")?
             }
         };
         let python = runtime_python()?;
@@ -229,7 +229,7 @@ impl Drop for BusyGuard {
 
 #[tauri::command]
 pub fn shazam_cancel(window: tauri::WebviewWindow) -> Result<(), String> {
-    if !matches!(window.label(), "main" | "settings") { return Err("Solo disponible en Neeko".into()); }
+    if !matches!(window.label(), "main" | "settings") { return Err("Solo disponible en Neeko Asistente".into()); }
     CANCEL.store(true, Ordering::SeqCst);
     Ok(())
 }

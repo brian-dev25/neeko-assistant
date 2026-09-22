@@ -1,3 +1,96 @@
+// Render only supported image links; all other content remains plain text.
+export function pokemonImageUrl(value) {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'https:' && url.hostname === 'raw.githubusercontent.com' && !url.username && !url.password && !url.port && !url.search && !url.hash
+            && /^\/PokeAPI\/sprites\/master\/sprites\/pokemon\/(?:other\/(?:official-artwork|home)\/)?\d+\.png$/.test(url.pathname) ? url.href : null;
+    } catch { return null; }
+}
+
+export function messageParts(text) {
+    const images = [];
+    const colors = {};
+    let plain = String(text ?? '').replace(/!\[([^\]\r\n]{1,100})\]\((https:\/\/[^\s)]+)\)/g, (match, alt, url) => {
+        const src = pokemonImageUrl(url);
+        if (!src) return match;
+        if (images.length < 4 && !images.some(image => image.src === src)) images.push({ src, alt });
+        return '';
+    }).trim();
+    plain = plain.replace(/\[poke-color:([a-z0-9-]{1,100}):(black|blue|brown|gray|green|pink|purple|red|white|yellow)\]/g, (_, name, color) => {
+        if (Object.keys(colors).length < 4) colors[name] = color;
+        return '';
+    }).trim();
+    const source = /(?:^|\n)Fuente: PokéAPI \(https:\/\/pokeapi\.co\/\)\.?\s*$/.test(plain) ? 'https://pokeapi.co/' : null;
+    if (source) plain = plain.replace(/(?:^|\n)Fuente: PokéAPI \(https:\/\/pokeapi\.co\/\)\.?\s*$/, '').trimEnd();
+    if (images.length || Object.keys(colors).length) plain = plain.replace(/\n[ \t]*\n(?:[ \t]*\n)+/g, '\n\n');
+    return { text: plain, images, source, colors };
+}
+
+// Light shades keep names readable on the dark desktop and web chat backgrounds.
+const POKEMON_COLORS = {black:'#c4c4d2',blue:'#8fc7ff',brown:'#dfb78f',gray:'#c9cdd6',green:'#98e6ad',pink:'#ffb4dc',purple:'#d1b0ff',red:'#ffaaa7',white:'#f5f5ff',yellow:'#ffe078'};
+
+export function renderMessageContent(parent, text, openUrl) {
+    const parts = messageParts(text);
+    parent.textContent = parts.text;
+    if (Object.keys(parts.colors).length) {
+        parent.textContent = '';
+        for (const token of parts.text.split(/([a-z0-9-]+)/gi)) {
+            const color = POKEMON_COLORS[parts.colors[token.toLowerCase()]];
+            if (!color) { parent.append(document.createTextNode(token)); continue; }
+            const name = document.createElement('span');
+            name.textContent = token;
+            name.style.color = color;
+            name.style.fontWeight = '600';
+            parent.append(name);
+        }
+    }
+    if (parts.images.length) {
+        const gallery = document.createElement('div');
+        gallery.className = 'chat-image-gallery';
+        gallery.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:12px 0;max-width:100%;white-space:normal';
+        for (const image of parts.images) {
+            const card = document.createElement('figure');
+            card.style.cssText = 'margin:0;flex:1 1 110px;min-width:0;max-width:min(180px,100%);text-align:center';
+            const img = document.createElement('img');
+            img.alt = image.alt;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.referrerPolicy = 'no-referrer';
+            img.width = img.height = 144;
+            img.style.cssText = 'display:block;width:100%;height:144px;object-fit:contain;border-radius:12px;background:rgba(128,128,128,.12)';
+            const caption = document.createElement('figcaption');
+            caption.textContent = image.alt;
+            caption.style.cssText = 'font-size:12px;margin-top:4px;overflow-wrap:anywhere';
+            const color = POKEMON_COLORS[parts.colors[image.alt.toLowerCase()]];
+            if (color) { caption.style.color = color; caption.style.fontWeight = '600'; }
+            img.onerror = () => { img.hidden = true; img.style.display = 'none'; caption.textContent = image.alt + ' — imagen no disponible'; };
+            img.src = image.src;
+            card.append(img, caption);
+            gallery.append(card);
+        }
+        parent.append(gallery);
+    }
+    if (parts.source) {
+        const footer = document.createElement('div');
+        footer.className = 'chat-source';
+        footer.style.cssText = 'margin-top:8px;font-size:12px;line-height:1.4;white-space:normal';
+        footer.textContent = 'Fuente: ';
+        const link = document.createElement('a');
+        link.textContent = 'PokéAPI';
+        link.href = parts.source;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.cssText = 'color:#c4b5fd;text-decoration:underline;text-underline-offset:2px;cursor:pointer';
+        if (openUrl) link.onclick = async event => {
+            event.preventDefault();
+            try { await openUrl(parts.source); }
+            catch (error) { console.error('Could not open source:', error); link.textContent = 'PokéAPI — no se pudo abrir; reintentá'; }
+        };
+        footer.append(link);
+        parent.append(footer);
+    }
+}
+
 // Both UIs use this lifecycle. Only the backend may choose/validate/execute actions.
 export class ChatClient {
     constructor(transport, ui, session = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-')) {

@@ -1,17 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["vendor/micyou/core", "vendor/micyou/micyou-audio", "vendor/micyou/micyou-protocol"]
 
 [package]
 name = "neeko-assistant"
-version = "1.0.6"
+version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-neeko-micyou-core = { path = "vendor/micyou/core" }
-micyou-audio = { path = "vendor/micyou/micyou-audio", features = ["dsp", "noise-suppression"] }
-micyou-protocol = { path = "vendor/micyou/micyou-protocol" }
-cpal = "0.15.3"
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2"
 tauri-plugin-notification = "2"
@@ -57,7 +52,3 @@ tauri-build = { version = "2", features = [] }
 [lib]
 name = "neeko_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
-
-# Same decoder fix as the reviewed MicYou revision, pinned instead of a moving branch.
-[patch.crates-io]
-opus-decoder = { git = "https://github.com/tfr0305/Rusopus.git", rev = "025a8e4e77fa544b66c4ad90cf49efe684a45faf" }

@@ -1,5 +1,6 @@
+import { readAvatar, saveAvatar, validateAvatar } from './avatar.mjs';
 import { initAppearance } from './appearance.mjs';
-import { ChatClient, confirmationControls, confirmationText, attachInfo } from './chat-client.mjs';
+import { ChatClient, confirmationControls, confirmationText, attachInfo, renderMessageContent } from './chat-client.mjs';
 import { PetRegion } from './pet-region.mjs';
 import { PetActivity } from './pet-activity.mjs';
 let THREE = null;
@@ -36,7 +37,7 @@ const petRegion = new PetRegion(settingsWindow ? async () => {} : invoke);
 
 const neekoSection = document.getElementById('neeko-section');
 const neekoSprite = document.getElementById('neeko-sprite');
-const neekoImg = document.getElementById('neeko-img');
+let avatarLoadRequest = 0;
 const neeko3d = document.getElementById('neeko-3d');
 const speechBubble = document.getElementById('speech-bubble');
 const bubbleText = document.getElementById('bubble-text');
@@ -84,15 +85,6 @@ if (THREE) {
 }
 
 // ─── Addon System ───
-setInterval(() => {
-    if (!petRegion.enabled || !neekoImg.complete || !neekoImg.naturalWidth || !neekoImg.getClientRects().length) return;
-    if (getComputedStyle(neekoImg).visibility === 'hidden') return;
-    const rect = neekoImg.getBoundingClientRect();
-    const scale = Math.min(rect.width / neekoImg.naturalWidth, rect.height / neekoImg.naturalHeight);
-    const width = neekoImg.naturalWidth * scale, height = neekoImg.naturalHeight * scale;
-    petRegion.capture(neekoImg, { x: rect.x + (rect.width - width) / 2, y: rect.bottom - height, width, height });
-}, 60);
-
 const NeekoAddons = {
     _commands: new Map(),
     _actions: new Map(),
@@ -371,12 +363,6 @@ const NeekoAddons = {
     },
 };
 
-const SPRITES = {
-    default: "NEEKO.png",
-    standing: "NEEKO-standing-costume.png",
-    sitting: "NEEKO-sitting.png",
-};
-
 const NEEKO_3D_ANIMATIONS = {
     idle: ['Idle1_Base', 'Idle2_Base', 'Neeko_idle3.anm'],
     thinking: 'Idlein_Animal',
@@ -392,7 +378,7 @@ const NEEKO_3D_PORTRAIT = {
 const I18N = {
     es: {
         locale: 'es-AR',
-        chatPlaceholder: 'Hablale a Neeko...',
+        chatPlaceholder: 'Hablale a Neeko Asistente...',
         settingsTitle: 'Configuracion',
         checkTools: 'Probar',
         save: 'Guardar',
@@ -420,13 +406,12 @@ const I18N = {
         riotIdLabel: 'Riot ID (Usuario#Tag):',
         lolRegion: 'Region LOL:',
         aiAppearance: 'Apariencia de IA',
-        neekoSprite: 'Sprite de Neeko:',
-        render3d: 'Renderizar Neeko en 3D',
+        render3d: 'Renderizar Neeko Asistente en 3D',
         appearanceTheme: 'Tema:',
-        appearanceClassic: 'Neeko clásico',
-        appearanceDesktop: 'Neeko de escritorio',
-        appearanceHelp: 'Muestra a Neeko sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.',
-        appearanceSize: 'Tamaño de Neeko',
+        appearanceClassic: 'Neeko Asistente clásico',
+        appearanceDesktop: 'Neeko Asistente de escritorio',
+        appearanceHelp: 'Muestra a Neeko Asistente sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.',
+        appearanceSize: 'Tamaño de Neeko Asistente',
         appearanceReset: 'Restablecer tamaño',
         sourceResearch: 'Responder preguntas con busqueda y fuentes',
         sourceResearchHelp: 'Activado: busca, lee fuentes y usa la IA para responder con citas (hasta dos rondas). Apagado: conversa sin buscar fuentes.',
@@ -471,8 +456,8 @@ const I18N = {
         llamaOff: 'LLaMA esta apagado. Activalo en Configuracion.',
         missingRiot: 'No tenes tu Riot ID configurado. Ponelo en Configuracion.',
         saved: 'Configuracion guardada',
-        hello: 'Hola! Soy Neeko',
-        helloLlamaOff: 'Hola! Soy Neeko\nLLaMA esta apagado. Activalo en Configuracion si lo necesitas.',
+        hello: 'Hola! Soy Neeko Asistente',
+        helloLlamaOff: 'Hola! Soy Neeko Asistente\nLLaMA esta apagado. Activalo en Configuracion si lo necesitas.',
         noModel: 'No encontre el modelo GGUF',
         idle: [
             'Necesitas ayuda con algo?',
@@ -487,7 +472,7 @@ const I18N = {
         addonsEnabled: 'Habilitados',
         addonsDisabled: 'Deshabilitados',
         addonNoAddons: 'No hay addons instalados',
-        addonNoAddonsHint: 'Pone carpetas de addons en la carpeta "addons/" de la config de Neeko.',
+        addonNoAddonsHint: 'Pone carpetas de addons en la carpeta "addons/" de la config de Neeko Asistente.',
         addonRequiresReload: 'Cambios se aplican al reiniciar la app.',
         addonEnable: 'Habilitar',
         addonDisable: 'Deshabilitar',
@@ -506,7 +491,7 @@ const I18N = {
         memoryTitle: 'Memoria',
         memorySearch: 'Buscar...',
         memoryNoFacts: 'No hay nada guardado aun.',
-        memoryNoFactsHint: 'Decile algo a Neeko y lo guarda automaticamente. O deci "guarda que X es Y".',
+        memoryNoFactsHint: 'Decile algo a Neeko Asistente y lo guarda automaticamente. O deci "guarda que X es Y".',
         memoryExport: 'Exportar',
         memoryImport: 'Importar',
         memoryClearAll: 'Borrar todo',
@@ -517,7 +502,7 @@ const I18N = {
     },
     en: {
         locale: 'en-US',
-        chatPlaceholder: 'Talk to Neeko...',
+        chatPlaceholder: 'Talk to Neeko Asistente...',
         settingsTitle: 'Settings',
         checkTools: 'Test',
         save: 'Save',
@@ -545,13 +530,12 @@ const I18N = {
         riotIdLabel: 'Riot ID (User#Tag):',
         lolRegion: 'LoL region:',
         aiAppearance: 'AI Appearance',
-        neekoSprite: 'Neeko sprite:',
-        render3d: 'Render Neeko in 3D',
+        render3d: 'Render Neeko Asistente in 3D',
         appearanceTheme: 'Theme:',
-        appearanceClassic: 'Classic Neeko',
-        appearanceDesktop: 'Desktop Neeko',
-        appearanceHelp: 'Shows Neeko without a background. Click to chat, drag to move and right-click for controls.',
-        appearanceSize: 'Neeko size',
+        appearanceClassic: 'Classic Neeko Asistente',
+        appearanceDesktop: 'Desktop Neeko Asistente',
+        appearanceHelp: 'Shows Neeko Asistente without a background. Click to chat, drag to move and right-click for controls.',
+        appearanceSize: 'Neeko Asistente size',
         appearanceReset: 'Reset size',
         sourceResearch: 'Answer questions with search and sources',
         sourceResearchHelp: 'On: searches, reads sources and uses AI to answer with citations (up to two rounds). Off: chats without searching sources.',
@@ -596,8 +580,8 @@ const I18N = {
         llamaOff: 'LLaMA is off. Turn it on in Settings.',
         missingRiot: 'Your Riot ID is not configured. Add it in Settings.',
         saved: 'Settings saved',
-        hello: 'Hi! I am Neeko',
-        helloLlamaOff: 'Hi! I am Neeko\nLLaMA is off. Turn it on in Settings if you need it.',
+        hello: 'Hi! I am Neeko Asistente',
+        helloLlamaOff: 'Hi! I am Neeko Asistente\nLLaMA is off. Turn it on in Settings if you need it.',
         noModel: 'I could not find the GGUF model',
         idle: [
             'Need help with anything?',
@@ -612,7 +596,7 @@ const I18N = {
         addonsEnabled: 'Enabled',
         addonsDisabled: 'Disabled',
         addonNoAddons: 'No addons installed',
-        addonNoAddonsHint: 'Put addon folders in the Neeko config "addons/" folder.',
+        addonNoAddonsHint: 'Put addon folders in the Neeko Asistente config "addons/" folder.',
         addonRequiresReload: 'Changes apply after restarting the app.',
         addonEnable: 'Enable',
         addonDisable: 'Disable',
@@ -631,7 +615,7 @@ const I18N = {
         memoryTitle: 'Memory',
         memorySearch: 'Search...',
         memoryNoFacts: 'Nothing saved yet.',
-        memoryNoFactsHint: 'Tell Neeko something and she saves it automatically. Or say "remember that X is Y".',
+        memoryNoFactsHint: 'Tell Neeko Asistente something and she saves it automatically. Or say "remember that X is Y".',
         memoryExport: 'Export',
         memoryImport: 'Import',
         memoryClearAll: 'Clear all',
@@ -967,34 +951,64 @@ function syncSystemPrompt() {
     conversationHistory[0].content = getSystemPrompt();
 }
 
-function normalizeNeekoSprite(sprite) {
-    return Object.values(SPRITES).includes(sprite) ? sprite : SPRITES.default;
-}
-
-function applyNeekoSprite(sprite) {
-    const selected = normalizeNeekoSprite(sprite);
-    neekoImg.src = selected;
-    neekoImg.classList.remove('sprite-loading');
-    neekoSprite.classList.toggle('sprite-standing', selected === SPRITES.standing);
-    neekoSprite.classList.toggle('sprite-sitting', selected === SPRITES.sitting);
-}
-
-function applyRender3D(enabled) {
+async function applyRender3D() {
     if (settingsWindow) return;
-    neeko3dRendered = !!enabled && !!THREE;
-    neekoSection.classList.toggle('render-3d', neeko3dRendered);
-    neekoSprite.classList.toggle('using-3d', neeko3dRendered);
-
-    if (neeko3dRendered) {
-        neekoImg.style.display = 'none';
+    try {
+        const stored = await readAvatar();
+        if (!stored || !THREE || !GLTFLoaderClass) {
+            await invoke('set_avatar_available', { available: false });
+            return;
+        }
+        neeko3dRendered = true;
+        neekoSection.classList.add('render-3d');
+        neekoSprite.classList.add('using-3d');
         neeko3d.style.display = 'block';
         initNeeko3d();
-        syncNeeko3dAnimation();
+        await loadAvatar(stored);
+    } catch (error) {
+        console.error('No se pudo iniciar el avatar:', error);
+        await invoke('set_avatar_available', { available: false });
+    }
+}
+
+function releaseAvatarScene(scene) {
+    scene.traverse(child => {
+        child.geometry?.dispose();
+        for (const material of (Array.isArray(child.material) ? child.material : [child.material])) {
+            if (!material) continue;
+            for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
+            material.dispose();
+        }
+    });
+}
+
+function disposeAvatar() {
+    neeko3dMixer?.stopAllAction();
+    if (neeko3dModel) {
+        neeko3dScene.remove(neeko3dModel);
+        releaseAvatarScene(neeko3dModel);
+    }
+    neeko3dModel = neeko3dMixer = neeko3dActiveAction = neeko3dHeadBone = neeko3dNeckBone = null;
+    neeko3dActions.clear();
+    petRegion.shape = [];
+}
+
+async function loadAvatar(stored) {
+    if (!neeko3dScene) return;
+    const request = ++avatarLoadRequest;
+    try {
+        if (request !== avatarLoadRequest) return;
+        validateAvatar(stored.bytes, stored.name);
+        const gltf = await new GLTFLoaderClass().parseAsync(stored.bytes, '');
+        if (request !== avatarLoadRequest) { releaseAvatarScene(gltf.scene); return; }
+        disposeAvatar();
+        attachAvatar(gltf);
         startNeeko3dIdle();
-    } else {
-        neekoImg.style.display = '';
-        neeko3d.style.display = 'none';
+        await invoke('set_avatar_available', { available: true });
+    } catch (error) {
+        console.error('No se pudo cargar el avatar:', error);
         stopNeeko3dIdle();
+        await invoke('set_avatar_available', { available: false });
     }
 }
 
@@ -1029,7 +1043,9 @@ function initNeeko3d() {
     neeko3dResizeObserver.observe(neeko3d);
     resizeNeeko3d();
 
-        new GLTFLoaderClass().load('neeko.glb', ({ scene, animations }) => {
+}
+
+function attachAvatar({ scene, animations }) {
         neeko3dModel = scene;
         neeko3dModel.rotation.y = -0.12;
 
@@ -1071,11 +1087,6 @@ function initNeeko3d() {
             neeko3dActions.set(clip.name, neeko3dMixer.clipAction(clip));
         });
         syncNeeko3dAnimation();
-    }, undefined, (error) => {
-        console.error('No pude cargar neeko.glb:', error);
-        neekoImg.style.display = '';
-        neeko3d.style.display = 'none';
-    });
 }
 
 function resizeNeeko3d() {
@@ -1235,7 +1246,7 @@ function stopNeeko3dIdle() {
 }
 
 function getSystemPrompt() {
-    return currentLanguage === 'en' ? 'You are Neeko. Reply briefly in English.' : 'Sos Neeko. Responde brevemente en espanol.';
+    return currentLanguage === 'en' ? 'You are Neeko Asistente. Reply briefly in English.' : 'Sos Neeko Asistente. Responde brevemente en espanol.';
 }
 
 // Legacy addon conversation access; app chat context is assembled once in Rust.
@@ -1280,7 +1291,7 @@ function showBubble(text) {
         return;
     }
     speechBubble.querySelectorAll('.assistant-info-trigger, .assistant-info-panel').forEach(button => button.remove());
-    bubbleText.textContent = text;
+    renderMessageContent(bubbleText, text, url => invoke('open_url', { url }));
     speechBubble.classList.remove('hidden');
 }
 
@@ -1330,14 +1341,14 @@ const assistantClient = new ChatClient({
     executing: (approved) => { if (approved) showBubble(t('working')); },
     progress: (step, details) => {
         const labels = currentLanguage === 'en' ? {
-            thinking: 'Neeko is thinking...',
+            thinking: 'Neeko Asistente is thinking...',
             searching: 'Searching information...',
             reading: 'Reading sources...',
             checking: 'Checking facts...',
             preparing: 'Preparing answer...',
             writing: 'Writing answer...',
         } : {
-            thinking: 'Neeko esta pensando...',
+            thinking: 'Neeko Asistente esta pensando...',
             searching: 'Buscando informacion...',
             reading: 'Leyendo fuentes...',
             checking: 'Comprobando datos...',
@@ -1391,7 +1402,6 @@ async function init() {
     await window.__TAURI__.event.listen('neeko:settings-saved', async ({ payload }) => {
         const config = JSON.parse(await invoke('lol_get_config'));
         setLanguage(config.language || 'es');
-        applyNeekoSprite(config.neeko_sprite);
         neeko3dSelectedIdle = config.neeko_3d_animation || 'Neeko_idle3.anm';
         applyRender3D(config.render_3d !== false);
         neeko3dMouseTracking = payload.mouseTracking;
@@ -1416,11 +1426,9 @@ async function init() {
     try {
         const config = JSON.parse(await invoke('lol_get_config'));
         setLanguage(config.language || 'es');
-        applyNeekoSprite(config.neeko_sprite);
         neeko3dSelectedIdle = config.neeko_3d_animation || 'Neeko_idle3.anm';
         applyRender3D(config.render_3d !== false);
     } catch {
-        applyNeekoSprite(SPRITES.default);
         neeko3dSelectedIdle = 'Neeko_idle3.anm';
         applyRender3D(true);
     }
@@ -1710,11 +1718,9 @@ settingsBtn.addEventListener('click', async () => {
         setLanguage(settingsOriginalLanguage);
         document.getElementById('cfg-git-pat').value = '';
         document.getElementById('cfg-git-path').value = config.git_default_path || '';
-        document.getElementById('cfg-neeko-sprite').value = normalizeNeekoSprite(config.neeko_sprite);
-        const render3dEnabled = config.render_3d !== false;
-        document.getElementById('cfg-render-3d').checked = render3dEnabled;
+        const render3dEnabled = true;
         document.getElementById('cfg-source-research').checked = config.source_research_enabled === true;
-        document.getElementById('cfg-neeko-3d-animation').value = config.neeko_3d_animation || 'Neeko_idle3.anm';
+        await refreshAvatarSettings(config.neeko_3d_animation || 'Neeko_idle3.anm');
         document.getElementById('cfg-mouse-tracking').checked = neeko3dMouseTracking;
         document.getElementById('cfg-language').value = normalizeLanguage(config.language || currentLanguage);
         document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !render3dEnabled);
@@ -1853,10 +1859,6 @@ async function checkEnvironmentTools(showMessage = true) {
     checkToolsBtn.disabled = false;
 }
 
-document.getElementById('cfg-render-3d').addEventListener('change', (e) => {
-    document.getElementById('neeko-3d-animation-row').classList.toggle('hidden', !e.target.checked);
-});
-
 document.getElementById('cfg-language').addEventListener('change', (e) => {
     setLanguage(e.target.value);
 });
@@ -1989,7 +1991,7 @@ async function runUninstaller(button, command, confirmation) {
 }
 
 uninstallFfmpegBtn.addEventListener('click', () => {
-    runUninstaller(uninstallFfmpegBtn, 'uninstall_ffmpeg', '¿Eliminar FFmpeg y FFprobe descargados por Neeko?');
+    runUninstaller(uninstallFfmpegBtn, 'uninstall_ffmpeg', '¿Eliminar FFmpeg y FFprobe descargados por Neeko Asistente?');
 });
 
 uninstallGitBtn.addEventListener('click', () => {
@@ -1997,7 +1999,7 @@ uninstallGitBtn.addEventListener('click', () => {
 });
 
 uninstallModelBtn.addEventListener('click', () => {
-    runUninstaller(uninstallModelBtn, 'uninstall_model', '¿Eliminar los modelos GGUF descargados por Neeko?');
+    runUninstaller(uninstallModelBtn, 'uninstall_model', '¿Eliminar los modelos GGUF descargados por Neeko Asistente?');
 });
 
 settingsModal.addEventListener('click', (e) => {
@@ -2012,8 +2014,7 @@ settingsModal.addEventListener('click', (e) => {
 saveSettingsBtn.addEventListener('click', async () => {
     const pat = document.getElementById('cfg-git-pat').value.trim();
     const gitPath = document.getElementById('cfg-git-path').value.trim();
-    const neekoSpriteValue = normalizeNeekoSprite(document.getElementById('cfg-neeko-sprite').value);
-    const render3d = document.getElementById('cfg-render-3d').checked;
+    const render3d = true;
     const sourceResearchEnabled = document.getElementById('cfg-source-research').checked;
     const region = document.getElementById('cfg-lol-region').value;
     const riotId = document.getElementById('cfg-riot-id').value.trim();
@@ -2027,14 +2028,12 @@ saveSettingsBtn.addEventListener('click', async () => {
         await invoke('lol_save_config', {
             gitPat: pat || null,
             gitPath: gitPath || null,
-            neekoSprite: neekoSpriteValue,
             region: region || null,
             riotId: riotId || null,
             language,
             sourceResearchEnabled,
         });
         appearance?.save();
-        applyNeekoSprite(neekoSpriteValue);
         setLanguage(language);
         await refreshKnowledgeContext();
         resetSystemPrompt();
@@ -2194,6 +2193,60 @@ applyUpdateBtn.addEventListener('click', async () => {
 });
 
 init().catch(error => {
-    console.error('No se pudo iniciar Neeko:', error);
+    console.error('No se pudo iniciar Neeko Asistente:', error);
     if (settingsWindow) showBubble('No se pudo cargar Configuración: ' + String(error));
+    else void invoke('set_avatar_available', { available: false }).catch(console.error);
 });
+
+async function refreshAvatarSettings(selected = neeko3dSelectedIdle) {
+    const stored = await readAvatar();
+    const status = document.getElementById('avatar-status');
+    const select = document.getElementById('cfg-neeko-3d-animation');
+    select.replaceChildren(new Option('Idle 3', 'Neeko_idle3.anm'));
+    status.textContent = stored ? `Modelo instalado · ${stored.name}` : 'Solo chat · Sin modelo instalado';
+    if (stored && GLTFLoaderClass) {
+        const { animations, scene } = await new GLTFLoaderClass().parseAsync(stored.bytes, '');
+        const supported = ['Idle1_Base', 'Idle2_Base', 'Idlein_Animal', 'Joke_Loop', 'Dance_Loop', 'Laugh', 'Taunt'];
+        for (const clip of animations) if (supported.includes(clip.name)) select.add(new Option(clip.name, clip.name));
+        releaseAvatarScene(scene);
+    }
+    select.value = [...select.options].some(option => option.value === selected) ? selected : 'Neeko_idle3.anm';
+}
+document.getElementById('avatar-download').addEventListener('click', () => {
+    invoke('open_url', { url: 'https://modelviewer.lol/?lang=es-ES' }).catch(error => {
+        document.getElementById('avatar-status').textContent = String(error);
+    });
+});
+document.getElementById('avatar-import').addEventListener('click', () => document.getElementById('avatar-file').click());
+document.getElementById('avatar-file').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const button = document.getElementById('avatar-import');
+    const status = document.getElementById('avatar-status');
+    button.disabled = true;
+    try {
+        status.textContent = 'Cargando Neeko…';
+        if (file.size > 100 * 1024 * 1024) throw new Error('El modelo debe pesar menos de 100 MB.');
+        const bytes = await file.arrayBuffer();
+        validateAvatar(bytes, file.name);
+        if (!GLTFLoaderClass) throw new Error('El visor 3D no está disponible.');
+        // Parse before saving so a broken download never replaces the current avatar.
+        const parsed = await new GLTFLoaderClass().parseAsync(bytes, '');
+        let hasMesh = false;
+        parsed.scene.traverse(child => { if (child.isMesh) hasMesh = true; });
+        releaseAvatarScene(parsed.scene);
+        if (!hasMesh) throw new Error('El archivo no contiene un modelo 3D.');
+        await saveAvatar({ name: file.name, bytes });
+        await refreshAvatarSettings();
+        await window.__TAURI__.event.emit('assistant:avatar-changed');
+    } catch (error) {
+        status.textContent = `No se pudo cargar el modelo: ${error.message || error}`;
+    } finally {
+        button.disabled = false;
+        event.target.value = '';
+    }
+});
+window.__TAURI__.event.listen('assistant:avatar-changed', async () => {
+    await applyRender3D();
+    await refreshAvatarSettings().catch(console.error);
+}).catch(console.error);

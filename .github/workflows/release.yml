@@ -65,8 +65,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-          releaseName: "Neeko Assistant ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
-          releaseBody: "Build de Neeko Assistant con updater Tauri."
+          releaseName: "Neeko Asistente ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          releaseBody: "Neeko Asistente con modo chat e importación local del GLB. No incluye el modelo ni las imágenes del personaje. Incluye instalador, versión portable y actualizador Tauri."
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true

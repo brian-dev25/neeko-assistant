@@ -1,15 +1,18 @@
 # Dependencies
 node_modules/
 
+# Local documentation
+/docs/
+
 # Local scripts / launchers
 !scripts/
 scripts/*
 !scripts/screen-translate-ui.test.html
 !scripts/bump-version.js
 !scripts/action-policy.test.mjs
+!scripts/poke.test.mjs
 !scripts/tiktok.test.py
 !scripts/tiktok-ui.test.mjs
-!scripts/vendor-micyou.py
 !scripts/build-screen-ocr.mjs
 /*.bat
 /*.cmd
@@ -81,6 +84,4 @@ Desktop.ini
 /driver/transport/target/
 
 !scripts/appearance.test.mjs
-
-# Local documentation
-/docs/
+!scripts/avatar.test.mjs

@@ -454,7 +454,7 @@ fn helper_path(app: &AppHandle) -> Result<PathBuf, String> {
     if path.is_file() {
         Ok(path)
     } else {
-        Err("Falta el motor OCR incluido con Neeko. Reinstalá una versión que incluya Screen Translate; en desarrollo ejecutá node scripts/build-screen-ocr.mjs.".into())
+        Err("Falta el motor OCR incluido con Neeko Asistente. Reinstalá una versión que incluya Screen Translate; en desarrollo ejecutá node scripts/build-screen-ocr.mjs.".into())
     }
 }
 
@@ -565,7 +565,7 @@ fn ensure_overlay(app: &AppHandle) -> Result<(), String> {
         OVERLAY,
         WebviewUrl::App("screen-translate-overlay.html".into()),
     )
-    .title("Neeko · Traducción en pantalla")
+    .title("Neeko Asistente · Traducción en pantalla")
     .inner_size(660., 240.)
     .min_inner_size(300., 130.)
     .decorations(false)
@@ -596,7 +596,7 @@ fn ensure_remote(app: &AppHandle) -> Result<(), String> {
         REMOTE,
         WebviewUrl::App("remote-controller.html".into()),
     )
-    .title("Neeko · Control")
+    .title("Neeko Asistente · Control")
     .inner_size(220., 40.)
     .min_inner_size(180., 36.)
     .decorations(false)

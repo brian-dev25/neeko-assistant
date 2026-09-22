@@ -1,0 +1,189 @@
+{
+  "id": "poke",
+  "name": "POKE",
+  "version": "1.0.0",
+  "description": "Pokédex, debilidades, counters y enfrentamientos teóricos de Pokémon. Evoluciones, movimientos, habilidades y objetos con PokéAPI.",
+  "author": "Neeko",
+  "minAppVersion": "1.0.6",
+  "enabled": false,
+  "permissions": [
+    "chat:commands",
+    "ui:tabs",
+    "network:http"
+  ],
+  "commands": [
+    {
+      "id": "poke-weaknesses",
+      "description": "Consultar debilidades, resistencias, inmunidades y qué le gana a un Pokémon o tipo. Entender también devilidades. name en español o inglés.",
+      "patterns": {
+        "es": [
+          "^\\s*(?:¿)?(?:poke\\s+)?(.+?)\\s+(?:vs\\.?|versus|contra)\\s*\\?[?!]*\\s*$",
+          "^(?:¿)?(?:qu[eé]\\s+(?:le\\s+)?gana\\s+a|qu[eé]\\s+de[bhv]ilidades?\\s+tiene|de[bhv]ilidades?\\s+(?:de|del))\\s+(.+?)[?!]*$",
+          "^\\s*(?:¿)?(?:poke\\s+)?counters?\\s+(?:(?:de|del|para)\\s+)?(.+?)[?!]*\\s*$",
+          "^\\s*(?:¿)?(?:poke\\s+)?(.+?)\\s+counters?[?!]*\\s*$"
+        ],
+        "en": [
+          "^\\s*(?:¿)?(?:poke\\s+)?(.+?)\\s+(?:vs\\.?|versus|contra)\\s*\\?[?!]*\\s*$",
+          "^(?:¿)?(?:qu[eé]\\s+(?:le\\s+)?gana\\s+a|qu[eé]\\s+de[bhv]ilidades?\\s+tiene|de[bhv]ilidades?\\s+(?:de|del))\\s+(.+?)[?!]*$",
+          "^\\s*(?:¿)?(?:poke\\s+)?counters?\\s+(?:(?:de|del|para)\\s+)?(.+?)[?!]*\\s*$",
+          "^\\s*(?:¿)?(?:poke\\s+)?(.+?)\\s+counters?[?!]*\\s*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar debilidades, resistencias, inmunidades y qué le gana a un Pokémon o tipo. Entender también devilidades. name en español o inglés.",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-compare",
+      "description": "Comparar dos Pokémon o tipos (Fuego vs Agua, Pikachu vs Squirtle). Ventaja teórica, no victoria garantizada.",
+      "patterns": {
+        "es": [
+          "^\\s*(?:poke\\s+)?(?<first>[\\wáéíóúñü♀♂ .-]+?)\\s+(?:vs\\.?|versus|contra)\\s+(?<second>[\\wáéíóúñü♀♂ .-]+?)[?¿!]*\\s*$"
+        ],
+        "en": [
+          "^\\s*(?:poke\\s+)?(?<first>[\\wáéíóúñü♀♂ .-]+?)\\s+(?:vs\\.?|versus|contra)\\s+(?<second>[\\wáéíóúñü♀♂ .-]+?)[?¿!]*\\s*$"
+        ]
+      },
+      "ai": {
+        "label": "Comparar dos Pokémon o tipos (Fuego vs Agua, Pikachu vs Squirtle). Ventaja teórica, no victoria garantizada.",
+        "fields": {
+          "first": {
+            "type": "string"
+          },
+          "second": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-info",
+      "description": "Consultar información de cualquier Pokémon, número de Pokédex o forma: tipos, estadísticas, habilidades, generación, formas y descripción.",
+      "patterns": {
+        "es": [
+          "^(?:poke|pok[eé]dex|pokemon|pok[eé]mon|info\\s+pokemon)\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^(?:poke|pok[eé]dex|pokemon|pok[eé]mon|info\\s+pokemon)\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar información de cualquier Pokémon, número de Pokédex o forma: tipos, estadísticas, habilidades, generación, formas y descripción.",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-evolution",
+      "description": "Consultar cadena y condiciones de evolución de un Pokémon.",
+      "patterns": {
+        "es": [
+          "^(?:evoluciones?\\s+de|c[oó]mo\\s+evoluciona)\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^(?:evoluciones?\\s+de|c[oó]mo\\s+evoluciona)\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar cadena y condiciones de evolución de un Pokémon.",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-move",
+      "description": "Consultar un movimiento Pokémon: efecto, tipo, potencia y precisión. Traducir name a identificador inglés (rayo = thunderbolt).",
+      "patterns": {
+        "es": [
+          "^movimiento\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^movimiento\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar un movimiento Pokémon: efecto, tipo, potencia y precisión. Traducir name a identificador inglés (rayo = thunderbolt).",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-ability",
+      "description": "Consultar efecto de una habilidad Pokémon. Traducir name a identificador inglés (levitación = levitate).",
+      "patterns": {
+        "es": [
+          "^habilidad\\s+pokemon\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^habilidad\\s+pokemon\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar efecto de una habilidad Pokémon. Traducir name a identificador inglés (levitación = levitate).",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-item",
+      "description": "Consultar un objeto Pokémon. Traducir name a identificador inglés (restos = leftovers).",
+      "patterns": {
+        "es": [
+          "^objeto\\s+pokemon\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^objeto\\s+pokemon\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar un objeto Pokémon. Traducir name a identificador inglés (restos = leftovers).",
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "poke-moves",
+      "description": "Consultar movimientos que aprende un Pokémon y sus métodos por juego; usar version si se conoce para limitar resultados (scarlet-violet, sword-shield, etc.).",
+      "patterns": {
+        "es": [
+          "^movimientos\\s+de\\s+(.+?)[?!]*$"
+        ],
+        "en": [
+          "^movimientos\\s+de\\s+(.+?)[?!]*$"
+        ]
+      },
+      "ai": {
+        "label": "Consultar movimientos que aprende un Pokémon y sus métodos por juego; usar version si se conoce para limitar resultados (scarlet-violet, sword-shield, etc.).",
+        "fields": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      }
+    }
+  ]
+}

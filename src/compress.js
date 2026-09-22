@@ -98,7 +98,7 @@ compressBtn.addEventListener('click', async () => {
     }
 
     setBusy(true);
-    setStatus('working', 'Comprimiendo', 'Neeko está procesando el video con FFmpeg. Esto puede tardar un poco.');
+    setStatus('working', 'Comprimiendo', 'Neeko Asistente está procesando el video con FFmpeg. Esto puede tardar un poco.');
 
     try {
         const message = await invoke('compress_for_discord', {

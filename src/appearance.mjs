@@ -36,8 +36,8 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
     function createSizeControl(id) {
         const control = document.createElement('div');
         control.className = 'airi-size-control';
-        control.innerHTML = `<label for="${id}">Tamaño de Neeko <output for="${id}"></output></label>
-            <input id="${id}" type="range" min="30" max="100" step="1" aria-label="Tamaño de Neeko">
+        control.innerHTML = `<label for="${id}">Tamaño de Neeko Asistente <output for="${id}"></output></label>
+            <input id="${id}" type="range" min="30" max="100" step="1" aria-label="Tamaño de Neeko Asistente">
             <button type="button">Restablecer tamaño</button>`;
         control.querySelector('input').addEventListener('input', event => applySize(event.target.value), options);
         control.querySelector('button').addEventListener('click', () => applySize(82), options);
@@ -48,8 +48,8 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
     menu.id = 'airi-pet-menu';
     menu.hidden = true;
     menu.setAttribute('role', 'group');
-    menu.setAttribute('aria-label', 'Controles de Neeko');
-    menu.innerHTML = `<button type="button" data-action="chat">Hablar con Neeko</button>
+    menu.setAttribute('aria-label', 'Controles de Neeko Asistente');
+    menu.innerHTML = `<button type="button" data-action="chat">Hablar con Neeko Asistente</button>
         <button type="button" data-action="settings">Configuración</button>
         <button type="button" data-action="minimize">Minimizar</button>
         <button type="button" data-action="close">Cerrar</button>`;
@@ -63,10 +63,10 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
         openingChat = true;
         try { await invoke('open_chat_window'); }
         catch (error) {
-            console.error('[Neeko escritorio] No se pudo abrir el chat:', error);
+            console.error('[Neeko Asistente escritorio] No se pudo abrir el chat:', error);
             if (!disposed) {
                 const notice = document.createElement('p');
-                notice.textContent = 'No se pudo abrir el chat. Reiniciá Neeko con la versión nueva.';
+                notice.textContent = 'No se pudo abrir el chat. Reiniciá Neeko Asistente con la versión nueva.';
                 notice.style.cssText = 'color:#f5f3ff;padding:8px;font-size:12px';
                 menu.querySelector('p')?.remove();
                 menu.appendChild(notice);
@@ -91,7 +91,7 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
                     bottom = Math.min(bottom, (area.position.y + area.size.height - origin.y) / scale);
                 }
             }
-        } catch (error) { console.error('[Neeko escritorio] Menu bounds:', error); }
+        } catch (error) { console.error('[Neeko Asistente escritorio] Menu bounds:', error); }
         if (disposed || request !== menuRequest) return;
         // Fit the menu into the visible portion of the pet window, without moving the pet.
         menu.style.maxWidth = `${Math.max(1, right - left - 16)}px`;
@@ -113,7 +113,7 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
     settingsObserver.observe(settings, { attributes: true, attributeFilter: ['class'] });
     sprite.setAttribute('role', 'button');
     sprite.setAttribute('tabindex', '0');
-    sprite.setAttribute('aria-label', 'Neeko: clic para hablar, arrastrar para mover, clic derecho para controles');
+    sprite.setAttribute('aria-label', 'Neeko Asistente: clic para hablar, arrastrar para mover, clic derecho para controles');
     sprite.addEventListener('pointerdown', event => {
         if (event.button !== 0) return;
         pointer = { x: event.clientX, y: event.clientY };
@@ -125,7 +125,7 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
         pointer = null;
         dragged = true;
         hideMenu();
-        win?.startDragging().catch(error => console.error('[Neeko escritorio] No se pudo mover Neeko:', error));
+        win?.startDragging().catch(error => console.error('[Neeko Asistente escritorio] No se pudo mover Neeko Asistente:', error));
     }, options);
     window.addEventListener('pointerup', () => { pointer = null; }, options);
     window.addEventListener('pointercancel', () => { pointer = null; }, options);
@@ -190,7 +190,7 @@ function activateDesktop({ invoke, setDesktopHitRegion }) {
             if (disposed) return;
             await win.setAlwaysOnTop(true);
             if (disposed) await win.setAlwaysOnTop(false);
-        } catch (error) { console.error('[Neeko escritorio] No se pudo ajustar la ventana:', error); }
+        } catch (error) { console.error('[Neeko Asistente escritorio] No se pudo ajustar la ventana:', error); }
     })();
     return dispose;
 }

@@ -1,17 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicklasonmedia/tauri/dev/crates/tauri-cli/schema.json",
-  "productName": "Neeko Assistant",
-  "version": "1.0.6",
+  "productName": "Neeko Asistente",
+  "version": "1.0.0",
   "identifier": "com.neeko.assistant",
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
+        "visible": false,
         "alwaysOnTop": false,
         "transparent": true,
         "shadow": false,
-        "title": "Neeko Assistant",
+        "title": "Neeko Asistente",
         "width": 380,
         "height": 600,
         "minWidth": 290,
@@ -23,7 +24,7 @@
       },
       {
         "label": "chat",
-        "title": "Chat con Neeko",
+        "title": "Chat con Neeko Asistente",
         "width": 440,
         "height": 580,
         "minWidth": 320,
@@ -75,8 +76,8 @@
       "../addons/quick-notes/": "addons/quick-notes/",
       "../addons/discord-rich-presence/": "addons/discord-rich-presence/",
       "../addons/shazam/": "addons/shazam/",
-      "../addons/phone-microphone/": "addons/phone-microphone/",
-      "../addons/screen-translate/": "addons/screen-translate/"
+      "../addons/screen-translate/": "addons/screen-translate/",
+      "../addons/poke/": "addons/poke/"
     },
     "windows": {
       "nsis": {

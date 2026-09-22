@@ -486,7 +486,7 @@ pub fn lol_save_config(
             "NEEKO.png" | "NEEKO-standing-costume.png" | "NEEKO-sitting.png" => {
                 config.neeko_sprite = sprite;
             }
-            _ => return Err("Sprite de Neeko no valido".to_string()),
+            _ => return Err("Sprite de Neeko Asistente no valido".to_string()),
         }
     }
     if let Some(language) = language {

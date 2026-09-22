@@ -54,7 +54,7 @@ export class PetRegion {
             if (shape.length) this.shape = shape;
             this.refresh();
         } catch (error) {
-            console.error('[Neeko region]', error);
+            console.error('[Neeko Asistente region]', error);
             this.enable(false); // Leave controls recoverable if capture is unavailable.
         }
     }
@@ -87,7 +87,7 @@ export class PetRegion {
             }
         } catch (error) {
             this.key = undefined;
-            console.error('[Neeko region]', error);
+            console.error('[Neeko Asistente region]', error);
         } finally {
             this.sending = false;
             if (this.pending) void this.flush();

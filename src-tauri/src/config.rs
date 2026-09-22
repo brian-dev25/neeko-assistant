@@ -112,7 +112,7 @@ fn default_true() -> bool {
 }
 
 fn default_neeko_sprite() -> String {
-    "NEEKO.png".to_string()
+    String::new()
 }
 
 fn default_neeko_3d_animation() -> String {

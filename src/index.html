@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neeko Assistant</title>
+    <title>Neeko Asistente</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="appearance.css">
     <script type="importmap">
@@ -18,7 +18,7 @@
 <body>
     <div id="app">
         <div id="top-bar" data-tauri-drag-region>
-            <span id="title">Neeko</span>
+            <span id="title">Neeko Asistente</span>
             <div id="window-controls">
                 <button id="settings-btn" title="Configuracion">⚙</button>
                 <button id="minimize-btn" title="Minimizar">-</button>
@@ -28,7 +28,7 @@
 
         <div id="neeko-section">
             <div id="speech-bubble" class="hidden">
-                <p id="bubble-text"></p>
+                <div id="bubble-text"></div>
                 <div id="action-confirmation" hidden role="group" aria-label="Confirmar acción">
                     <pre id="action-details"></pre>
                     <div class="action-choices">
@@ -38,13 +38,12 @@
                 </div>
             </div>
             <div id="neeko-sprite">
-                <img alt="Neeko" id="neeko-img" class="sprite-loading">
-                <div id="neeko-3d" aria-label="Neeko 3D"></div>
+                <div id="neeko-3d" aria-label="Neeko Asistente 3D"></div>
             </div>
         </div>
 
         <div id="input-bar">
-            <input type="text" id="chat-input" placeholder="Hablale a Neeko..." autocomplete="off">
+            <input type="text" id="chat-input" placeholder="Hablale a Neeko Asistente..." autocomplete="off">
             <button id="send-btn">➤</button>
         </div>
     </div>
@@ -79,12 +78,12 @@
                     <h4 data-i18n="generalTitle">General</h4>
                     <label for="cfg-appearance-theme" data-i18n="appearanceTheme">Tema:</label>
                     <select id="cfg-appearance-theme">
-                        <option value="classic" data-i18n="appearanceClassic">Neeko clásico</option>
-                        <option value="desktop" data-i18n="appearanceDesktop">Neeko de escritorio</option>
+                        <option value="classic" data-i18n="appearanceClassic">Neeko Asistente clásico</option>
+                        <option value="desktop" data-i18n="appearanceDesktop">Neeko Asistente de escritorio</option>
                     </select>
-                    <p id="appearance-help-text" data-i18n="appearanceHelp" hidden>Muestra a Neeko sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.</p>
+                    <p id="appearance-help-text" data-i18n="appearanceHelp" hidden>Muestra a Neeko Asistente sin fondo. Clic para hablar, arrastrar para mover y clic derecho para abrir los controles.</p>
                     <div id="appearance-size-row" hidden>
-                        <label for="cfg-appearance-size"><span data-i18n="appearanceSize">Tamaño de Neeko</span> <output id="cfg-appearance-size-output" for="cfg-appearance-size">82%</output></label>
+                        <label for="cfg-appearance-size"><span data-i18n="appearanceSize">Tamaño de Neeko Asistente</span> <output id="cfg-appearance-size-output" for="cfg-appearance-size">82%</output></label>
                         <input id="cfg-appearance-size" type="range" min="30" max="100" value="82">
                         <button id="appearance-size-reset" type="button" data-i18n="appearanceReset">Restablecer tamaño</button>
                     </div>
@@ -145,7 +144,7 @@
                 <section id="settings-tab-lol" class="settings-section settings-panel" role="tabpanel" data-settings-panel="lol" hidden>
                     <h4>League of Legends</h4>
                     <label for="cfg-riot-id" data-i18n="riotIdLabel">Riot ID (Usuario#Tag):</label>
-                    <input type="text" id="cfg-riot-id" placeholder="NotNeeko#LAS">
+                    <input type="text" id="cfg-riot-id" placeholder="Jugador#LAS">
 
                     <label for="cfg-lol-region" data-i18n="lolRegion">Region LOL:</label>
                     <select id="cfg-lol-region">
@@ -164,16 +163,19 @@
 
                 <section id="settings-tab-ai" class="settings-section settings-panel" role="tabpanel" data-settings-panel="ai" hidden>
                     <h4 data-i18n="aiAppearance">Apariencia de IA</h4>
-                    <label for="cfg-neeko-sprite" data-i18n="neekoSprite">Sprite de Neeko:</label>
-                    <select id="cfg-neeko-sprite">
-                        <option value="NEEKO.png">Neeko con clip</option>
-                        <option value="NEEKO-standing-costume.png">Neeko parada</option>
-                        <option value="NEEKO-sitting.png">Neeko sentada</option>
-                    </select>
-
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="cfg-render-3d">
-                        <label for="cfg-render-3d" data-i18n="render3d">Renderizar Neeko en 3D</label>
+                    <div class="avatar-card">
+                        <div class="avatar-card-heading">
+                            <h5>Personaje 3D</h5>
+                            <span class="avatar-optional">Opcional</span>
+                        </div>
+                        <p class="avatar-description">El chat funciona sin personaje. Para mostrar a Neeko, descargá su GLB con texturas y todas las animaciones.</p>
+                        <div class="avatar-actions">
+                            <button id="avatar-download" type="button"><span class="avatar-step" aria-hidden="true">1</span> Descargar en Khada <span aria-hidden="true">↗</span></button>
+                            <button id="avatar-import" type="button"><span class="avatar-step" aria-hidden="true">2</span> Importar GLB</button>
+                        </div>
+                        <input id="avatar-file" type="file" accept=".glb" hidden>
+                        <p id="avatar-status" role="status">Solo chat · Sin modelo instalado</p>
+                        <p class="avatar-note">Se guarda al importar. El modelo pertenece a sus titulares.</p>
                     </div>
 
                     <div class="checkbox-row">
@@ -182,17 +184,10 @@
                     </div>
                     <p style="color:#aab;font-size:11px;margin-top:-4px;" data-i18n="sourceResearchHelp">Activado: busca, lee fuentes y usa la IA para responder con citas (hasta dos rondas). Apagado: conversa sin buscar fuentes.</p>
 
-                    <div id="neeko-3d-animation-row" class="hidden">
+                    <div id="neeko-3d-animation-row">
                         <label for="cfg-neeko-3d-animation" data-i18n="animation3d">Animacion 3D:</label>
                         <select id="cfg-neeko-3d-animation">
-                            <option value="Idle1_Base">Idle 1</option>
-                            <option value="Idle2_Base">Idle 2</option>
                             <option value="Neeko_idle3.anm">Idle 3</option>
-                            <option value="Idlein_Animal">Thinking</option>
-                            <option value="Joke_Loop">Talking</option>
-                            <option value="Dance_Loop">Dance</option>
-                            <option value="Laugh">Laugh</option>
-                            <option value="Taunt">Taunt</option>
                         </select>
                         <div class="checkbox-row" style="margin-top:4px">
                             <input type="checkbox" id="cfg-mouse-tracking" checked>
@@ -241,7 +236,7 @@
                     <button id="model-runtime-help-btn" class="advanced-link-btn" type="button" data-i18n="explanation">Explicacion</button>
                     <div id="model-runtime-help" class="model-runtime-help hidden">
                         <p><strong>Capas GPU:</strong> cuantas capas del modelo pasan a la placa de video. 0 significa solo CPU. Esto controla memoria VRAM usada, no limita el porcentaje de uso de GPU: con 15 capas la GPU puede marcar 80-100% mientras genera aunque no use toda la VRAM. En este modelo, 1 capa puede rondar 75 MB de VRAM para pesos; 4 capas aprox. 300 MB, 6 capas aprox. 450 MB y 15 capas aprox. 1.1 GB, mas contexto y overhead. Si hay ruido o picos fuertes, baja capas o usa Python con 0 capas.</p>
-                        <p><strong>Contexto:</strong> espacio para herramientas, memoria y conversación. El valor inicial es 8192. Más contexto usa más RAM/VRAM. Neeko limita el historial y avisa si las herramientas y tu mensaje no caben.</p>
+                        <p><strong>Contexto:</strong> espacio para herramientas, memoria y conversación. El valor inicial es 8192. Más contexto usa más RAM/VRAM. Neeko Asistente limita el historial y avisa si las herramientas y tu mensaje no caben.</p>
                         <p><strong>Hilos CPU:</strong> cuantos hilos del procesador usa. Mas hilos puede responder mas rapido, pero deja menos margen para juegos o apps. Si tu CPU tiene 12 hilos, 6 es una mitad razonable.</p>
                         <p><strong>Ejemplo suave:</strong> Capas GPU 4-6, Contexto 4608, Hilos CPU 6. Depende mucho de tu grafica, VRAM, CPU y temperaturas.</p>
                     </div>
@@ -289,7 +284,7 @@
                     <div id="addons-list" class="addons-list">
                         <div class="addons-empty">
                             <p data-i18n="addonNoAddons">No hay addons instalados</p>
-                            <p style="font-size:11px;color:#aab;" data-i18n="addonNoAddonsHint">Pone carpetas de addons en la carpeta "addons/" de la config de Neeko.</p>
+                            <p style="font-size:11px;color:#aab;" data-i18n="addonNoAddonsHint">Pone carpetas de addons en la carpeta "addons/" de la config de Neeko Asistente.</p>
                         </div>
                     </div>
                     <p style="font-size:11px;color:#aab;margin-top:10px;" data-i18n="addonRequiresReload">Cambios se aplican al reiniciar la app.</p>
@@ -300,7 +295,7 @@
                     <div id="memory-list" class="memory-list">
                         <div class="memory-empty">
                             <p data-i18n="memoryNoFacts">No hay nada guardado aun.</p>
-                            <p style="font-size:11px;color:#aab;" data-i18n="memoryNoFactsHint">Decile algo a Neeko y lo guarda automaticamente.</p>
+                            <p style="font-size:11px;color:#aab;" data-i18n="memoryNoFactsHint">Decile algo a Neeko Asistente y lo guarda automaticamente.</p>
                         </div>
                     </div>
                     <div style="display:flex;gap:6px;margin-top:10px;">

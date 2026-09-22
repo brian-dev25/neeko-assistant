@@ -1,4 +1,4 @@
-import { ChatClient, confirmationControls, attachInfo } from './chat-client.mjs';
+import { ChatClient, confirmationControls, attachInfo, renderMessageContent, messageParts } from './chat-client.mjs';
 
 const { invoke } = window.__TAURI__.core;
 const messages = document.getElementById('messages');
@@ -15,7 +15,8 @@ function appendMessage(text, role = 'assistant', info, sources) {
     document.getElementById('welcome')?.remove();
     const entry = document.createElement('div');
     entry.className = `message ${role}`;
-    entry.textContent = text;
+    if (role === 'assistant') renderMessageContent(entry, text, openUrl);
+    else entry.textContent = text;
     messages.appendChild(entry);
     attachInfo(entry, info, 'es', openUrl, sources);
     // Keep the visible log bounded along with the model's conversation history.
@@ -35,12 +36,12 @@ const client = new ChatClient({
         send.classList.toggle('cancel-mode', value);
         send.title = value ? 'Cancelar' : 'Enviar';
         send.setAttribute('aria-label', send.title);
-        status.textContent = value ? 'Neeko está pensando…' : '';
+        status.textContent = value ? 'Neeko Asistente está pensando…' : '';
         if (!value) { send.disabled = false; input.focus(); }
     },
     progress: (step, details) => {
         const labels = {
-            thinking: 'Neeko esta pensando...',
+            thinking: 'Neeko Asistente esta pensando...',
             searching: 'Buscando informacion...',
             reading: 'Leyendo fuentes...',
             checking: 'Comprobando datos...',
@@ -59,7 +60,7 @@ const client = new ChatClient({
         petState({ state: approved ? 'thinking' : 'waiting' });
         status.textContent = approved ? 'Ejecutando…' : 'Cancelando acción…';
     },
-    message: (text, info, sources) => { appendMessage(text, 'assistant', info, sources); petState({ state: 'reply', text }); },
+    message: (text, info, sources) => { appendMessage(text, 'assistant', info, sources); petState({ state: 'reply', text: messageParts(text).text }); },
     error: text => appendMessage(text, 'error'),
 });
 
@@ -88,6 +89,9 @@ document.addEventListener('keydown', event => {
 });
 
 const chatWindow = window.__TAURI__.window.getCurrentWindow();
+document.getElementById('settings-btn').addEventListener('click', () => {
+    void invoke('open_settings_window').catch(error => appendMessage(String(error), 'error'));
+});
 document.getElementById('top-bar').addEventListener('pointerdown', event => {
     if (event.button === 0 && !event.target.closest('button')) void chatWindow.startDragging().catch(console.error);
 });

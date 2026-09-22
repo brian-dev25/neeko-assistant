@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Chat con Neeko</title>
+    <title>Chat con Neeko Asistente</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
-    <header id="top-bar"><span id="title">Neeko</span><div id="window-controls">
+    <header id="top-bar"><span id="title">Neeko Asistente</span><div id="window-controls">
+        <button id="settings-btn" type="button" title="Configuración" aria-label="Configuración">⚙</button>
         <button id="minimize-btn" type="button" title="Minimizar" aria-label="Minimizar">-</button>
         <button id="close-btn" type="button" title="Cerrar" aria-label="Cerrar">x</button>
     </div></header>
@@ -22,8 +23,8 @@
     </section>
     <p id="status" role="status"></p>
     <form id="input-bar">
-        <label class="sr-only" for="chat-input">Mensaje para Neeko</label>
-        <input id="chat-input" type="text" placeholder="Hablale a Neeko…" autocomplete="off" autofocus>
+        <label class="sr-only" for="chat-input">Mensaje para Neeko Asistente</label>
+        <input id="chat-input" type="text" placeholder="Hablale a Neeko Asistente…" autocomplete="off" autofocus>
         <button id="send-btn" type="submit" title="Enviar" aria-label="Enviar">➤</button>
     </form>
     <script type="module" src="chat.js"></script>

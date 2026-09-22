@@ -262,7 +262,7 @@ fn notify_free_game(app: &AppHandle, offer: &FreeGameOffer) {
     let _ = app
         .notification()
         .builder()
-        .title("Neeko encontro un juego gratis")
+        .title("Neeko Asistente encontro un juego gratis")
         .body(body)
         .show();
 }
@@ -1001,7 +1001,7 @@ async fn test_free_games_notification_handler(
     let offer = FreeGameOffer {
         id: "test".to_string(),
         title: "Aviso de prueba".to_string(),
-        store: "Neeko".to_string(),
+        store: "Neeko Asistente".to_string(),
         url: "http://localhost:1414".to_string(),
         expires_at: None,
         image_url: None,

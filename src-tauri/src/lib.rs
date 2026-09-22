@@ -19,7 +19,6 @@ use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::{broadcast, watch};
 
 mod addon_manager;
-mod phone_microphone;
 mod screen_translate;
 mod assistant;
 mod research;
@@ -39,6 +38,7 @@ const LLAMA_SERVER_URL: &str = "http://127.0.0.1:8080";
 static LLAMA_PROCESS: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 static LLAMA_LIFECYCLE: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 static EXIT_REQUESTED: AtomicBool = AtomicBool::new(false);
+static AVATAR_AVAILABLE: AtomicBool = AtomicBool::new(false);
 static DOWNLOAD_PROGRESS: OnceLock<broadcast::Sender<DownloadProgress>> = OnceLock::new();
 static CANCEL_DOWNLOADS: OnceLock<Mutex<HashMap<String, watch::Sender<bool>>>> = OnceLock::new();
 static ADDON_MANAGER: OnceLock<addon_manager::AddonManager> = OnceLock::new();
@@ -114,8 +114,8 @@ unsafe fn check_single_instance_windows() {
 
     if GetLastError() == ERROR_ALREADY_EXISTS {
         CloseHandle(handle);
-        let msg = to_wide("Neeko Assistant ya esta abierto.\n\nUsa la ventana existente o abrila desde la bandeja.");
-        let title = to_wide("Neeko Assistant");
+        let msg = to_wide("Neeko Asistente ya esta abierto.\n\nUsa la ventana existente o abrila desde la bandeja.");
+        let title = to_wide("Neeko Asistente");
         MessageBoxW(std::ptr::null_mut(), msg.as_ptr(), title.as_ptr(), 0x50010);
         std::process::exit(1);
     }
@@ -385,7 +385,7 @@ fn get_neeko_3d_animation() -> Result<String, String> {
 #[tauri::command]
 fn set_neeko_3d_animation(animation: String) -> Result<String, String> {
     if !is_valid_neeko_3d_animation(&animation) {
-        return Err("Animacion 3D de Neeko no valida".to_string());
+        return Err("Animacion 3D de Neeko Asistente no valida".to_string());
     }
 
     let mut config = config::AppConfig::load();
@@ -654,7 +654,7 @@ async fn prepare_python_engine(app: AppHandle) -> Result<String, String> {
         "python-engine-progress",
         serde_json::json!({
             "step": "create_venv",
-            "message": "Creando entorno Python propio de Neeko...",
+            "message": "Creando entorno Python propio de Neeko Asistente...",
             "percent": 20,
         }),
     );
@@ -1093,10 +1093,28 @@ fn open_compressor_window(
 fn open_chat_window(app: AppHandle) -> Result<(), String> {
     let window = app
         .get_webview_window("chat")
-        .ok_or_else(|| "La ventana de chat no está disponible. Reiniciá Neeko.".to_string())?;
+        .ok_or_else(|| "La ventana de chat no está disponible. Reiniciá Neeko Asistente.".to_string())?;
     window.unminimize().map_err(|e| e.to_string())?;
     window.show().map_err(|e| e.to_string())?;
     window.set_focus().map_err(|e| e.to_string())
+}
+
+fn show_assistant(app: &AppHandle) -> Result<(), String> {
+    let label = if AVATAR_AVAILABLE.load(Ordering::SeqCst) { "main" } else { "chat" };
+    let window = app.get_webview_window(label).ok_or("Ventana no disponible")?;
+    window.unminimize().map_err(|e| e.to_string())?;
+    window.show().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_avatar_available(app: AppHandle, window: tauri::Window, available: bool) -> Result<(), String> {
+    if window.label() != "main" { return Err("Solo disponible en la ventana principal".into()); }
+    AVATAR_AVAILABLE.store(available, Ordering::SeqCst);
+    if !available {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    show_assistant(&app)
 }
 
 #[tauri::command]
@@ -1108,7 +1126,7 @@ async fn open_settings_window(app: AppHandle) -> Result<(), String> {
         return window.set_focus().map_err(|e| e.to_string());
     }
     WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("index.html".into()))
-        .title("Configuración de Neeko")
+        .title("Configuración de Neeko Asistente")
         .inner_size(520.0, 650.0).min_inner_size(320.0, 430.0)
         .decorations(false).resizable(true).always_on_top(false)
         .build().map_err(|e| e.to_string())?;
@@ -1557,7 +1575,7 @@ async fn download_to_file(
 
     let response = client
         .get(url)
-        .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+        .header(reqwest::header::USER_AGENT, "Neeko Asistente")
         .send()
         .await
         .map_err(|e| {
@@ -1651,7 +1669,7 @@ async fn download_google_drive_file(
 
     let resp1 = client
         .get(&direct_url)
-        .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+        .header(reqwest::header::USER_AGENT, "Neeko Asistente")
         .send()
         .await
         .map_err(|e| {
@@ -1694,7 +1712,7 @@ async fn download_google_drive_file(
 
     let resp2 = client
         .get(&confirm_url)
-        .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+        .header(reqwest::header::USER_AGENT, "Neeko Asistente")
         .send()
         .await
         .map_err(|e| {
@@ -1754,7 +1772,7 @@ async fn resolve_download_url(url: &str) -> Result<String, String> {
 
         let response = client
             .get(&direct_url)
-            .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+            .header(reqwest::header::USER_AGENT, "Neeko Asistente")
             .send()
             .await
             .map_err(|e| format!("No pude abrir Google Drive: {}", e))?;
@@ -1828,7 +1846,7 @@ async fn resolve_download_url(url: &str) -> Result<String, String> {
 
     let html = client
         .get(url)
-        .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+        .header(reqwest::header::USER_AGENT, "Neeko Asistente")
         .send()
         .await
         .map_err(|e| format!("No pude abrir MediaFire: {}", e))?
@@ -1963,7 +1981,7 @@ pub(crate) async fn install_git_impl(app: AppHandle) -> Result<String, String> {
 
     let release: serde_json::Value = client
         .get("https://api.github.com/repos/git-for-windows/git/releases/latest")
-        .header(reqwest::header::USER_AGENT, "Neeko Assistant")
+        .header(reqwest::header::USER_AGENT, "Neeko Asistente")
         .send()
         .await
         .map_err(|e| format!("No pude abrir GitHub releases: {}", e))?
@@ -2230,7 +2248,7 @@ pub(crate) fn uninstall_ffmpeg_impl() -> Result<String, String> {
     }
     config.save()?;
 
-    Ok("FFmpeg y FFprobe instalados por Neeko fueron eliminados".to_string())
+    Ok("FFmpeg y FFprobe instalados por Neeko Asistente fueron eliminados".to_string())
 }
 
 #[tauri::command]
@@ -2266,7 +2284,7 @@ pub(crate) fn uninstall_model_impl() -> Result<String, String> {
 
     let ia_dir = installed_models_dir();
     if !ia_dir.exists() {
-        return Ok("No habia modelos descargados por Neeko".to_string());
+        return Ok("No habia modelos descargados por Neeko Asistente".to_string());
     }
 
     let mut removed = 0_u32;
@@ -2288,7 +2306,7 @@ pub(crate) fn uninstall_model_impl() -> Result<String, String> {
     let _ = std::fs::remove_dir(&ia_dir);
 
     Ok(if removed == 0 {
-        "No habia modelos GGUF descargados por Neeko".to_string()
+        "No habia modelos GGUF descargados por Neeko Asistente".to_string()
     } else {
         format!("Modelos eliminados: {}", removed)
     })
@@ -2623,8 +2641,8 @@ pub async fn open_any_app_with_notify(
     let result = open_any_app_impl(app_name.clone()).await;
     if let Some(app) = app {
         match &result {
-            Ok(msg) => notify_system(app, "Neeko", msg),
-            Err(err) => notify_system(app, "Neeko no pudo abrir la app", err),
+            Ok(msg) => notify_system(app, "Neeko Asistente", msg),
+            Err(err) => notify_system(app, "Neeko Asistente no pudo abrir la app", err),
         }
     }
     result
@@ -3060,7 +3078,7 @@ async fn check_updates(app: AppHandle) -> Result<serde_json::Value, String> {
         "hasUpdate": true,
         "currentVersion": current,
         "latestVersion": version,
-        "releaseName": format!("Neeko Assistant {}", version),
+        "releaseName": format!("Neeko Asistente {}", version),
         "downloadUrl": download_url,
         "notes": notes,
     }))
@@ -3105,7 +3123,6 @@ fn addon_enable(addon_id: String) -> Result<String, String> {
 #[tauri::command]
 async fn addon_disable(app: AppHandle, addon_id: String) -> Result<String, String> {
     addon_manager().disable_addon(&addon_id)?;
-    if addon_id == "phone-microphone" { phone_microphone::stop().await?; }
     if addon_id == "screen-translate" { screen_translate::stop(&app).await; }
     Ok(format!("Addon {} deshabilitado", addon_id))
 }
@@ -3216,7 +3233,7 @@ pub fn run() {
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .tooltip("Neeko Assistant");
+                .tooltip("Neeko Asistente");
 
             if let Some(icon) = app.default_window_icon().cloned() {
                 tray = tray.icon(icon);
@@ -3227,10 +3244,7 @@ pub fn run() {
         })
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+                let _ = show_assistant(app);
             }
             "quit" => {
                 EXIT_REQUESTED.store(true, Ordering::SeqCst);
@@ -3247,16 +3261,12 @@ pub fn run() {
             } = event
             {
                 let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+                let _ = show_assistant(app);
             }
         })
         .invoke_handler(tauri::generate_handler![
             addon_list,
             screen_translate::screen_translate,
-            phone_microphone::phone_microphone,
             addon_enable,
             addon_disable,
             addon_get_js,
@@ -3280,6 +3290,7 @@ pub fn run() {
             minimize_window,
             close_window,
             open_chat_window,
+            set_avatar_available,
             open_settings_window,
             pet_region::pet_set_region,
             open_compressor_window,
@@ -3383,9 +3394,6 @@ pub fn run() {
         .run(|_app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 tauri::async_runtime::block_on(screen_translate::stop(_app));
-                if let Err(error) = tauri::async_runtime::block_on(phone_microphone::stop()) {
-                    eprintln!("[NEEKO Phone Microphone] Cleanup: {error}");
-                }
             }
         });
 }
